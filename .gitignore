@@ -1,0 +1,109 @@
+###########################
+# Global ignores
+###########################
+.DS_Store
+Thumbs.db
+*.log
+logs/
+temp/
+*.tmp
+
+###########################
+# Environment files
+###########################
+.env
+.env.local
+.env.development.local
+.env.production.local
+
+###########################
+# Node.js / React frontend
+###########################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+.cache/
+.vite/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+###########################
+# React tooling
+###########################
+# Parcel / Vite / Next.js
+.parcel-cache/
+.vscode/
+
+###########################
+# Spring Boot / Java backend
+###########################
+# Build output
+target/
+.gradle/
+build/
+out/
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper
+.mvn/wrapper/maven-wrapper.properties
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+###########################
+# Docker
+###########################
+# Local container or volume data
+docker-data/
+docker-compose.override.yml
+
+###########################
+# Reports and generated files
+###########################
+*.pdf
+*.svg
+*.png
+*.jpeg
+*.jpg
+*.gif
+
+###########################
+# OS artifacts
+###########################
+# macOS
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+###########################
+# Python environments (if used in scripts)
+###########################
+__pycache__/
+*.pyc
+
+###########################
+# VSCode settings
+###########################
+.vscode/
