@@ -1,256 +1,337 @@
-# Attributes, Types & Validation Rules (DM-02)
+# DM-02 — Entities, Data Types & Validation (Ultimo / Microservices)
 > Source: EEET2582_DevVision-JobApplicant-v1.1.pdf  
 > Scope: Sections 1 – 6  
 > Milestone 1 Deliverable – Data Model (Level Simplex → Ultimo)
 
-
 All attributes are preliminary for ER Model v1
 
-## Conventions
-
-- **Type (FE)**: UI form type (text, email, select, file, etc.).
-- **Type (BE)**: Database/storage type (PostgreSQL unless noted).
-- **Constraint**: `PK`, `FK`, `UNIQUE`, `NOT NULL`, `NULL`, `CHECK`, `INDEX`, `DEFAULT`.
-- **Regex** samples are language‑agnostic (PCRE/ECMAScript compatible).
-- **Shared FE/BE validators** are defined once and reused across forms and DTOs.
-
-### Shared Validation Library (reuse everywhere)
-
-- **Email**
-    - Rules: exactly one `@`; at least one `.` after `@`; total length < 255; no spaces; forbid `()[];:`.
-    - Regex (syntax check): `^(?!.*[()\[\];:])[^\s@]+@[^\s@]+\.[^\s@]+$`
-    - BE: `CHECK (length(email) < 255)` + `LOWER(email)` unique index.
-- **Password strength**
-    - Rules: ≥ 8 chars; ≥ 1 digit; ≥ 1 special; ≥ 1 uppercase.
-    - Regex: `^(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$`
-- **Phone (optional)**
-    - Rules: starts with `+` and valid dial code; digits only after `+`; digits *after* dial code ≤ 12.
-    - Regex (format): `^\+[1-9]\d{0,2}\d{1,12}$`
-    - BE: custom `CHECK` to enforce local‑part length ≤ 12 after dial code.
-- **Country**
-    - FE: dropdown sourced from ISO‑3166‑1 alpha‑2 list.
-    - BE: `CHAR(2)` with `CHECK (country ~ '^[A-Z]{2}$')`.
-- **Image file**
-    - FE: accept `image/*`, max 5MB.
-    - BE: content‑type sniff + size cap; auto‑resize (e.g., 512×512) on upload; store URL only.
-- **Timestamps**: `TIMESTAMPTZ`; default `NOW()` on create; update triggers for `updatedAt`.
+> Purpose: Definitive field types, constraints, indexing and DTO visibility for each entity under the **Ultimo (microservice)** architecture.  
+> This file assumes each microservice owns its own database (no cross-service FK constraints). See DM-01 for ownership mapping.
 
 ---
 
-## 1. Applicant
-
-| Attribute | Type (FE) | Type (BE) | Constraint | Frontend validation rule | Backend validation rule | Example values / edge cases |
-| --- | --- | --- | --- | --- | --- | --- |
-| applicantId | – | UUID | PK | – | `PRIMARY KEY` | `3e0f…` (UUID v4) |
-| fullName | text | VARCHAR(150) | NOT NULL | 1–150 chars; trim; collapse doublespaces | `CHECK (length(fullName) BETWEEN 1 AND 150)` | `Nguyen Thuy Dung` |
-| email | email | CITEXT | UNIQUE, NOT NULL | email regex; length<255 | unique index on `LOWER(email)`; email `CHECK` | `dung.nguyen@example.com` |
-| passwordHash | – | VARCHAR(255) | NULL (SSO) / NOT NULL (local) | – | generate via Argon2id/BCrypt; `NULL` if `ssoProvider!='local'` | `$argon2id$v=19$…` |
-| country | select | CHAR(2) | NOT NULL, INDEX, shard key | must pick from list | `CHECK (country ~ '^[A-Z]{2}$')` | `VN` |
-| city | text | VARCHAR(120) | NULL | ≤120 chars | `CHECK (length(city) <= 120)` | `Ho Chi Minh City` |
-| streetAddress | text | VARCHAR(180) | NULL | ≤180 chars | `CHECK (length(streetAddress) <= 180)` | `12 Nguyen Hue, Dist. 1` |
-| phoneNumber | tel | VARCHAR(20) | NULL | phone regex | phone regex + custom `CHECK` | `+84xxxxxxxxx` |
-| profileImage | file (image) | TEXT (URL) | NULL | accept image/*; ≤5MB | store URL; resize to 512×512 | `https://cdn/.../avatar.png` |
-| isActivated | – | BOOLEAN | DEFAULT false | – | defaults false; set true after email activation | `false` → `true` |
-| createdAt | – | TIMESTAMPTZ | DEFAULT NOW() | – | – | `2025‑11‑12T05:30:00Z` |
-| updatedAt | – | TIMESTAMPTZ | – | – | trigger to auto‑update | – |
-| ssoProvider | select | ENUM('local','google','microsoft','facebook','github') | DEFAULT 'local' | single choice (project selects **one** for SSO enablement) | enforce only configured provider allowed | `google` |
-| ssoId | – | VARCHAR(128) | UNIQUE NULLABLE | – | unique when not null | `google-oauth2 |
-| shardKey | – | CHAR(2) | NOT NULL | – | equals `country`; used for routing and migrations | `VN` |
-
-**Notes**
-
-- Email activation: send activation email on registration; `isActivated=false` until verified; login blocked otherwise.
-- Country change triggers **data migration** to new shard; wrap in transaction and publish Kafka event (§3.3.2).
+## Conventions & Notes
+- **ID format:** `uuid` (string, UUIDv4) across all services. Example: `"applicantId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"`.  
+- **Timestamps:** ISO8601 strings (UTC). Field names: `createdAt`, `updatedAt`, `deletedAt`.  
+- **Field visibility:** `internalOnly` fields MUST NOT be returned by external DTOs/endpoints. Use the `external` DTO mapping stage to sanitize.  
+- **No cross-DB FK constraints:** Where one service references another's entity, store only the ID as a reference string and validate via API calls or event consumer logic.  
+- **Sharding rule:** Profile DB is sharded by `country`. ShardKey = `country`. See Shard Migration section below.
+- **FTS:** Use DB engine FTS features (Postgres `GIN` + `tsvector` or MongoDB text index) for fields flagged `FTS`.  
+- **Indexes:** Each entity section includes recommended indexes for performance.
 
 ---
 
-## 2. AuthToken
+# 1. Profile Service Entities (Sharded DB: shardKey = country)
+Owned: Applicant, Education, WorkExperience, SkillTag (catalog), ApplicantSkill, MediaPortfolio, Resume, SearchProfile.
 
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| tokenId | – | UUID | PK | – | – | – |
-| applicantId | – | UUID | FK → Applicant | – | FK; `ON DELETE CASCADE` | – |
-| accessToken | – | TEXT | NOT NULL | – | JWE (encrypted) for non‑SSO; store hash or opaque id; set TTL | `eyJhbGciOiJ…` |
-| refreshToken | – | TEXT | NULLABLE | – | rotate; store hash; TTL (e.g., 30d) | – |
-| issuedAt | – | TIMESTAMPTZ | NOT NULL | – | – | – |
-| expiresAt | – | TIMESTAMPTZ | NOT NULL | – | – | – |
-| isRevoked | – | BOOLEAN | DEFAULT false | – | mirror Redis revocation cache | – |
-| failedAttempts | – | SMALLINT | DEFAULT 0 | – | throttle: block after ≥5 fails within 60s | – |
-
-**Notes**
-
-- Brute force: maintain rolling window; lock account and/or IP; expose user‑safe error message.
-- Logout: revoke access token in Redis; add to deny‑list until expiry.
-
----
-
-## 3. Resume
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| resumeId | – | UUID | PK | – | – | – |
-| applicantId | – | UUID | FK | – | FK | – |
-| headline | text | VARCHAR(120) | NULL | ≤120 chars | length check | `Backend Developer` |
-| objective | textarea | TEXT | NULL | ≤2,000 chars | length check | Short career goal |
-| education | dynamic list | JSONB | NULL | degree, institution, startYear, endYear, gpa? | schema validate; gpa 0–100 | `{degree:"BSc",…}` |
-| experience | dynamic list | JSONB | NULL | title, company, start, end, desc | schema validate; dates mm‑yyyy | `{jobTitle:"SE",…}` |
-| skills | tag input | JSONB | NULL | tag set; dedupe case‑insensitive | normalise to SkillTag | `["Kafka","React"]` |
-| certifications | tag input | JSONB | NULL | ≤50 items | – | – |
-| createdAt | – | TIMESTAMPTZ | – | – | – | – |
-| updatedAt | – | TIMESTAMPTZ | – | – | trigger | – |
+### 1.1 Applicant
+- `applicantId` : string (uuid) — PK  
+- `fullName` : string (max 200) — required  
+- `email` : string — required, unique **within global index** (store unique constraint in Auth Service as well)  
+- `country` : string (ISO-2 / ISO-3 or canonical) — required — **shardKey**  
+- `city` : string (optional)  
+- `phoneNumber` : string (optional) — validated E.164 format (regex)  
+- `streetAddress` : string (optional)  
+- `profileImageUrl` : string (URL) — optional  
+- `isActivated` : boolean — default false  
+- `createdAt`, `updatedAt`, `deletedAt` : timestamps  
+- `isArchived` : boolean — default false (for soft-delete)  
+**internalOnly:** none (profile fields are shareable)  
+**Indexes:** `{country, email}`, `email`(unique across shards via central index or Auth check), `createdAt`  
+**Notes:** Store applicant in the shard corresponding to `country`. Use UUIDs for `applicantId`.
 
 ---
 
-## 4. ApplicantSkill (junction)
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| applicantId | – | UUID | PK part, FK | – | – | – |
-| skillId | – | UUID | PK part, FK | – | – | – |
-| proficiency | select | ENUM('Beginner','Intermediate','Advanced') | NULL | single choice | enum check | `Intermediate` |
-
-Composite PK `(applicantId, skillId)`; unique per pair.
-
----
-
-## 5. SkillTag
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| skillId | – | UUID | PK | – | – | – |
-| name | text | CITEXT | UNIQUE, NOT NULL | 1–50 chars | unique case‑insensitive | `React` |
-| category | text | VARCHAR(50) | NULL | optional | – | `Frontend` |
-| createdAt | – | TIMESTAMPTZ | – | – | – | – |
+### 1.2 Education
+- `educationId` : uuid  
+- `applicantId` : uuid (reference) — **no DB FK**, must be co-located (same shard)  
+- `degree` : string  
+- `institution` : string  
+- `fromYear` : integer (YYYY)  
+- `toYear` : integer or `null`  
+- `gpa` : number (0-100) optional  
+- `createdAt`, `updatedAt`  
+**Indexes:** `applicantId`
 
 ---
 
-## 6. MediaPortfolio
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| mediaId | – | UUID | PK | – | – | – |
-| applicantId | – | UUID | FK | – | – | – |
-| fileUrl | – | TEXT | NOT NULL | – | signed URL; virus scan | `https://…/file.mp4` |
-| mediaType | select | ENUM('image','video') | NOT NULL | radio/select | enum check | `image` |
-| title | text | VARCHAR(120) | NULL | ≤120 | – | – |
-| description | textarea | TEXT | NULL | ≤1,000 | – | – |
-| uploadDate | – | TIMESTAMPTZ | DEFAULT NOW() | – | – | – |
-| visibility | select | ENUM('public','private') | DEFAULT 'private' | – | – | – |
-
----
-
-## 7.  Application
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| applicationId | – | UUID | PK | – | – | – |
-| applicantId | – | UUID | FK | – | – | – |
-| jobPostId | – | UUID/TEXT | External ref | – | FK to JM store | – |
-| companyId | – | UUID/TEXT | External ref | – | – | – |
-| status | badge | ENUM('Pending','Viewed','Accepted','Rejected') | NOT NULL | – | enum check | `Pending` |
-| submissionDate | – | TIMESTAMPTZ | NOT NULL | – | default NOW() | – |
-| updatedAt | – | TIMESTAMPTZ | – | – | trigger | – |
-| feedback | textarea | TEXT | NULL | ≤2,000 | – | – |
-| applicantCV | file | TEXT (URL) | NULL | PDF/DOCX ≤10MB | MIME/size check | – |
-| coverLetter | file | TEXT (URL) | NULL | PDF/DOCX ≤10MB | – | – |
-| fresherFlag | – | BOOLEAN | NULL | – | derived from JobPost | – |
+### 1.3 WorkExperience
+- `workExpId` : uuid  
+- `applicantId` : uuid (reference, same shard)  
+- `jobTitle` : string (FTS candidate)  
+- `companyName` : string  
+- `from` : date (mm-yyyy or ISO)  
+- `to` : date or null  
+- `description` : text (FTS)  
+- `createdAt`, `updatedAt`  
+**FTS:** `jobTitle`, `description`  
+**Indexes:** `applicantId`
 
 ---
 
-## 8. SearchProfile (Premium)
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| searchProfileId | – | UUID | PK | – | – | – |
-| applicantId | – | UUID | FK | – | – | – |
-| profileName | text | VARCHAR(100) | NULL | ≤100 | – | `SG SWE roles` |
-| desiredCountry | select | CHAR(2) | NULL | ISO list | `CHECK` | `VN` |
-| desiredMinSalary | number | NUMERIC(10,2) | DEFAULT 0 | ≥0 | `CHECK (desiredMinSalary>=0)` | `0.00` |
-| desiredMaxSalary | number | NUMERIC(10,2) | NULL | ≥ min | `CHECK (desiredMaxSalary IS NULL OR desiredMaxSalary>=desiredMinSalary)` | – |
-| jobTitles | textarea | TEXT | NULL | semicolon‑separated; trim tokens | BE to normalise and dedupe | `"Software Engineer; Backend Developer"` |
-| technicalBackground | tags | JSONB | NULL | tags | validate array of strings | `["Kafka","React"]` |
-| employmentStatus | multiselect | JSONB | NULL | any of {Full‑time, Part‑time, Fresher, Internship, Contract} | validate set; if neither FT nor PT ⇒ include both in matcher | `["Full-time","Internship"]` |
-| createdAt | – | TIMESTAMPTZ | – | – | – | – |
-| updatedAt | – | TIMESTAMPTZ | – | – | – | – |
-| isActive | toggle | BOOLEAN | DEFAULT true | – | – | true |
+### 1.4 SkillTag (catalog)
+- `skillId` : uuid  
+- `name` : string (unique, normalized lowercase)  
+- `category` : string (optional)  
+- `createdAt`  
+**Sharding:** NOT sharded — global small catalog (replicated).  
+**Indexes:** `name` (unique)
 
 ---
 
-## 9. Subscription
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| subscriptionId | – | UUID | PK | – | – | – |
-| applicantId | – | UUID | FK | – | – | – |
-| planType | select | ENUM('Free','Premium') | NOT NULL | – | enum | `Premium` |
-| startDate | – | TIMESTAMPTZ | NOT NULL | – | – | – |
-| expiryDate | – | TIMESTAMPTZ | NULL | – | – | – |
-| isActive | toggle | BOOLEAN | NOT NULL | – | computed from dates + last payment | true |
-
----
-
-## 10. PaymentTransaction
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| transactionId | – | UUID | PK | – | – | – |
-| applicantId | – | UUID | FK | – | – | – |
-| email | email | CITEXT | NOT NULL | email regex | same as Applicant | billing email |
-| amount | – | NUMERIC(10,2) | NOT NULL | fixed 10.00 | `CHECK (amount=10.00)` | `10.00` |
-| currency | select | CHAR(3) | NOT NULL | fixed `USD` | `CHECK (currency='USD')` | `USD` |
-| gateway | select | ENUM('Stripe','PayPal') | NOT NULL | selected provider | enum | `Stripe` |
-| timestamp | – | TIMESTAMPTZ | NOT NULL | – | – | – |
-| status | badge | ENUM('Success','Failed') | NOT NULL | – | enum | `Success` |
+### 1.5 ApplicantSkill (join)
+- `id` : uuid  
+- `applicantId` : uuid (same shard)  
+- `skillId` : uuid (ref to SkillTag)  
+- `proficiency` : enum(`Beginner`, `Intermediate`, `Advanced`)  
+- `endorsedBy` : optional array of uuid (if endorsements implemented)  
+- `createdAt`, `updatedAt`  
+**Source of truth:** ApplicantSkill is canonical for skill relationships. Resume.skills may be a cached/denormalized copy.  
+**Indexes:** `{applicantId}`, `{skillId}`
 
 ---
 
-## 11. Notification
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| notificationId | – | UUID | PK | – | – | – |
-| applicantId | – | UUID | FK | – | – | – |
-| type | badge | ENUM('ApplicationUpdate','Recommendation','System') | NOT NULL | – | enum | `Recommendation` |
-| message | – | TEXT | NOT NULL | – | ≤2,000 chars | – |
-| isRead | toggle | BOOLEAN | DEFAULT false | – | – | false |
-| timestamp | – | TIMESTAMPTZ | DEFAULT NOW() | – | – | – |
-
----
-
-## 12. SystemAdmin
-
-| Attribute | Type (FE) | Type (BE) | Constraint | FE rule | BE rule | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| adminId | – | UUID | PK | – | – | – |
-| fullName | text | VARCHAR(120) | NOT NULL | ≤120 | length check | – |
-| email | email | CITEXT | UNIQUE, NOT NULL | email regex | unique index | – |
-| passwordHash | – | VARCHAR(255) | NOT NULL | – | Argon2id/BCrypt | – |
-| role | select | ENUM('Moderator','SystemAdmin') | NOT NULL | – | enum | `SystemAdmin` |
-| lastLogin | – | TIMESTAMPTZ | NULL | – | – | – |
+### 1.6 MediaPortfolio (metadata)
+- `mediaId` : uuid  
+- `applicantId` : uuid (same shard)  
+- `fileUrl` : string (S3 or CDN)  
+- `mediaType` : enum(`image`,`video`)  
+- `title` : string  
+- `description` : text  
+- `visibility` : enum(`public`,`private`)  
+- `createdAt`  
+**Files:** store actual binary in S3/minio; metadata in DB.  
+**Indexes:** `applicantId`
 
 ---
 
-## Search & Sharding Notes (SRS §4.3.1)
-
-- **Shard key**: `country` (Applicant) – used for routing profile reads/writes; Job search defaults to `VN`.
-- **FTS** (Job posts – external JM): ensure index on Title, Description, RequiredSkills; Applicant side passes case‑insensitive title and selected country to narrow to a single shard.
+### 1.7 Resume
+- `resumeId` : uuid  
+- `applicantId` : uuid (same shard)  
+- `headline` : string  
+- `objective` : text (FTS)  
+- `education` : array of educationId refs or embedded (choose one)  
+- `experience` : array of workExpId refs or embedded  
+- `skills` : array[string] — **denormalized** ONLY; canonical = ApplicantSkill  
+- `certifications` : array[string]  
+- `createdAt`, `updatedAt`  
+**FTS:** `objective`  
+**Notes:** Keep `skills` in sync via events: `ApplicantSkillsUpdated`.
 
 ---
 
-## Edge‑Case Examples (QA data pack)
+### 1.8 SearchProfile (saved search preferences)
+- `searchProfileId` : uuid  
+- `applicantId` : uuid (same shard)  
+- `profileName` : string  
+- `desiredCountry` : string (filter)  
+- `desiredMinSalary` : decimal(10,2)  
+- `desiredMaxSalary` : decimal(10,2)  
+- `jobTitles` : array[string]  
+- `technicalBackground` : array[skillId or skill name]  
+- `employmentStatus` : array[enum]  
+- `isActive` : boolean  
+- `createdAt`, `updatedAt`  
+**Indexes:** `applicantId`, `desiredCountry`
 
-- **Email**: `very.long+label-1234567890@sub.sub2.sub3.example-travel.agency` (length 80, valid), `a@b.co` (shortest practical).
-- **Password**: `A1!aaaaa` (min valid), `A....1!....` (unicode punctuation allowed).
-- **Phone**: `+49` + `123456789012` (12 local digits = max), reject `+490123` (leading 0 after dial code if business rule forbids).
-- **Address i18n**: `Đường Lê Lợi 12, Quận 1` (unicode, accents).
-- **Skills**: tags dedupe `react`, `React`, `REACT` → `React`.
-- **Media**: upload a 12MB image → FE blocks; BE re‑checks; rejection message localized.
-- **Shard migration**: change `VN` → `SG` performs atomic copy to `SG` shard, updates `shardKey`, publishes Kafka `profile.updated` (keys: applicantId, oldCountry, newCountry, changedFields).
-- **Token security**: try to use revoked JWE → Redis deny‑list hit; 401 returned.
+---
 
+# 2. Auth Service Entities (Global DB + Redis)
+Owned: AuthToken / AuthAccount
 
-## Responsibilities & Traceability
+### 2.1 AuthAccount
+- `authId` : uuid  
+- `applicantId` : uuid (reference to Profile service) — **no FK**  
+- `email` : string — required, unique (Auth service must coordinate uniqueness with Profile during signup)  
+- `passwordHash` : string — **internalOnly**  
+- `ssoProvider` : enum(`local`,`google`,`github`,...)  
+- `ssoId` : string (when SSO used)  
+- `isActivated` : boolean  
+- `createdAt`, `updatedAt`  
+**Security:** Use Argon2/Bcrypt hashed passwords; never store plaintext.  
+**Indexes:** `email` (unique)
 
-- **Frontend:** wire FE validators to each form field per tables; enforce dropdowns (Country), multiselect (Employment Status), lazy load lists; responsive SRS §4.2.5.
-- **Backend:** enforce constraints, indexes, uniqueness, Argon2id hashing, JWE issue/refresh/revoke, Redis revocation cache, brute‑force guard, shard routing & migration hooks; Kafka publish on skills/country changes (§3.3.1–§3.3.2).
-- **QA:** use edge‑case pack to assert FE/BE parity and error messaging clarity.
+---
+
+### 2.2 AuthToken (metadata)
+- `tokenId` : uuid  
+- `authId` : uuid (reference)  
+- `issuedAt` : timestamp  
+- `expiresAt` : timestamp  
+- `tokenType` : enum(`access`,`refresh`)  
+- `isRevoked` : boolean (soft)  
+- `failedAttempts` : integer (for lockout policy)  
+- `createdAt`, `updatedAt`  
+**Storage pattern:**  
+- Store `tokenId` + metadata in Auth DB (Postgres/Mongo) and store active/blocked token IDs in Redis (fast denylist).  
+- Access tokens should be short-lived JWE/JWT; use `tokenId` pattern for server revoke (JWT contains tokenId in payload).  
+**Revocation:** Use Redis set `revoked:tokenIds` or a bloom filter TTL-based approach for performance.
+
+---
+
+# 3. Application Service Entities (Global DB)
+Owned: Application, CV/CoverLetter metadata
+
+### 3.1 Application
+- `applicationId` : uuid  
+- `applicantId` : uuid (reference) — stored as string, no FK constraint  
+- `jobPostId` : string (external ID from Job Manager) — external reference only  
+- `companyId` : string (external)  
+- `status` : enum(`Pending`,`Viewed`,`Accepted`,`Rejected`)  
+- `submissionDate` : timestamp  
+- `updatedAt` : timestamp  
+- `feedback` : text (internal)  
+- `applicantCV` : CVFileReference id (optional)  
+- `coverLetter` : CoverLetterReference id (optional)  
+- `createdAt`, `isArchived` (soft-delete flag)  
+**Indexes:** `{jobPostId}`, `{applicantId}`, `{status}`  
+**Notes:** Do not cascade delete on applicant removal — Application service receives `ApplicantDeleted` event and will anonymize or keep audit per retention policy.
+
+---
+
+### 3.2 CVFileReference / CoverLetterReference
+- `fileId` : uuid  
+- `applicationId` : uuid  
+- `fileUrl` : string (S3)  
+- `fileType` : string (pdf/docx)  
+- `createdAt`  
+**PII:** ensure file access requires auth check.
+
+---
+
+# 4. Subscription & Payment Entities (Global DB)
+Owned: Subscription Service, Payment Service (may be separate microservices)
+
+### 4.1 Subscription
+- `subscriptionId` : uuid  
+- `applicantId` : uuid (reference)  
+- `planType` : enum(`Free`,`Premium`)  
+- `startDate` : timestamp  
+- `expiryDate` : timestamp  
+- `isActive` : boolean  
+- `createdAt`, `updatedAt`  
+**Indexes:** `applicantId`, `isActive`
+
+---
+
+### 4.2 PaymentTransaction
+- `transactionId` : uuid  
+- `applicantId` : uuid (reference)  
+- `email` : string (payer email)  
+- `amount` : decimal(10,2)  
+- `currency` : string (ISO)  
+- `gateway` : enum(`Stripe`,`PayPal`)  
+- `status` : enum(`Success`,`Failed`)  
+- `timestamp` : timestamp  
+**Security:** **Never store raw card numbers / CVV.** Store payment gateway reference tokens only.
+
+---
+
+# 5. Notification Service Entities (Global DB)
+Owned: Notification Service
+
+### 5.1 Notification
+- `notificationId` : uuid  
+- `recipientId` : uuid (applicantId or companyId)  
+- `type` : enum(`ApplicationUpdate`,`JobMatch`,`System`)  
+- `message` : text  
+- `isRead` : boolean  
+- `timestamp` : timestamp  
+**Retention:** keep history for X days — configurable.  
+**Indexes:** `recipientId`, `isRead`
+
+---
+
+# 6. Admin Service Entities (Global DB)
+### 6.1 SystemAdmin
+- `adminId` : uuid  
+- `fullName` : string  
+- `email` : string  
+- `passwordHash` : string — **internalOnly**  
+- `role` : enum(`Moderator`,`SystemAdmin`)  
+- `lastLogin` : timestamp
+
+---
+
+## Shard Migration Procedure (when applicant changes `country`)
+(Required by SRS Ultimo: user's country change triggers data migration) 
+
+**Goal:** Move the applicant record and collocated data (Resume, ApplicantSkill, MediaPortfolio, Education, WorkExperience, SearchProfile) atomically or in safe steps between shards.
+
+**Procedure (high-level):**
+1. **Lock write** for that applicant at Profile service (set `migrationInProgress` flag).  
+2. **Create a copy** of the applicant record and its dependent docs in the target shard (write-only state).  
+3. **Publish** Kafka event `ApplicantShardMoved` with payload `{ applicantId, fromShard, toShard, timestamp }`. (Consumers may update caches/routing.)  
+4. **Switch reads/writes** to the target shard for this applicant (update routing registry).  
+5. **Perform consistency checks** (count documents, checksums).  
+6. **Soft-delete or mark old docs as migrated** in source shard (do not hard delete immediately).  
+7. **Publish** `ApplicantShardMoveCompleted` event.  
+8. **Background cleanup** after TTL (archive old docs after 7 days or policy window).  
+**Notes:** Plan for partial failure: if copy fails, rollback target writes and release lock; use idempotent writes and correlation IDs for events.
+
+---
+
+## Event list (key domain events) — to include in relationships.md / Kafka topics
+**(Short list; expand in CT-04 as required)**
+
+- `ApplicantCreated` — Producer: Profile Service — Consumers: Auth (maybe), Notification — payload `{applicantId, email, country, createdAt}`.
+- `ProfileUpdated` — Producer: Profile Service — Consumers: Notification, Search Indexer, Job Manager (if subscribed) — payload `{applicantId, changedFields, timestamp}`.
+- `ApplicantDeleted` — Producer: Profile Service — Consumers: Application, Payment, Notification — payload `{applicantId, deletedAt}`.  
+- `ApplicantShardMoved` — Producer: Profile Service — Consumers: All services holding caches/routing — payload `{applicantId, fromShard, toShard, timestamp}`.  
+- `ApplicationSubmitted` — Producer: Application Service — Consumers: Notification Service, Job Manager (JM) — payload `{applicationId, applicantId, jobPostId, submissionDate}`.  
+- `PaymentSucceeded` / `PaymentFailed` — Producer: Payment Service — Consumers: Subscription Service, Notification — payload `{transactionId, subscriptionId, status}`.
+
+---
+
+## DTO visibility & mapping (internal vs external)
+Each entity lists `internalOnly` fields:
+- `AuthAccount.passwordHash` — `internalOnly`  
+- `AuthToken.*` (token raw) — `internalOnly`  
+- `PaymentTransaction` — do NOT include gateway tokens or sensitive fields in external DTOs  
+All other profile fields can be in external DTOs, but apply PII rules (GDPR): when `isArchived` or `deletedAt` present, external DTO should mask or remove PII.
+
+---
+
+## Indexing & Search recommendations
+- **Profile DB (shard):** compound index on `{country, applicantId}`, FTS index on `Resume.objective`, `WorkExperience.description`.  
+- **ApplicantSkill:** index on `skillId` for reverse lookups.  
+- **Application:** index on `{jobPostId, status}` for company-side queries.  
+- Use materialized read-models or search index (Elastic / Postgres FTS / Mongo Atlas Search) for global search across shards (route queries to relevant shards if `country` present, otherwise multi-shard queries).
+
+---
+
+## Example minimal JSON payloads (for reference)
+
+**ApplicantCreated event**
+```json
+{
+  "event": "ApplicantCreated",
+  "payload": {
+    "applicantId": "uuid-v4",
+    "email": "jane.doe@example.com",
+    "country": "VN",
+    "createdAt": "2025-11-10T10:00:00Z"
+  }
+}
+```
+
+**ApplicationSubmitted event**
+```json
+{
+  "event": "ApplicationSubmitted",
+  "payload": {
+    "applicationId": "uuid-v4",
+    "applicantId": "uuid-v4",
+    "jobPostId": "jm-1234",
+    "submissionDate": "2025-11-12T14:25:00Z"
+  }
+}
+```
+
+---
+
+## Security & privacy reminders (must be in report)
+- Passwords hashed (Argon2/Bcrypt).  
+- Payment card data handled only by payment provider (Stripe/PayPal). Store reference tokens only.
+- Token revocation: use Redis denylist for quick checks and store token metadata in Auth DB.  
+- For deletions: prefer soft-delete + anonymization; only hard-delete by policy or admin request with confirmation.

@@ -1,248 +1,196 @@
-# DEVision – Job Applicant Subsystem  
-## DM-03 — Model Relationships & Cardinalities
+# DM-03 — Relationships & Cardinalities (Microservices, Ultimo-Level)
 
-This document defines all entity-to-entity relationships for the Job Applicant subsystem, based on:
-
-- DM-01 (`entities-list.md`)
-- DM-02 (`entities-datatypes.md`)
-- Full Job Applicant Functional Requirements
-- Microservice + sharding requirements (Ultimo)
-
-It includes:
-
-- Relationship type (1:1, 1:N, N:M)  
-- Cardinality & optionality  
-- Cascade rules  
-- Join tables  
-- Sharding + microservice considerations  
-- Explicit distinction between relational vs. embedded structures  
+This document defines the conceptual entity relationships of the Job Applicant subsystem under an **Ultimo-level microservices + sharding + event-driven architecture**.  
+All relationships describe **business cardinality**, not database foreign keys (because each microservice owns its own database).
 
 ---
 
-# 1. Applicant-Centric Relationships
+# 1. Profile Service Relationships (Sharded by `country`)
 
-## 1.1 Applicant ↔ Resume  
-**Type:** 1 : 1  
-**Cardinality:**  
-- Applicant → exactly **1**  
-- Resume → **0 or 1**  
+### 1.1 Applicant → Education  
+- **Type:** 1-to-many  
+- **Cardinality:** One Applicant has 0..N Education records  
+- **Storage:** Same shard as Applicant  
+- **Cascade:** Delete Applicant → Delete all Education in same shard  
 
-**FK:** `Resume.applicantId`  
-**Cascade:** Delete Applicant → delete Resume  
-**Notes:** Resume is optional until the user creates profile text fields.  
-**SRS:** §3.1
+### 1.2 Applicant → WorkExperience  
+- **Type:** 1-to-many  
+- **Cardinality:** One Applicant has 0..N WorkExperience entries  
+- **Storage:** Same shard  
+- **Cascade:** Delete Applicant → Delete WorkExperience  
 
----
+### 1.3 Applicant → ApplicantSkill → SkillTag  
+- **Type:** Many-to-many  
+- **Cardinality:**  
+  - One Applicant has N skills  
+  - One SkillTag may be used by M Applicants  
+- **Storage:**  
+  - ApplicantSkill: same shard  
+  - SkillTag: global catalog  
+- **Cascade:**  
+  - Delete Applicant → Delete ApplicantSkill  
+  - Delete SkillTag → Invalidates related ApplicantSkill entries  
 
-## 1.2 Applicant ↔ ApplicantSkill (junction / true N:M)  
-**Type:** 1 : N (Applicant to ApplicantSkill)  
-Represents the normalized **N:M** relationship between Applicant and SkillTag.  
-**Cardinality:**  
-- Applicant → **0..n** ApplicantSkill rows  
-- SkillTag → **0..n** ApplicantSkill rows  
+### 1.4 Applicant → MediaPortfolio  
+- **Type:** 1-to-many  
+- **Cardinality:** One Applicant has 0..N media items  
+- **Storage:** Metadata in same shard; files in Object Storage  
+- **Cascade:** Delete Applicant → Delete metadata + delete files  
 
-**Cascade:**  
-- Delete Applicant → delete ApplicantSkill  
-- Delete SkillTag → delete ApplicantSkill (or soft-delete SkillTag)  
+### 1.5 Applicant → Resume  
+- **Type:** 1-to-1  
+- **Cardinality:** One Applicant has exactly one Resume  
+- **Storage:** Same shard  
+- **Cascade:** Delete Applicant → Delete Resume  
 
-**Notes:**  
-- This is the **only N:M table** in the subsystem.  
-- Resume.skills (JSONB array) does NOT replace ApplicantSkill.  
-
-**SRS:** §3.2.2
-
----
-
-## 1.3 Applicant ↔ MediaPortfolio  
-**Type:** 1 : N  
-**Cardinality:**  
-- Applicant → **0..n** media items 
-
-**Cascade:** Delete Applicant → delete MediaPortfolio  
-**Notes:** Stores only file URLs.  
-**SRS:** §3.2.3
-
----
-
-## 1.4 Applicant ↔ Application  
-**Type:** 1 : N  
-**Cardinality:**  
-- Applicant → **0..n** applications  
-
-**Cascade:** **Soft-delete Applicant**, DO NOT delete Applications  
-**Reason:** Job Manager must retain historical applications.  
-**Notes:** Application references JobPost + Company from external system.  
-**SRS:** §4.2.3
+### 1.6 Applicant → SearchProfile  
+- **Type:** 1-to-many  
+- **Cardinality:** One Applicant has 0..N SearchProfiles  
+- **Storage:** Same shard  
+- **Cascade:** Delete Applicant → Delete all SearchProfiles  
 
 ---
 
-## 1.5 Applicant ↔ SearchProfile  
-**Type:** 1 : N  
-**Cardinality:** Applicant → **0..n** saved search profiles  
-**Cascade:** Delete Applicant → delete SearchProfiles  
-**SRS:** §5.2.x
+# 2. Application Service Relationships (Global DB)
+
+### 2.1 Applicant → Application  
+- **Type:** 1-to-many  
+- **Cardinality:** One Applicant has 0..N Applications  
+- **Storage:** Application DB (different microservice)  
+- **Reference:** `applicantId` stored as string only (no FK)  
+- **Cascade:**  
+  - On Applicant deletion → Applications are **not deleted**  
+  - They are **anonymized** (PII removed, applicantId replaced with a placeholder)  
+
+### 2.2 Application → CVFileReference / CoverLetterReference  
+- **Type:** 1-to-1  
+- **Cardinality:**  
+  - One Application has 0..1 CV  
+  - One Application has 0..1 Cover Letter  
+- **Storage:** Application DB  
+- **Cascade:** Delete Application → Delete file metadata (Object Storage cleanup)  
+
+### 2.3 Application → JobPost (external)  
+- **Type:** many-to-one (conceptual)  
+- **Reference:** `jobPostId` stored as string (Job Manager owns JobPost)  
+- **Cascade:** If JM deletes JobPost → Application is marked archived  
 
 ---
 
-## 1.6 Applicant ↔ Subscription  
-**Type:** 1 : N  
-**Cardinality:**  
-- Applicant → **0..n** subscriptions (renewals/history)  
+# 3. Subscription & Payment Relationships (Global DB)
 
-**Cascade:** Delete Applicant → delete Subscription rows  
-**Notes:** There is only **1 active** subscription at a time.  
-**SRS:** §5.1
+### 3.1 Applicant → Subscription  
+- **Type:** 1-to-1 (current active subscription)  
+- **Storage:** Subscription DB  
+- **Reference:** `applicantId` stored as string  
+- **Cascade:** On Applicant deletion → SubscriptionService auto-cancels subscription  
 
----
-
-## 1.7 Applicant ↔ PaymentTransaction  
-**Type:** 1 : N  
-**Cardinality:**  
-- Applicant → **0..n** payment transactions  
-
-**Cascade:** Delete Applicant → delete PaymentTransactions  
-**Notes:**  
-- PaymentTransaction also links to Subscription (see Section 2.3).  
-- Contains billing email, gateway, amount, currency.  
-
-**SRS:** §5.1.2
+### 3.2 Applicant → PaymentTransaction  
+- **Type:** 1-to-many  
+- **Cardinality:** One Applicant may have many transactions  
+- **Cascade:** On Applicant deletion → Do **not** delete (audit). Mask PII.  
 
 ---
 
-## 1.8 Applicant ↔ Notification  
-**Type:** 1 : N  
-**Cardinality:**  
-- Applicant → **0..n** notifications  
+# 4. Notification Service Relationships
 
-**Cascade:** Delete Applicant → delete Notifications  
-**SRS:** §5.3
-
----
-
-## 1.9 Applicant ↔ AuthToken  
-**Type:** 1 : N  
-**Cardinality:**  
-- Applicant → **0..n** tokens  
-
-**Cascade:** Delete Applicant → delete AuthToken  
-**Notes:** Redis stores token revocation state.  
-**SRS:** §2.2–2.3
+### 4.1 Applicant → Notification  
+- **Type:** 1-to-many  
+- **Cardinality:** One Applicant has 0..N notifications  
+- **Cascade:** On Applicant deletion → Mark notifications archived  
 
 ---
 
-# 2. Resume-Embedded Structures (Non-Relationships)
+# 5. Sharding Relationships
 
-## 2.1 Resume → Education (JSONB array)  
-**Type:** Embedded list  
-**Notes:** Not a separate entity; stored within Resume.  
-**SRS:** §3.1.3
+### 5.1 Same-Shard Requirement  
+The following MUST exist in the same shard as the Applicant:
 
-## 2.2 Resume → WorkExperience (JSONB array)  
-**Type:** Embedded list  
-**Notes:** Not a separate entity.  
-**SRS:** §3.1.4
+- Education  
+- WorkExperience  
+- Resume  
+- ApplicantSkill  
+- MediaPortfolio  
+- SearchProfile  
 
-## 2.3 Resume → Skills (JSONB array of strings)  
-**Type:** Embedded tag list  
-**Notes:**  
-- Does NOT form relationships.  
-- ApplicantSkill is the official relational N:M link.
-
-## 2.4 Resume → Certifications (JSONB array of strings)  
-**Type:** Embedded list  
-**Notes:** No relationship.
+### 5.2 Shard Migration  
+When `country` changes:  
+- Applicant and all same-shard entities migrate together  
+- Application, Payment, Subscription remain in their own databases  
+- Migration emits:  
+  - `ApplicantShardMoved`  
+  - `ApplicantShardMoveCompleted`
 
 ---
 
-# 3. Skill Relationships
+# 6. Event Relationships (Kafka)
 
-## 3.1 SkillTag ↔ ApplicantSkill  
-**Type:** 1 : N  
-**Cardinality:**  
-- SkillTag → **0..n** ApplicantSkill rows  
+## 6.1 Applicant Events
+### ApplicantCreated  
+- Producer: Profile Service  
+- Consumers: Notification, (JM optional)
 
-**Cascade:** Recommended soft-delete SkillTag  
-**Notes:** Prevents broken applicant profiles.  
-**SRS:** §3.2.2, §5.2.2
+### ProfileUpdated  
+- Producer: Profile Service  
+- Consumers: Notification, Job Manager (for headhunt matching)
 
-## 3.2 Applicant ↔ SkillTag (N:M)  
-Implemented entirely via ApplicantSkill.
+### ApplicantDeleted  
+- Producer: Profile Service  
+- Consumers: Application, Payment, Subscription, Notification  
+- Effect: PII anonymization in external services
 
----
-
-# 4. Application External References (Cross-Subsystem)
-
-## 4.1 Application ↔ JobPost (Job Manager subsystem)  
-**Type:** N : 1  
-**Cardinality:**  
-- Application → must reference 1 JobPost  
-
-**Cascade:** None (external DB)  
-**Notes:** jobPostId stored as text/UUID but FK not enforced.  
-**SRS:** JM §4
-
-## 4.2 Application ↔ Company (Job Manager subsystem)  
-**Type:** N : 1  
-**Cardinality:**  
-- Application → must reference 1 Company  
-
-**Cascade:** None  
-**Notes:** companyId stored as external ID.  
-**SRS:** JM §1–4
+### ApplicantShardMoved  
+- Producer: Profile Service  
+- Consumers: Any service with routing/state caches  
 
 ---
 
-# 5. Subscription ↔ PaymentTransaction
-
-## 5.1 Subscription ↔ PaymentTransaction  
-**Type:** 1 : N  
-**Cardinality:**  
-- Subscription → **0..n** PaymentTransactions  
-- PaymentTransaction → exactly **1** Subscription  
-
-**FK:** `PaymentTransaction.subscriptionId`  
-**Cascade:** Delete Subscription → delete PaymentTransactions  
-**Notes:**  
-- PaymentTransaction also keeps `applicantId` redundantly for query convenience.  
-- Supports multi-month renewals and recurring billing.  
-
-**SRS:** §5.1–5.2
+## 6.2 Application Events
+### ApplicationSubmitted  
+- Producer: Application Service  
+- Consumers: Job Manager, Notification Service  
 
 ---
 
-# 6. SystemAdmin (Independent)
+## 6.3 Payment & Subscription Events
+### PaymentSucceeded  
+- Producer: Payment Service  
+- Consumers: Subscription, Notification  
 
-## 6.1 SystemAdmin  
-**Type:** Independent entity  
-**Relationships:** None  
-**Notes:** Admin actions do not use FK relationships.  
-**SRS:** §6
-
----
-
-# 7. Sharding & Microservice Considerations
-
-- **Shard Key:** `Applicant.country`  
-- All dependent entities (Resume, ApplicantSkill, Media, Application, Notification, SearchProfile, Subscription, PaymentTransaction, AuthToken) must live in the **same shard**.  
-- Cross-subsystem relations are **references only**, no physical FK (Application → JobPost, Company).  
-- Microservices own their entities; only Applicant-related data is sharded.
+### SubscriptionActivated  
+- Producer: Subscription Service  
+- Consumers: Notification  
 
 ---
 
-# 8. Relationship Summary Table
+# 7. Summary Table — Complete Relationship Matrix (Ultimo-Level)
 
-| Relationship | Type | Cardinality | Optionality | Cascade |
-|-------------|------|-------------|-------------|---------|
-| Applicant — Resume | 1 : 1 | 1 ↔ 0/1 | Resume optional | Cascade |
-| Applicant — ApplicantSkill | 1 : N | 1 ↔ 0..n | Optional | Cascade |
-| SkillTag — ApplicantSkill | 1 : N | 1 ↔ 0..n | Optional | Soft-delete SkillTag |
-| Applicant — MediaPortfolio | 1 : N | 1 ↔ 0..n | Optional | Cascade |
-| Applicant — Application | 1 : N | 1 ↔ 0..n | Optional | Soft-delete Applicant |
-| Applicant — SearchProfile | 1 : N | 1 ↔ 0..n | Optional | Cascade |
-| Applicant — Subscription | 1 : N | 1 ↔ 0..n | Optional | Cascade |
-| Applicant — PaymentTransaction | 1 : N | 1 ↔ 0..n | Optional | Cascade |
-| Subscription — PaymentTransaction | 1 : N | 1 ↔ 0..n | Optional | Cascade |
-| Applicant — Notification | 1 : N | 1 ↔ 0..n | Optional | Cascade |
-| Applicant — AuthToken | 1 : N | 1 ↔ 0..n | Optional | Cascade |
-| Application — JobPost | N : 1 | n ↔ 1 | Mandatory | No cascade |
-| Application — Company | N : 1 | n ↔ 1 | Mandatory | No cascade |
+| Relationship | Cardinality | Storage Location | Enforcement Mode | Cascade / Event Behavior |
+|-------------|-------------|------------------|------------------|---------------------------|
+| Applicant → Education | 1:N | Profile shard | Strong (same DB) | Delete Education on Applicant delete |
+| Applicant → WorkExperience | 1:N | Profile shard | Strong | Delete WorkExperience |
+| Applicant → Resume | 1:1 | Profile shard | Strong | Delete Resume |
+| Applicant → MediaPortfolio | 1:N | Profile shard + S3 | Strong | Delete metadata + object files |
+| Applicant → ApplicantSkill | 1:N | Profile shard | Strong | Delete ApplicantSkill |
+| ApplicantSkill → SkillTag | N:1 | Profile global catalog | Loose (ID reference) | If SkillTag deleted → cleanup ApplicantSkill |
+| Applicant → SkillTag (via ApplicantSkill) | M:N | Profile shard + catalog | Strong (join table) | As above |
+| Resume → Education/WorkExperience | 1:N (embedded/refs) | Profile shard | Strong | Auto-clean via Applicant cascades |
+| Applicant → SearchProfile | 1:N | Profile shard | Strong | Delete SearchProfiles |
+| Applicant → Application | 1:N | Application DB | Loose (ID reference) | **Anonymize**, not delete |
+| Application → CVFileReference | 1:1 | Application DB | Strong | Delete metadata + file |
+| Application → CoverLetterReference | 1:1 | Application DB | Strong | Delete metadata + file |
+| Application → JobPost (JM) | N:1 | JM DB | External reference | JM delete → Application archived |
+| Application → Company (JM) | N:1 | JM DB | External reference | No cascade |
+| Applicant → Subscription | 1:1 (active) | Subscription DB | Loose | Cancel subscription |
+| Applicant → PaymentTransaction | 1:N | Payment DB | Loose | Retain for audit, mask PII |
+| Subscription → PaymentTransaction | M:N (conceptual) | Payment DB | Loose | No cascade |
+| Applicant → Notification | 1:N | Notification DB | Loose | Archive on delete |
+| Notification → Application (contextual) | Optional | Notification DB | Loose | No cascade |
+| Admin → Applicant | 1:N | Admin DB | Command relationship | Admin may deactivate |
+| Admin → Company | 1:N | Admin DB | Command relationship | Admin may deactivate |
+| Admin → JobPost | 1:N | Admin DB | Command relationship | Admin may delete JobPost |
+| Applicant (country) → Shard | 1:1 | Profile DB | Routing rule | Shard migration on country change |
+| Profile Service → JM (ProfileUpdated event) | Event-based | Kafka | Loose | Trigger headhunt matching |
+| Application Service → JM (ApplicationSubmitted) | Event-based | Kafka | Loose | Update company dashboards |
+| Payment Service → Subscription (PaymentSucceeded) | Event-based | Kafka | Loose | Activate subscription |
+| Profile → All Services (ApplicantShardMoved) | Event-based | Kafka | Loose | Update routing caches |
