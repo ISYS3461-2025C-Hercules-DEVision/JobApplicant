@@ -189,6 +189,7 @@ ssoId         : String | null
 isActivated   : Boolean
 createdAt     : Date
 updatedAt     : Date
+failedAttempts: Number
 ```
 
 **Indexes:** `{ email: 1 } (unique)`
@@ -203,7 +204,6 @@ issuedAt      : Date
 expiresAt     : Date
 tokenType     : String (access | refresh)
 isRevoked     : Boolean
-failedAttempts: Number
 createdAt     : Date
 updatedAt     : Date
 ```
@@ -230,6 +230,7 @@ feedback      : String
 applicantCV   : String | null   // CVFileReference.fileId
 coverLetter   : String | null   // CoverLetter.fileId
 createdAt     : Date
+deletedAt     : Date | null
 isArchived    : Boolean
 ```
 
