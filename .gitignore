@@ -80,7 +80,6 @@ docker-compose.override.yml
 ###########################
 *.pdf
 *.svg
-*.png
 *.jpeg
 *.jpg
 *.gif
