@@ -124,7 +124,72 @@ This diagram ensures:
 It is essential for financial compliance and secure operation.
 
 ---
+# 6. **Login front-end  Component Diagram**
+# Login Module – Component Justification
 
+This section explains the purpose and rationale behind each component within the Login module.
+
+## 1. Login Form
+The **Login Form** component is responsible for rendering the user interface for traditional credential-based authentication (email and password).  
+It is separated from the business logic to ensure a clean separation of concerns, making the UI easy to update or reuse without modifying the underlying login logic.
+
+## 2. Social Login
+The **Social Login** component manages authentication through external identity providers such as Google OAuth.  
+Since OAuth flows differ significantly from standard username/password login, this component is isolated to allow independent development and future expansion to additional providers.
+
+## 3. Login Hook
+The **Login Hook** encapsulates all stateful login logic, including loading states, error handling, API communication, and updating the global authentication state.  
+By moving logic into a hook, the UI components remain simple and stateless, and the hook becomes reusable across different pages or containers.
+
+## 4. Login Service
+The **Login Service** acts as the communication layer between the frontend and the backend authentication API.  
+It centralizes all login-related API operations, ensuring that any updates to endpoints, payload structures, or authentication logic can be applied in one place without affecting UI components.
+
+# 7. **Registration front-end  Component Diagram**
+# Registration Module  – Component Justification
+
+This section explains the purpose and rationale behind each component within the Registration module.  
+Only registration-specific components are described here.
+
+## 1. Social Register
+The **Social Register** component manages user registration through external identity providers such as Google OAuth.  
+Since the OAuth onboarding flow (token exchange, redirect handling, user profile retrieval) is fundamentally different from manual account creation, this component is isolated to allow independent development and future extension to additional providers.
+
+## 2. Register Hook
+The **Register Hook** (shared with the login module) encapsulates the core authentication logic such as API communication, loading states, error handling, and state updates.  
+Reusing it in the Registration module avoids duplicated logic and ensures that authentication behaviour remains consistent between Login and Registration features.
+
+## 3. Register Service
+The **Register Service** acts as the communication layer between the frontend and the backend authentication/registration APIs.  
+This includes sending registration data, handling OAuth callbacks, and processing backend responses.  
+Centralizing these interactions ensures that changes to API endpoints, validation rules, or onboarding workflows can be applied in one place without modifying UI components.
+7. **Notification front-end  Component Diagram**
+# Notification Module – Component Justification
+
+This section explains the purpose and rationale behind each component within the Notification module.  
+Only notification-specific components are described here.
+
+## 1. Notification UI
+The **Notification UI** component is responsible for displaying notifications to users, such as unread messages, maintenance updates, or payment alerts.  
+Separating the UI from the logic ensures that design changes, layout updates, or new display styles can be applied without affecting the underlying notification retrieval or processing logic.
+
+## 2. Notification Hook
+The **Notification Hook** encapsulates all logic needed to manage notifications, including:
+- Fetching notifications from the backend  
+- Tracking read/unread status  
+- Handling real-time updates or polling  
+- Managing loading or error states  
+
+By keeping this logic in a hook, the Notification UI remains clean, while the hook can be reused across different screens that need notification data.
+
+## 3. Notification Service
+The **Notification Service** handles communication with the backend notification API.  
+It centralizes all HTTP calls related to:
+- Retrieving notifications  
+- Marking notifications as read  
+- Updating user notification status  
+
+Centralizing API interactions in one service makes it easier to update endpoints, change notification formats, or integrate WebSocket/Kafka-based updates in the future without modifying UI or hook components.
 # 📌 Summary Table
 
 | Diagram | Description | Why It’s Important |
