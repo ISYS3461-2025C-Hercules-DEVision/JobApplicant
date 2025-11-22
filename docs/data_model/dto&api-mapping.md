@@ -1,6 +1,6 @@
-# DM-07 – DTO & API Data Contract Mapping (Internal vs External DTOs)
+### **DM-07 – DTO & API Data Contract Mapping (Internal vs External DTOs)**
 
-**Scope:** Job Applicant subsystem – all microservices shown in ERD v2 (Profile, Auth, Application, Subscription, Payment, Notification, Admin).
+**Scope:** Job Applicant subsystem – all microservices shown in ERD v2 (Profile, Auth, Application, Subscription, Payment, Notification, Admin, Authorization).
 
 **Goal:** Define DTOs for:
 
@@ -12,7 +12,7 @@ This is a *logical* mapping document; concrete OpenAPI/Proto files will be creat
 
 ---
 
-## 0. Conventions
+### **0. Conventions**
 
 - **Naming**
     - External DTOs (public APIs): `XxxPublicDTO`, `XxxRequestDTO`, `XxxResponseDTO`.
@@ -31,11 +31,11 @@ This is a *logical* mapping document; concrete OpenAPI/Proto files will be creat
 
 ---
 
-## 1. Profile Service DTOs
+### **1. Profile Service DTOs**
 
-### 1.1 Applicant
+### **1.1 Applicant**
 
-### 1.1.1 External – ApplicantPublicDTO
+### **1.1.1 External – ApplicantPublicDTO**
 
 Used by FE to display/edit profile.
 
@@ -59,7 +59,7 @@ Used by FE to display/edit profile.
 - **Source entity:** `Applicant` (DM‑02).
 - **Hidden fields:** `passwordHash`, `ssoProvider`, `ssoId`, `shardKey`, `isArchived`, internal audit fields.
 
-### Requests
+### **Requests**
 
 - **CreateApplicantRequestDTO** (Registration – local account)
 
@@ -92,7 +92,7 @@ Used by FE to display/edit profile.
 > Note: When country changes, backend triggers shard migration as per DM‑06; FE just sends new value.
 > 
 
-### 1.1.2 Internal – ApplicantInternalDTO
+### **1.1.2 Internal – ApplicantInternalDTO**
 
 Used inside Profile Service and for events to Job Manager / Notification.
 
@@ -123,7 +123,7 @@ Used inside Profile Service and for events to Job Manager / Notification.
 
 ---
 
-### 1.2 EducationDTO & WorkExperienceDTO (External)
+### **1.2 EducationDTO & WorkExperienceDTO (External)**
 
 ```json
 {
@@ -153,9 +153,9 @@ Both internal and external shapes are identical; no sensitive fields.
 
 ---
 
-### 1.3 Resume
+### **1.3 Resume**
 
-### ResumePublicDTO (External)
+### **ResumePublicDTO (External)**
 
 ```json
 {
@@ -175,7 +175,7 @@ Internal DTO is the same plus optional internal scoring fields (e.g., `matchScor
 
 ---
 
-### 1.4 MediaPortfolioDTO (External)
+### **1.4 MediaPortfolioDTO (External)**
 
 ```json
 {
@@ -194,9 +194,9 @@ Internal variant may include storage provider info and internal flags (e.g., `st
 
 ---
 
-### 1.5 SearchProfile (Premium)
+### **1.5 SearchProfile (Premium)**
 
-### SearchProfilePublicDTO
+### **SearchProfilePublicDTO**
 
 ```json
 {
@@ -228,11 +228,11 @@ These are not exposed to FE.
 
 ---
 
-## 2. Auth Service DTOs
+### **2. Authentication Service DTOs**
 
-### 2.1 Login & Registration
+### **2.1 Login & Registration**
 
-### LoginRequestDTO (External)
+### **LoginRequestDTO (External)**
 
 ```json
 {
@@ -242,7 +242,7 @@ These are not exposed to FE.
 
 ```
 
-### LoginResponseDTO (External)
+### **LoginResponseDTO (External)**
 
 ```json
 {
@@ -255,7 +255,7 @@ These are not exposed to FE.
 
 ```
 
-### SSOLoginRequestDTO
+### **SSOLoginRequestDTO**
 
 ```json
 {
@@ -265,7 +265,7 @@ These are not exposed to FE.
 
 ```
 
-### Internal – AuthAccountInternalDTO
+### **Internal – AuthAccountInternalDTO**
 
 ```json
 {
@@ -284,7 +284,7 @@ These are not exposed to FE.
 
 - **Never** leave Auth service boundary; no external exposure.
 
-### 2.2 Token Introspection & Events
+### **2.2 Token Introspection & Events**
 
 - **TokenIntrospectionInternalDTO**
     - Fields: `tokenId`, `authId`, `applicantId`, `isRevoked`, `expiresAt`, `scopes` (optional).
@@ -292,11 +292,89 @@ These are not exposed to FE.
 
 ---
 
-## 3. Application Service DTOs
+### **3. Authorization Service DTOs**
 
-### 3.1 Application Submission (External)
+### **3.1 Authorization Service Overview**
 
-### ApplicationCreateRequestDTO
+- **Role of Authorization Service**:
+    - The **Authorization Service** is responsible for **managing user roles** and **permissions** across the entire system.
+    - It ensures that users can only access the resources or perform actions for which they are authorized.
+    - **Authorization** is separate from **Authentication**: while Authentication handles verifying user credentials, Authorization controls access to resources based on the user’s roles and permissions.
+
+### **3.2 Internal DTOs (Authorization Service)**
+
+### **AuthAccountInternalDTO**
+
+Used to store user **roles**, **permissions**, and other metadata related to user access control.
+
+```json
+{
+  "authId": "uuid",
+  "applicantId": "uuid",
+  "email": "string",
+  "passwordHash": "string",
+  "role": "SystemAdmin",
+  "permissions": ["view_jobs", "edit_profile"],
+  "failedAttempts": 0,
+  "isActivated": true,
+  "createdAt": "2025-11-20T12:00:00Z"
+}
+
+```
+
+- **Fields**:
+    - `authId`: Unique identifier for the authentication account (UUID).
+    - `applicantId`: Foreign key linking to the applicant entity (UUID).
+    - `role`: The role assigned to the user (e.g., `SystemAdmin`, `User`, `HiringManager`).
+    - `permissions`: A list of permissions granted to the user for access control (e.g., `view_jobs`, `edit_profile`).
+    - `failedAttempts`: Number of failed login attempts (used for rate-limiting and security).
+    - `isActivated`: Boolean indicating if the user account is active.
+    - `createdAt`: Timestamp of account creation.
+- **Exposed only internally**: This DTO is used to manage user roles and permissions within the **Authorization Service** and is **never exposed externally**.
+
+### **RoleDTO (Internal)**
+
+This DTO defines the available **roles** and the permissions associated with them.
+
+```json
+{
+  "roleId": "uuid",
+  "roleName": "SystemAdmin",
+  "permissions": ["view_jobs", "edit_profile", "manage_users"]
+}
+
+```
+
+- **Fields**:
+    - `roleId`: Unique identifier for the role (UUID).
+    - `roleName`: The name of the role (e.g., `SystemAdmin`, `User`).
+    - `permissions`: List of permissions associated with the role (e.g., `view_jobs`, `edit_profile`).
+- **Exposed internally**: This DTO is used within the **Authorization Service** to assign permissions to users based on their roles.
+
+### **AuthorizationEventPayload (Internal)**
+
+Used to pass **role-based access control events** between services (e.g., when a user’s role is updated).
+
+```json
+{
+  "authId": "uuid",
+  "role": "SystemAdmin",
+  "permissions": ["view_jobs", "edit_profile"]
+}
+
+```
+
+- **Fields**:
+    - `authId`: The authentication account ID (UUID) for the user whose role or permissions are being updated.
+    - `role`: The new role assigned to the user.
+    - `permissions`: The list of permissions assigned to the role.
+- **Used in event-driven communication**: This DTO is used to notify other services when a user’s role or permissions are updated (e.g., via Kafka events).
+
+### **4. Application Service DTOs**
+
+### **4.1 Application Submission (External)**
+
+### **ApplicationCreateRequestDTO**
 
 ```json
 {
@@ -312,7 +390,7 @@ These are not exposed to FE.
 > FE may first call File Upload endpoint to obtain cvFileId and coverLetterFileId.
 > 
 
-### ApplicationPublicDTO (External)
+### **ApplicationPublicDTO (External)**
 
 ```json
 {
@@ -325,14 +403,13 @@ These are not exposed to FE.
   "feedback": "string|null",
   "applicantCVUrl": "https://cdn/.../cv.pdf",
   "coverLetterUrl": "https://cdn/.../cover-letter.pdf",
-  "fresherFlag": false
-}
+  "fresherFlag": false}
 
 ```
 
 - External DTO returns signed, temporary URLs rather than raw storage keys.
 
-### 3.2 Internal – ApplicationInternalDTO
+### **4.2 Internal – ApplicationInternalDTO**
 
 ```json
 {
@@ -352,9 +429,9 @@ Used in Kafka events (`ApplicationSubmittedEvent`) to Job Manager and Notificati
 
 ---
 
-## 4. Subscription Service DTOs
+### **5. Subscription Service DTOs**
 
-### 4.1 SubscriptionStatusDTO (External)
+### **5.1 SubscriptionStatusDTO (External)**
 
 ```json
 {
@@ -368,7 +445,7 @@ Used in Kafka events (`ApplicationSubmittedEvent`) to Job Manager and Notificati
 
 - Shown on applicant profile page and subscription management UI.
 
-### 4.2 SubscriptionInternalDTO
+### **5.2 SubscriptionInternalDTO**
 
 ```json
 {
@@ -387,9 +464,9 @@ Used between Subscription and Payment/Notification services.
 
 ---
 
-## 5. Payment Service DTOs
+### **6. Payment Service DTOs**
 
-### 5.1 PaymentRequestDTO (External)
+### **6.1 PaymentRequestDTO (External)**
 
 ```json
 {
@@ -403,7 +480,7 @@ Used between Subscription and Payment/Notification services.
 
 - Card details handled client → gateway (Stripe/PayPal) directly; backend receives only tokenized `paymentMethodId`.
 
-### 5.2 PaymentReceiptDTO (External)
+### **6.2 PaymentReceiptDTO (External)**
 
 ```json
 {
@@ -417,15 +494,15 @@ Used between Subscription and Payment/Notification services.
 
 ```
 
-### 5.3 PaymentTransactionInternalDTO
+### **6.3 PaymentTransactionInternalDTO**
 
 Same as entity; includes `applicantId` and `email` for reconciliation & audit. Not all fields exposed externally.
 
 ---
 
-## 6. Notification Service DTOs
+### **7. Notification Service DTOs**
 
-### 6.1 NotificationPublicDTO
+### **7.1 NotificationPublicDTO**
 
 ```json
 {
@@ -438,7 +515,7 @@ Same as entity; includes `applicantId` and `email` for reconciliation & audit. N
 
 ```
 
-### 6.2 NotificationInternalEventDTO
+### **7.2 NotificationInternalEventDTO**
 
 ```json
 {
@@ -460,9 +537,9 @@ Internal DTO has explicit `recipientId` and template info; FE never sees these f
 
 ---
 
-## 7. Admin Service DTOs
+### **8. Admin Service DTOs**
 
-### 7.1 AdminLoginRequest/Response
+### **8.1 AdminLoginRequest/Response**
 
 ```json
 {
@@ -480,7 +557,7 @@ Internal DTO has explicit `recipientId` and template info; FE never sees these f
 
 ```
 
-### 7.2 AdminApplicantSummaryDTO (External – Admin UI only)
+### **8.2 AdminApplicantSummaryDTO (External – Admin UI only)**
 
 ```json
 {
@@ -499,7 +576,7 @@ Admin UI may see more than normal applicant UI (e.g., `isArchived`), but never `
 
 ---
 
-## 8. Sensitive Field Matrix
+### **9. Sensitive Field Matrix**
 
 | Service | Entity | Field | Rule for External DTOs |
 | --- | --- | --- | --- |
@@ -507,18 +584,20 @@ Admin UI may see more than normal applicant UI (e.g., `isArchived`), but never `
 | Auth | AuthAccount | ssoId | Never exposed |
 | Auth | AuthToken | isRevoked, tokenId | Internal only; gateway + Auth |
 | Profile | Applicant | shardKey, isArchived | Internal only |
-| Profile | ApplicantSkill | endorsedBy | Internal only (future social feature) |
+| Profile | ApplicantSkill | endorsedBy | Internal only |
 | Profile | Resume | internal scoring fields | Internal only |
 | Payment | PaymentTransaction | applicantId, email | Not in public receipt; only amount, currency, status, timestamp |
 | Admin | SystemAdmin | passwordHash | Internal only |
+| Authorization | AuthAccount | role, permissions, failedAttempts | Internal only; never exposed externally |
+| Authorization | Role | roleId, permissions | Internal only; never exposed externally |
 
 Error DTOs must also avoid leaking sensitive data (e.g., invalid email vs. "user not found").
 
 ---
 
-## 9. Example End-to-End Payloads
+### **10. Example End-to-End Payloads**
 
-### 9.1 Applicant Profile (GET /api/me)
+### **10.1 Applicant Profile (GET /api/me)**
 
 - **Response:** `ApplicantPublicDTO` + `ResumePublicDTO` + `SearchProfilePublicDTO[]` bundled.
 
@@ -531,18 +610,18 @@ Error DTOs must also avoid leaking sensitive data (e.g., invalid email vs. "user
 
 ```
 
-### 9.2 Application Submission (POST /api/applications)
+### **10.2 Application Submission (POST /api/applications)**
 
 - **Request:** `ApplicationCreateRequestDTO`
 - **Response:** `ApplicationPublicDTO`
 
-### 9.3 Subscription Status (GET /api/subscription)
+### **10.3 Subscription Status (GET /api/subscription)**
 
 - **Response:** `SubscriptionStatusDTO`
 
 ---
 
-## 10. Definition of Done
+### **11. Definition of Done**
 
 - `dto-mapping.md` committed under `/docs/data-model/` with service‑by‑service sections.
 - For each entity in DM‑01, at least one **external** and (where needed) **internal** DTO is defined.
