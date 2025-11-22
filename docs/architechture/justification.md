@@ -239,29 +239,31 @@ This diagram ensures:
 
 ---
 
-# 10. **Job Microservice Component Diagram**
+# 10. **Admin Microservice Component Diagram**
 
-This diagram illustrates the internal structure of Job Service, including job creation logic, event streaming and inter-service communication.
+This diagram illustrates the internal structure of Admin Service, including inquiry handling logic and inter-service communication
 
 ### **Purpose**
-- Break down the job workflow and its subcomponents
-- Show how job events are handled, routed and stored
-- Demonstrate communication with Application, Applicant, Premium Application and Notification microservices.
+- Break down the admin workflow and its subcomponents
+- Show how dmin events are handled, routed and stored
+- Demonstrate communication with Application and Notification microservices.
 
 ### **Why It Matters**
-Job Microservice requires: 
-- Scalability
+Admin Microservice requires:
+- Security and Manipulation
+- Responsiveness
 - Modularity
-- Maintainability
+- Auditability  
 
 This diagram ensures: 
-- Clear visibility into job operations
-- Proper handling of job-related events
-- Safe, consistent job data management
+- Clear visibility into admin operations
+- Logical seperation of interface, service logic and configuration layers
+- Safe, consistent inquiry management
 
 ---
 
-
+# 11. **Profile front-end Component Diagram**
+# Profile Module - Component Justification
 
 
 # 📌 Summary Table
