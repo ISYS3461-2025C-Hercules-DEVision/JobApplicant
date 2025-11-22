@@ -201,3 +201,26 @@ Centralizing API interactions in one service makes it easier to update endpoints
 | **Payment Component Diagram** | Detailed structure of payment workflow and gateway integration. | Ensures correctness and reliability of financial transactions. |
 
 ---
+# 8. **Authorization Microservice Component Diagram**
+
+This diagram show the structural and functional composition of the Authorization Microservice, performing how the authorization decisions are processed, validated and integrated with a microservice system.
+
+### **Purpose**
+- Describe the authorization workflow and its internal layers
+- Illustrate integrations with relevant microservices and platform components
+- Detail how authorization requests are performed
+- Highlight how the service interfaces with external systems
+
+### **Why It Matters**
+Authorization microservice must satisfy secure, consistent and scalable access control. This requires:
+- Confidentiality and Integrity
+- Consistency
+- Scalability and Extensibility
+  
+This diagram ensures:
+- Clear visibility into authorization operations
+- Safe and efficient communication with other microservices
+- Logcical layering of authorization concerns 
+
+---
+# 9. **Notification Microservice Component Diagram**
