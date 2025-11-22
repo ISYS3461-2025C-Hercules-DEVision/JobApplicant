@@ -216,6 +216,53 @@ This diagram ensures:
 ---
 # 9. **Notification Microservice Component Diagram**
 
+This diagram indicates the internal structure of Notification Service, including meesage routing logic, media configuration and external microservice interactions. 
+
+### **Purpose**
+- Break down the notification workflow
+- Explain integrations with Kafka, Redis and internal microservices
+- Show how notification events are processed and stored
+- Demonstrate communication with Applicant, Authentication and Payment and others microservices
+
+### **Why It Matters**
+This notification microservice requires: 
+- Scalability
+- Responsiveness
+- Decoupling
+- Reliability
+
+This diagram ensures: 
+- Clear visibility of how notifications are operated
+- Proper handling of asynchronous events
+- Safe, consistent message delivery
+- Logical seperation of interface, service logic, and media configuration
+
+---
+
+# 10. **Job Microservice Component Diagram**
+
+This diagram illustrates the internal structure of Job Service, including job creation logic, event streaming and inter-service communication.
+
+### **Purpose**
+- Break down the job workflow and its subcomponents
+- Show how job events are handled, routed and stored
+- Demonstrate communication with Application, Applicant, Premium Application and Notification microservices.
+
+### **Why It Matters**
+Job Microservice requires: 
+- Scalability
+- Modularity
+- Maintainability
+
+This diagram ensures: 
+- Clear visibility into job operations
+- Proper handling of job-related events
+- Safe, consistent job data management
+
+---
+
+
+
 
 # 📌 Summary Table
 
