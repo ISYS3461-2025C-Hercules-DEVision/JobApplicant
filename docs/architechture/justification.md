@@ -190,15 +190,6 @@ It centralizes all HTTP calls related to:
 - Updating user notification status  
 
 Centralizing API interactions in one service makes it easier to update endpoints, change notification formats, or integrate WebSocket/Kafka-based updates in the future without modifying UI or hook components.
-# 📌 Summary Table
-
-| Diagram | Description | Why It’s Important |
-|--------|-------------|---------------------|
-| **System Context Diagram** | Shows entire system boundary and external actors. | Establishes high-level understanding for all stakeholders. |
-| **Front-End Modularized Container Diagram** | Breakdown of UI modules and front-end boundaries. | Ensures scalable, maintainable front-end architecture. |
-| **Microservices Container Diagram** | Maps all microservices, databases, and external systems. | Clarifies responsibilities and integration patterns. |
-| **Authentication Component Diagram** | Detailed breakdown of authentication logic and Google SSO flow. | Critical for securing user identity and access. |
-| **Payment Component Diagram** | Detailed structure of payment workflow and gateway integration. | Ensures correctness and reliability of financial transactions. |
 
 ---
 # 8. **Authorization Microservice Component Diagram**
@@ -224,3 +215,17 @@ This diagram ensures:
 
 ---
 # 9. **Notification Microservice Component Diagram**
+
+
+# 📌 Summary Table
+
+| Diagram | Description | Why It’s Important |
+|--------|-------------|---------------------|
+| **System Context Diagram** | Shows entire system boundary and external actors. | Establishes high-level understanding for all stakeholders. |
+| **Front-End Modularized Container Diagram** | Breakdown of UI modules and front-end boundaries. | Ensures scalable, maintainable front-end architecture. |
+| **Microservices Container Diagram** | Maps all microservices, databases, and external systems. | Clarifies responsibilities and integration patterns. |
+| **Authentication Component Diagram** | Detailed breakdown of authentication logic and Google SSO flow. | Critical for securing user identity and access. |
+| **Payment Component Diagram** | Detailed structure of payment workflow and gateway integration. | Ensures correctness and reliability of financial transactions. |
+
+---
+
