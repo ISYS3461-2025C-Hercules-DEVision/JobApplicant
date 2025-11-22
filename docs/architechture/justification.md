@@ -275,6 +275,9 @@ This diagram ensures:
 | **Microservices Container Diagram** | Maps all microservices, databases, and external systems. | Clarifies responsibilities and integration patterns. |
 | **Authentication Component Diagram** | Detailed breakdown of authentication logic and Google SSO flow. | Critical for securing user identity and access. |
 | **Payment Component Diagram** | Detailed structure of payment workflow and gateway integration. | Ensures correctness and reliability of financial transactions. |
+| **Authorization Component Diagram** | Logic for permission control, access based on normal or premium account, policy enforcement. | Essential for enforcing secure access boundaries and protecting sensitive actions. |
+| **Notification Component Diagram** | Architecture of notification delivery, media config and event streaming. | Ensures reliable, scalable and decoupled communication across services. |
+| **Admin Component Diagram** | Internal structure of admin logic, inquiry handling and service orchestration. | Enables secure, modular and auditable administrative operations. |
 
 ---
 
