@@ -262,8 +262,51 @@ This diagram ensures:
 
 ---
 
-# 11. **Profile front-end Component Diagram**
+# 11. **Profile Front-end Component Diagram**
 # Profile Module - Component Justification
+
+This section explains the purpose and rationale behind each component within the Profile module.
+
+## 1. Profile Detail
+This component is responsible for rendering user's profile information, such as name, email and other personal data. 
+It is designed as a presentation component, which seperated from data-fetching logic, to ensure a clean seperation of concerns. It would make the code easy to style, reuse in other containers without affecting the logic.
+
+## 2. Profile Detail Hook
+The Profile Detail Hook encapsulates all stateful logic related to loading user profile data.
+It manages asynschronous API calls, loading states, and error handling. By splitting this logic in a hook, the Profile Detail components remains stateless and focused mainly on UI rendering.
+
+## 3. Profile Detail Service
+This component acts as the communication layer between the front-end and back-end profile API.
+It centralizes all operations for fetching user profile data, ensuring that any changes to endpoints or payload formats are confined in one place.
+
+## 4. Profile Update
+It provides the interface for editting or deleting user profile information.
+It is kept isolately from update profile logic to allow flexible UI changes without affecting the logic of back-end operation.
+
+## 5. Profile Update Hook
+The Profile Update Hook manages state transitions, form validation, and submission logic for profile update.
+It handles API communication, loading indicators and error feedback.
+
+## 6. Profile Update Service
+This is responsible for sending update or delete requests to back-end profile API.
+It encapsulates all unusual logic, make it easy to modify request formats or endpoints withoutt touching UI components.
+
+## 7. Profile Avatar
+Display the user's avatar.
+It is designed as a visual component, allowing flexible styling and placement across the application.
+
+## 8. Profile Avatar Hook
+The Hook handles the logic for loading data and managing upload states.
+It abstracts asynchronous operations and error handling, keeping the avatar component stateless and focused on rendering.
+
+## 9. Profile Avatar Service
+The Profile Avatar Service communicates with back-end logic to fetch or update avatar.
+It centralizes all avatar-related API interactions, ensuring consistent behavior and simplifying future enhancements.
+
+---
+
+# 12.  **Applicant Dashboard Front-end Component Diagram**
+# Applicant Dashboard Module - Component Justification
 
 
 # 📌 Summary Table
