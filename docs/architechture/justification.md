@@ -280,11 +280,73 @@ It centralizes all avatar-related API interactions, ensuring consistent behavior
 
 # 9.  **Application Dashboard Front-end Component Diagram**
 # Application Dashboard Module - Component Justification
+This component handle the role of displaying dashboard for the applicant, handling fetching-data and logic of operation and connect to backend and other external components via HTTP Utils and URL Config
+
+## 1. Applied Jobs
+This component displays the list of jobs that applicant has already applied
+It is developed as UI component, seperated from data-fetching logic, to ensure the clear structure.
+
+## 2. Applied Jobs Hook
+This component encapsulates all stateful logic related to fetching applied job data
+It handles asynchronous API calls, loading states, error handling. By isolating it in hook, the Applied Job Hook remains stateless and focuses on rendering UI
+
+## 3. Saved Jobs
+This component renders the list of wished jobs that applicants have saved.
+It is built as visual component, mainly display as presentation
+
+## 4. Saved Jobs Hook
+This component manage logic for loading saved jobs, handling asynchronous requests
+This component ensure the Saved Jobs only focuses on generating presentation
+
+## 5. Notification
+This component display user's notifications such as job update, application status
+It is designed to provide function of notification and be embeddable throughout Application Dashboard
+
+## 6. Notification Hook
+This component manages the logic of fetching and uploading data
+It handles API communication, error handling, keeping the Notification UI stateless and focus on rendering
+
+## 7. Profile Card
+This component displays the summary of applicant's information.
+It is designed to as reuseable component for displaying across dashboard views.
+
+## 8. Profile Card Hook
+This component manages the logic to develop the loading profile data
+It abstracts asynchronous operation and error handling, keeping the Profile Card UI remain stateless and focus on rendering
+
+## 9. Dashboard Service
+This component acts as the connection between back-end logic and front-end 
+It integrates with shared utilities such as HTTP Utils and URL Config for request handling
 
 ---
 
 # 10. **Application Form Front-end Component Diagram**
 # Application Form Module - Component Justification
+This diagram acts as rendering the form to apply a job for applicant, provide logic to operate the system and connect with backend through HTTP Utils and URL Config
+
+## 1. Job Description
+This component displays the detail of the job, including title, responsibilities, job requirements...
+It is designed as presentation component, allowing flexible styling without embedding business logic
+
+## 2. Application Information
+This component renders user's detail such as name, contact, birthplace and education
+It is kept stateless and mainly focus on layout rendering, separating from data-fetching and core business logic
+
+## 3. Upload Resume
+This component handles the interface to upload the user's CV
+It is designed as visual and interactive element, which allows drag-and-drop or import file.
+
+## 4. Cover Letter
+This component allows users to paste their cover letter 
+It is built as flexible UI element, which supports text formatting and validation without touching core logic and data-fetching
+
+## 5. Application Form Hook
+This component manages all stateful logic related to the form, including field value, validation and error handling
+It encapsulates asynchronous operation and keep the UI component stateless and focus on rendering
+
+## 6. Application Form Service
+This service handles communication with back-end API for submitting, updating or deleting form data.
+It generalizes API logic, make it easy to adjust endpoints or payload format without touching UI components.
 
 ---
 
