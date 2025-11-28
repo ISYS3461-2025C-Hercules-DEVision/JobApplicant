@@ -190,6 +190,125 @@ It centralizes all HTTP calls related to:
 - Updating user notification status  
 
 Centralizing API interactions in one service makes it easier to update endpoints, change notification formats, or integrate WebSocket/Kafka-based updates in the future without modifying UI or hook components.
+
+---
+# 8. **Authorization Microservice Component Diagram**
+
+This diagram show the structural and functional composition of the Authorization Microservice, performing how the authorization decisions are processed, validated and integrated with a microservice system.
+
+### **Purpose**
+- Describe the authorization workflow and its internal layers
+- Illustrate integrations with relevant microservices and platform components
+- Detail how authorization requests are performed
+- Highlight how the service interfaces with external systems
+
+### **Why It Matters**
+Authorization microservice must satisfy secure, consistent and scalable access control. This requires:
+- Confidentiality and Integrity
+- Consistency
+- Scalability and Extensibility
+  
+This diagram ensures:
+- Clear visibility into authorization operations
+- Safe and efficient communication with other microservices
+- Logcical layering of authorization concerns 
+
+---
+# 9. **Notification Microservice Component Diagram**
+
+This diagram indicates the internal structure of Notification Service, including meesage routing logic, media configuration and external microservice interactions. 
+
+### **Purpose**
+- Break down the notification workflow
+- Explain integrations with Kafka, Redis and internal microservices
+- Show how notification events are processed and stored
+- Demonstrate communication with Applicant, Authentication and Payment and others microservices
+
+### **Why It Matters**
+This notification microservice requires: 
+- Scalability
+- Responsiveness
+- Decoupling
+- Reliability
+
+This diagram ensures: 
+- Clear visibility of how notifications are operated
+- Proper handling of asynchronous events
+- Safe, consistent message delivery
+- Logical seperation of interface, service logic, and media configuration
+
+---
+
+# 10. **Admin Microservice Component Diagram**
+
+This diagram illustrates the internal structure of Admin Service, including inquiry handling logic and inter-service communication
+
+### **Purpose**
+- Break down the admin workflow and its subcomponents
+- Show how dmin events are handled, routed and stored
+- Demonstrate communication with Application and Notification microservices.
+
+### **Why It Matters**
+Admin Microservice requires:
+- Security and Manipulation
+- Responsiveness
+- Modularity
+- Auditability  
+
+This diagram ensures: 
+- Clear visibility into admin operations
+- Logical seperation of interface, service logic and configuration layers
+- Safe, consistent inquiry management
+
+---
+
+# 11. **Profile Front-end Component Diagram**
+# Profile Module - Component Justification
+
+This section explains the purpose and rationale behind each component within the Profile module.
+
+## 1. Profile Detail
+This component is responsible for rendering user's profile information, such as name, email and other personal data. 
+It is designed as a presentation component, which seperated from data-fetching logic, to ensure a clean seperation of concerns. It would make the code easy to style, reuse in other containers without affecting the logic.
+
+## 2. Profile Detail Hook
+The Profile Detail Hook encapsulates all stateful logic related to loading user profile data.
+It manages asynschronous API calls, loading states, and error handling. By splitting this logic in a hook, the Profile Detail components remains stateless and focused mainly on UI rendering.
+
+## 3. Profile Detail Service
+This component acts as the communication layer between the front-end and back-end profile API.
+It centralizes all operations for fetching user profile data, ensuring that any changes to endpoints or payload formats are confined in one place.
+
+## 4. Profile Update
+It provides the interface for editting or deleting user profile information.
+It is kept isolately from update profile logic to allow flexible UI changes without affecting the logic of back-end operation.
+
+## 5. Profile Update Hook
+The Profile Update Hook manages state transitions, form validation, and submission logic for profile update.
+It handles API communication, loading indicators and error feedback.
+
+## 6. Profile Update Service
+This is responsible for sending update or delete requests to back-end profile API.
+It encapsulates all unusual logic, make it easy to modify request formats or endpoints withoutt touching UI components.
+
+## 7. Profile Avatar
+Display the user's avatar.
+It is designed as a visual component, allowing flexible styling and placement across the application.
+
+## 8. Profile Avatar Hook
+The Hook handles the logic for loading data and managing upload states.
+It abstracts asynchronous operations and error handling, keeping the avatar component stateless and focused on rendering.
+
+## 9. Profile Avatar Service
+The Profile Avatar Service communicates with back-end logic to fetch or update avatar.
+It centralizes all avatar-related API interactions, ensuring consistent behavior and simplifying future enhancements.
+
+---
+
+# 12.  **Applicant Dashboard Front-end Component Diagram**
+# Applicant Dashboard Module - Component Justification
+
+
 # 📌 Summary Table
 
 | Diagram | Description | Why It’s Important |
@@ -199,5 +318,9 @@ Centralizing API interactions in one service makes it easier to update endpoints
 | **Microservices Container Diagram** | Maps all microservices, databases, and external systems. | Clarifies responsibilities and integration patterns. |
 | **Authentication Component Diagram** | Detailed breakdown of authentication logic and Google SSO flow. | Critical for securing user identity and access. |
 | **Payment Component Diagram** | Detailed structure of payment workflow and gateway integration. | Ensures correctness and reliability of financial transactions. |
+| **Authorization Component Diagram** | Logic for permission control, access based on normal or premium account, policy enforcement. | Essential for enforcing secure access boundaries and protecting sensitive actions. |
+| **Notification Component Diagram** | Architecture of notification delivery, media config and event streaming. | Ensures reliable, scalable and decoupled communication across services. |
+| **Admin Component Diagram** | Internal structure of admin logic, inquiry handling and service orchestration. | Enables secure, modular and auditable administrative operations. |
 
 ---
+
