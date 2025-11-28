@@ -69,7 +69,7 @@ Application Service         Manages the job application process, linking applica
 Notification Service        Sends notifications (email, SMS, or in-app) for registration confirmations, job updates, and payment alerts.
 
 3️⃣ Component Diagram 
-# 4. **Authentication Microservices Component Diagram**
+# 1. **Authentication Microservices Component Diagram**
 
 This diagram zooms into the **Authentication Service** internals, showing controllers, services, repositories, integrations, and token flows.
 
@@ -97,34 +97,7 @@ It provides depth where the overall container diagram provides breadth.
 
 ---
 
-# 5. **Payment Microservices Component Diagram**
-
-This diagram details the internal structure of the **Payment Service**, including payment validation logic, gateway integrations,  
-subscription workflows, and event handling.
-
-### **Purpose**
-- Break down the payment workflow and its subcomponents.
-- Explain integrations with VNPay/NAPAS and internal microservices.
-- Show how financial events are processed, verified, and stored.
-- Demonstrate communication with Notification, Subscription, and other services (if applicable).
-
-### **Why It Matters**
-Payment processing requires:
-- Reliability  
-- Auditability  
-- Idempotency  
-- Fault tolerance  
-
-This diagram ensures:
-- Clear visibility into payment operations  
-- Proper handling of callbacks  
-- Safe, consistent transaction processing  
-- Logical separation of billing, invoicing, and subscription logic  
-
-It is essential for financial compliance and secure operation.
-
----
-# 6. **Login front-end  Component Diagram**
+# 2. **Login front-end  Component Diagram**
 # Login Module – Component Justification
 
 This section explains the purpose and rationale behind each component within the Login module.
@@ -145,7 +118,7 @@ By moving logic into a hook, the UI components remain simple and stateless, and 
 The **Login Service** acts as the communication layer between the frontend and the backend authentication API.  
 It centralizes all login-related API operations, ensuring that any updates to endpoints, payload structures, or authentication logic can be applied in one place without affecting UI components.
 
-# 7. **Registration front-end  Component Diagram**
+# 3. **Registration front-end  Component Diagram**
 # Registration Module  – Component Justification
 
 This section explains the purpose and rationale behind each component within the Registration module.  
@@ -163,7 +136,7 @@ Reusing it in the Registration module avoids duplicated logic and ensures that a
 The **Register Service** acts as the communication layer between the frontend and the backend authentication/registration APIs.  
 This includes sending registration data, handling OAuth callbacks, and processing backend responses.  
 Centralizing these interactions ensures that changes to API endpoints, validation rules, or onboarding workflows can be applied in one place without modifying UI components.
-7. **Notification front-end  Component Diagram**
+# 4. **Notification front-end  Component Diagram**
 # Notification Module – Component Justification
 
 This section explains the purpose and rationale behind each component within the Notification module.  
@@ -192,7 +165,7 @@ It centralizes all HTTP calls related to:
 Centralizing API interactions in one service makes it easier to update endpoints, change notification formats, or integrate WebSocket/Kafka-based updates in the future without modifying UI or hook components.
 
 ---
-# 8. **Authorization Microservice Component Diagram**
+# 5. **Authorization Microservice Component Diagram**
 
 This diagram show the structural and functional composition of the Authorization Microservice, performing how the authorization decisions are processed, validated and integrated with a microservice system.
 
@@ -214,7 +187,7 @@ This diagram ensures:
 - Logcical layering of authorization concerns 
 
 ---
-# 9. **Notification Microservice Component Diagram**
+# 6. **Notification Microservice Component Diagram**
 
 This diagram indicates the internal structure of Notification Service, including meesage routing logic, media configuration and external microservice interactions. 
 
@@ -239,7 +212,7 @@ This diagram ensures:
 
 ---
 
-# 10. **Admin Microservice Component Diagram**
+# 7. **Admin Microservice Component Diagram**
 
 This diagram illustrates the internal structure of Admin Service, including inquiry handling logic and inter-service communication
 
@@ -262,7 +235,7 @@ This diagram ensures:
 
 ---
 
-# 11. **Profile Front-end Component Diagram**
+# 8. **Profile Front-end Component Diagram**
 # Profile Module - Component Justification
 
 This section explains the purpose and rationale behind each component within the Profile module.
@@ -305,10 +278,54 @@ It centralizes all avatar-related API interactions, ensuring consistent behavior
 
 ---
 
-# 12.  **Applicant Dashboard Front-end Component Diagram**
-# Applicant Dashboard Module - Component Justification
+# 9.  **Application Dashboard Front-end Component Diagram**
+# Application Dashboard Module - Component Justification
 
+---
 
+# 10. **Application Form Front-end Component Diagram**
+# Application Form Module - Component Justification
+
+---
+
+# 11. **Applicant Service Component Diagram**
+
+### **Purpose**
+
+### **Why It Matters**
+
+---
+
+# 12. **Application Service Component Diagram**
+
+### **Purpose**
+
+### **Why It Matters**
+
+---
+
+# 13. **Premium Applicant Subscription Service Component Diagram**
+
+### **Purpose**
+
+### **Why It Matters**
+
+---
+
+# 14.  **Account Management Front-end Component Diagram**
+# Account Management Module - Component Justification
+
+---
+
+# 15.  **Job Listing Front-end Component Diagram**
+# Job Listing Module - Component Justification
+
+---
+
+# 16.  **Payment Front-end Component Diagram**
+# Payment Module - Component Justification
+
+---
 # 📌 Summary Table
 
 | Diagram | Description | Why It’s Important |
