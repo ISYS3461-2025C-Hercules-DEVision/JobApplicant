@@ -11,7 +11,7 @@ function HomeNavbar() {
 
           <nav className="hidden md:flex items-center space-x-8">
             <Link
-              to="/"
+              to="/profile"
               className="text-black font-bold uppercase text-sm hover:bg-black hover:text-white px-3 py-2 transition-none"
             >
               Home

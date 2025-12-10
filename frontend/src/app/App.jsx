@@ -5,7 +5,7 @@ import {
   LoginPage,
   RegisterPage,
   // Future pages:
-  // ProfilePage,
+  ProfilePage,
   // JobListPage,
   // JobDetailPage,
   // ApplicationPage,
@@ -24,7 +24,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Future routes */}
-        {/* <Route path="/profile" element={<ProfilePage />} /> */}
+        <Route path="/profile" element={<ProfilePage />} />
         {/* <Route path="/jobs" element={<JobListPage />} /> */}
         {/* <Route path="/job/:id" element={<JobDetailPage />} /> */}
         {/* <Route path="/apply/:id" element={<ApplicationPage />} /> */}

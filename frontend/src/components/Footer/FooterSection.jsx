@@ -4,7 +4,7 @@ function FooterSection() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-black mb-4 uppercase">DEVision</h3>
+              <h3 className="text-2xl font-black mb-4">DEVision</h3>
               <p className="text-white font-bold mb-6 leading-relaxed border-l-4 border-primary pl-4">
                 Create your profile, discover opportunities, apply instantly,
                 and get notified when the right job appears.
