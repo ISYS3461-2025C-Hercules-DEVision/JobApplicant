@@ -6,7 +6,7 @@ import {
   RegisterPage,
   // Future pages:
   ProfilePage,
-  // JobListPage,
+  JobListPage,
   // JobDetailPage,
   // ApplicationPage,
   // DashboardPage,
@@ -25,7 +25,7 @@ function App() {
 
         {/* Future routes */}
         <Route path="/profile" element={<ProfilePage />} />
-        {/* <Route path="/jobs" element={<JobListPage />} /> */}
+        <Route path="/jobs" element={<JobListPage />} />
         {/* <Route path="/job/:id" element={<JobDetailPage />} /> */}
         {/* <Route path="/apply/:id" element={<ApplicationPage />} /> */}
         {/* <Route path="/dashboard" element={<DashboardPage />} /> */}

@@ -4,7 +4,7 @@ export { default as RegisterPage } from './RegisterPage';
 
 // Later you will add:
 export { default as ProfilePage } from './ProfilePage';
-// export { default as JobListPage } from './JobListPage';
+export { default as JobListPage } from './JobListPage';
 // export { default as JobDetailPage } from './JobDetailPage';
 // export { default as ApplicationPage } from './ApplicationPage';
 // export { default as DashboardPage } from './DashboardPage';

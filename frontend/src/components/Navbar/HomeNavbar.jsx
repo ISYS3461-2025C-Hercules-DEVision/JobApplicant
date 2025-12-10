@@ -22,12 +22,12 @@ function HomeNavbar() {
             >
               Top Content
             </a>
-            <a
-              href="#pricing"
+            <Link
+              to="/jobs"
               className="text-black font-bold uppercase text-sm hover:bg-black hover:text-white px-3 py-2 transition-none"
             >
               Jobs
-            </a>
+            </Link>
             <a
               href="#pricing"
               className="text-black font-bold uppercase text-sm hover:bg-black hover:text-white px-3 py-2 transition-none"
