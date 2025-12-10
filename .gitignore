@@ -78,7 +78,6 @@ docker-compose.override.yml
 ###########################
 # Reports and generated files
 ###########################
-*.pdf
 *.svg
 *.jpeg
 *.jpg
