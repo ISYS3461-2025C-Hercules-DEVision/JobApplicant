@@ -18,7 +18,7 @@ public class ApiGatewayApplication {
         return builder.routes()
                 .route("authentication-service", r->r.path("/auth/**")
                         .uri("lb://AUTHENTICATION-SERVICE"))
-                .route("applicant-service", r->r.path("/user/**")
+                .route("applicant-service", r->r.path("/api/v1/applicants/**")
                         .uri("lb://APPLICANT-SERVICE"))
                 .build();
     }
