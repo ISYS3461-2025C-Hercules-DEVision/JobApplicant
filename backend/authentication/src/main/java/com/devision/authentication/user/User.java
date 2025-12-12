@@ -11,16 +11,20 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @Builder
 public class User {
+    @Id
     private String id;
 
     private String email;
     private String fullName;
-    private String provider;      // "GOOGLE"
-    private String providerId;    // Google sub (unique id)
 
-    // For Kafka correlation
+    // For local login
+    private String password;      // hashed (BCrypt)
+
+    // For Google SSO
+    private String provider;      // "LOCAL" or "GOOGLE"
+    private String providerId;    // Google "sub" (unique id)
+
+    // Kafka correlation + link to applicant
     private String correlationId;
-
-    // ID coming back from applicant service
     private String applicantId;
 }
