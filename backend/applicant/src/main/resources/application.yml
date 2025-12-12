@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: applicant-service
+
+  data:
+    mongodb:
+      uri: mongodb+srv://ungxuandat11092001_db_user:8ZaEZXpeGQ6Zpxbq@applicant.44pbxjf.mongodb.net/applicant-db?retryWrites=true&w=majority&appName=Applicant
+
   kafka:
     bootstrap-servers: localhost:9092
     producer:

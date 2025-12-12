@@ -16,22 +16,20 @@ import java.util.Map;
 
 @Configuration
 @EnableKafka
-public class KafkaConsumer {
+public class KafkaConsumerConf {
     @Bean
-    public ConsumerFactory<String, AutheticationApplicantCodeWithUuid> defaultConsumerFactory() {
+    public ConsumerFactory<String, String> defaultConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KafkaConstant.KAFKA_HOST_URL);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaConstant.APPLICANT_GROUP_ID);
-
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, AutheticationApplicantCodeWithUuid> defaultKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, AutheticationApplicantCodeWithUuid> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, String> defaultKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(defaultConsumerFactory());
         return factory;

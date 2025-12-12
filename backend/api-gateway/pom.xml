@@ -26,11 +26,6 @@
             <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
 
-<!--        &lt;!&ndash; OAuth2 resource server (to validate Google tokens at gateway) &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>-->
-<!--        </dependency>-->
 
         <!-- Eureka client -->
         <dependency>

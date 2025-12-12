@@ -1,14 +1,11 @@
-server:
-  port: 8087
-
 spring:
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: 428795979364-em7i6n58uv2boc15bnasdm3le8qurft0.apps.googleusercontent.com
-            client-secret: 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
+            client-id: 4287...
+            client-secret: GOCSPX-...
             scope:
               - email
               - profile
@@ -21,25 +18,16 @@ spring:
       jwt-secret: "DevisionSuperSecretKeyForJWT123456"
       jwt-expiration-ms: 180000
       frontend-redirect-url: "http://localhost:5173/auth/callback"
+
   application:
     name: authentication-service
+
   kafka:
     bootstrap-servers: localhost:9092
-
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
-eureka:
-  instance:
-    hostname: localhost
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
-
-
-
-
+  data:
+    mongodb:
+      uri: mongodb+srv://ungxuandat11092001_db_user:rimUzRGKNrMsbCmb@authentication.wltiegf.mongodb.net/authentication-db?retryWrites=true&w=majority&appName=Authentication
