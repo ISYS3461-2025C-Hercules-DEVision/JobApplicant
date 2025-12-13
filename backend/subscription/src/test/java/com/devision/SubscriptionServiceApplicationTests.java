@@ -1,10 +1,10 @@
-package com.devdivision;
+package com.devision;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class RentMateApplicationTests {
+class SubscriptionServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

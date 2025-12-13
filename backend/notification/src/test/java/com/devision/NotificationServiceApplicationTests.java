@@ -1,13 +1,12 @@
-package com.devision.discovery_server;
+package com.devision;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DiscoveryServerApplicationTests {
+class NotificationServiceApplicationTests {
 
 	@Test
 	void contextLoads() {
 	}
-
 }
