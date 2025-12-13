@@ -5,6 +5,8 @@ import com.devision.notification.repository.NotificationRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.devision.notification.enums.NotificationType;
+
 
 import java.time.Instant;
 import java.util.List;
@@ -20,7 +22,7 @@ public class InitDataConfig {
                 Notification n = Notification.builder()
                         .notificationId(UUID.randomUUID().toString())
                         .applicantId("test-applicant-123")
-                        .type("System")
+                        .type(NotificationType.SYSTEM)
                         .message("Hello from Notification Service 🎉")
                         .jobPostId(null)
                         .companyId(null)

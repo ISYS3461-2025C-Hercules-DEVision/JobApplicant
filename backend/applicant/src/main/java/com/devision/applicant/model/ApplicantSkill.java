@@ -3,6 +3,8 @@ package com.devision.applicant.model;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.devision.applicant.enums.ProficiencyLevel;
+
 
 import java.time.Instant;
 import java.util.List;
@@ -20,7 +22,7 @@ public class ApplicantSkill {
     private String applicantId; // FK-like reference
     private String skillId;
 
-    private String proficiency; // Beginner | Intermediate | Advanced
+    private ProficiencyLevel proficiency; // Beginner | Intermediate | Advanced
     private List<String> endorsedBy;
 
     private Instant createdAt;

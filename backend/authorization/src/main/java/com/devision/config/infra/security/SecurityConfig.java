@@ -1,11 +1,10 @@
-package com.devision.authorization.config;
+package com.devision.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -18,9 +17,8 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Swagger
+                // allow swagger
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/swagger-ui.html",
@@ -29,11 +27,11 @@ public class SecurityConfig {
                     "/webjars/**"
                 ).permitAll()
 
-                // Token endpoints (tùy bạn đặt path)
-                .requestMatchers("/api/auth/**").permitAll()
+                // policy engine endpoints (gateway will call)
+                .requestMatchers("/api/**").permitAll()
 
-                // Everything else
-                .anyRequest().authenticated()
+                // anything else
+                .anyRequest().permitAll()
             );
 
         return http.build();

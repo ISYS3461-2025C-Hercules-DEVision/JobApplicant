@@ -6,6 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import com.devision.applicant.enums.MediaType;
+import com.devision.applicant.enums.ProficiencyLevel;
+import com.devision.applicant.enums.Visibility;
+
 
 import java.time.Instant;
 import java.util.List;
@@ -117,10 +121,10 @@ public class TestDataSeeder implements CommandLineRunner {
                 .applicantId(applicantId)
                 .fileUrl("https://res.cloudinary.com/demo/image/upload/v1/sample.jpg")
                 .publicId("sample_public_id")
-                .mediaType("image")     // vẫn nên giữ (giải thích bên dưới)
+                .mediaType(MediaType.IMAGE)    
                 .title("Portfolio Image")
                 .description("Test portfolio item")
-                .visibility("public")
+                .visibility(Visibility.PUBLIC)
                 .createdAt(now)
                 .build();
 
@@ -131,7 +135,7 @@ public class TestDataSeeder implements CommandLineRunner {
                 .id(uuid())
                 .applicantId(applicantId)
                 .skillId(uuid())
-                .proficiency("Intermediate")
+                .proficiency(ProficiencyLevel.BEGINNER)
                 .endorsedBy(List.of(uuid(), uuid()))
                 .createdAt(now)
                 .updatedAt(now)

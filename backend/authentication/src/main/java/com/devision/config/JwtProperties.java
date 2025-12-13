@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 public class JwtProperties {
     private String secret;
     private String issuer;
+    private long accessTtlSeconds;
+    private long refreshTtlSeconds;
 
     public String getSecret() {
         return secret;

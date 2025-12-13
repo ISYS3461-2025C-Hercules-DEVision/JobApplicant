@@ -3,6 +3,8 @@ package com.devision.notification.model;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.devision.notification.enums.NotificationType;
+
 
 import java.time.Instant;
 import java.util.List;
@@ -19,7 +21,7 @@ public class Notification {
 
     private String applicantId;      // string reference only, no FK
 
-    private String type;            // "ApplicationUpdate" | "JobMatch" | "System"
+    private NotificationType type;            // "ApplicationUpdate" | "JobMatch" | "System"
     private String message;
 
     private String jobPostId;       // from JM

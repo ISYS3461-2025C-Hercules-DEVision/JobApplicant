@@ -3,6 +3,8 @@ package com.devision.applicant.model;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import com.devision.applicant.enums.MediaType;
+import com.devision.applicant.enums.Visibility;
 
 import java.time.Instant;
 
@@ -21,12 +23,11 @@ public class MediaPortfolio {
     private String fileUrl;      // Cloudinary secure_url
     private String publicId;     // Cloudinary public_id (VERY IMPORTANT)
 
-    private String mediaType;    // image | video | link
+    private MediaType mediaType;    // image | video | link
     private String title;
     private String description;
 
-    private String visibility;   // public | private
-
+    private Visibility visibility;   // public | private
     private Instant createdAt;
 }
 
