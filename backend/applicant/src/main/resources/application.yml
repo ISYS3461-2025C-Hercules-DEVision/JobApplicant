@@ -1,0 +1,15 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: applicant-service
+
+eureka:
+  instance:
+    hostname: 10.247.206.12
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://10.247.205.230:8761/eureka

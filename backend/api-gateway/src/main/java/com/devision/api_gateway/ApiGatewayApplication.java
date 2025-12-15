@@ -13,8 +13,11 @@ public class ApiGatewayApplication {
     }
 
     @Bean
-    public RouteLocator routerBuidlder(RouteLocatorBuilder routeLocatorBuilder){
+    public RouteLocator routerBuilder(RouteLocatorBuilder routeLocatorBuilder){
 
         return routeLocatorBuilder.routes()
+                .route("applicant-service",r ->r.path("/applicant/**")
+                        .uri("lb://APPLICANT-SERVICE"))
+                .build();
     }
 }
