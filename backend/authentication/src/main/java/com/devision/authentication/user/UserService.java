@@ -2,6 +2,7 @@ package com.devision.authentication.user;
 
 import com.devision.authentication.dto.LoginRequest;
 import com.devision.authentication.dto.RegisterRequest;
+import com.devision.authentication.dto.UserDto;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +20,10 @@ public class UserService {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
-
+    public User findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+    }
     // -------- LOCAL REGISTER --------
     @Transactional
     public User registerLocalUser(RegisterRequest request) {
@@ -36,7 +40,7 @@ public class UserService {
                 .build();
 
         // correlationId for Kafka
-        user.setCorrelationId(UUID.randomUUID().toString());
+        //user.setCorrelationId(UUID.randomUUID().toString());
 
         return userRepository.save(user);
     }
@@ -74,15 +78,13 @@ public class UserService {
                         .build()
                 );
 
-        // new correlationId for each Google login/registration flow
-        user.setCorrelationId(UUID.randomUUID().toString());
 
         return userRepository.save(user);
-    }
 
+    }
     @Transactional
-    public void attachApplicantToUser(String correlationId, String applicantId) {
-        userRepository.findByCorrelationId(correlationId)
+    public void attachApplicantToUser(String email, String applicantId) {
+        userRepository.findByEmail(email)
                 .ifPresent(user -> {
                     user.setApplicantId(applicantId);
                     userRepository.save(user);

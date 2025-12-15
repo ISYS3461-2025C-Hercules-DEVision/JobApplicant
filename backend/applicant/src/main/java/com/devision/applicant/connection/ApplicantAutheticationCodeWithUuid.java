@@ -2,14 +2,14 @@ package com.devision.applicant.connection;
 
 import com.devision.applicant.dto.common.common.DtoWithProcessId;
 
-public class AutheticationApplicantCodeWithUuid extends DtoWithProcessId {
+public class ApplicantAutheticationCodeWithUuid extends DtoWithProcessId {
 
     private String applicantId;
 
-    public AutheticationApplicantCodeWithUuid() {
+    public ApplicantAutheticationCodeWithUuid() {
     }
 
-    public AutheticationApplicantCodeWithUuid(String correlationId, String applicantId) {
+    public ApplicantAutheticationCodeWithUuid(String correlationId, String applicantId,  String email) {
         super(correlationId);
         this.applicantId = applicantId;
     }

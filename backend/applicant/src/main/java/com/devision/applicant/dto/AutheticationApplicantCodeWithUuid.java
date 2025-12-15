@@ -1,5 +1,19 @@
 package com.devision.applicant.dto;
-//This missing some parameter
-// This should include correlationId and something that after register or login, authentication will send to applicant to get the POSTAPI back
-public record AutheticationApplicantCodeWithUuid(String correlationId) {
+
+public record AutheticationApplicantCodeWithUuid(String correlationId, String id, String fullName, String email ) {
+    public String getCorrelationId() {
+        return correlationId;
+    }
+    public String getId() {
+        return id;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public String getFullName() {
+        return fullName;
+    }
+
+
+
 }

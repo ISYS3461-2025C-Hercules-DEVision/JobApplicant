@@ -5,29 +5,33 @@ spring:
   application:
     name: authentication-service
 
+  cloud:
+    config:
+      enabled: false
+
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: 4287...
-            client-secret: GOCSPX-...
-            scope:
-              - email
-              - profile
+            client-id: 44667791366-ibsl42q8m2gah6e4pd84c9drsu5igk2d.apps.googleusercontent.com
+            client-secret: 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
+            scope: [email, profile]
         provider:
           google:
             issuer-uri: https://accounts.google.com
 
   kafka:
     bootstrap-servers: localhost:9092
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
 
-  data:
-    mongodb:
-      uri: mongodb+srv://ungxuandat11092001_db_user:rimUzRGKNrMsbCmb@authentication.wltiegf.mongodb.net/authentication-db?retryWrites=true&w=majority&appName=Authentication
+  mongodb:
+    uri: mongodb+srv://ungxuandat11092001_db_user:JukYaMVqL6hlaMdG@authentication.wltiegf.mongodb.net/authentication?retryWrites=true&w=majority&appName=Authentication
 
 app:
   auth:
@@ -38,8 +42,13 @@ app:
 eureka:
   instance:
     hostname: localhost
+    prefer-ip-address: false
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+logging:
+  level:
+    org.springframework.boot.context.config: DEBUG
+    org.springframework.data.mongodb.core: DEBUG
+    org.mongodb.driver: INFO

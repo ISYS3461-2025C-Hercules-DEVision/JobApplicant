@@ -1,6 +1,6 @@
 package com.devision.applicant.dto;
 
-import jakarta.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 import jakarta.validation.constraints.Size;
 
 public record ApplicantUpdateRequest(

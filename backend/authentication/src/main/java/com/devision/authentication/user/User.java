@@ -24,7 +24,5 @@ public class User {
     private String provider;      // "LOCAL" or "GOOGLE"
     private String providerId;    // Google "sub" (unique id)
 
-    // Kafka correlation + link to applicant
-    private String correlationId;
     private String applicantId;
 }

@@ -5,19 +5,18 @@ spring:
   application:
     name: applicant-service
 
-  data:
-    mongodb:
-      uri: mongodb+srv://ungxuandat11092001_db_user:8ZaEZXpeGQ6Zpxbq@applicant.44pbxjf.mongodb.net/applicant-db?retryWrites=true&w=majority&appName=Applicant
-
   kafka:
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  mongodb:
+    uri: mongodb+srv://ungxuandat11092001_db_user:8ZaEZXpeGQ6Zpxbq@applicant.44pbxjf.mongodb.net/applicant-db?retryWrites=true&w=majority&appName=Applicant
 
 eureka:
   instance:
     hostname: localhost
+    prefer-ip-address: false
   client:
     register-with-eureka: true
     fetch-registry: true

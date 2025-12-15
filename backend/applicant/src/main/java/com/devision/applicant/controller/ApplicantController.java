@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/applicants")
-@CrossOrigin(origins = "http://localhost:5173")
 public class ApplicantController {
     private final ApplicantService service;
 
@@ -47,4 +46,5 @@ public class ApplicantController {
     public void delete(@PathVariable String id) {
         service.delete(id);
     }
+
 }

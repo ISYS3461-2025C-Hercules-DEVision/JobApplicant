@@ -2,6 +2,38 @@ spring:
   application:
     name: api-gateway
 
+  cloud:
+    config:
+      enabled: false
+
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+      routes:
+        - id: authentication-service
+          uri: lb://AUTHENTICATION-SERVICE
+          predicates:
+            - Path=/auth/**,/oauth2/**,/login/oauth2/**
+
+        - id: applicant-service
+          uri: lb://APPLICANT-SERVICE
+          predicates:
+            - Path=/api/v1/applicants/**
+
 eureka:
   instance:
     hostname: localhost

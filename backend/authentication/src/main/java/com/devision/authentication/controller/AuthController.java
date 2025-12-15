@@ -11,9 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
 
     private final UserService userService;
@@ -32,20 +33,24 @@ public class AuthController {
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse register(@RequestBody RegisterRequest request) {
-        // 1. Create local user
+        //  Create local user
         User user = userService.registerLocalUser(request);
-
-        // 2. Send Kafka event to Applicant service
+        // create a correlationId
+        String correlationId = UUID.randomUUID().toString();
+        //  Send Kafka event to Applicant service
         AuthToApplicantEvent event = new AuthToApplicantEvent(
-                user.getCorrelationId(),
-                user.getId(),
                 user.getEmail(),
-                user.getFullName()
+                user.getFullName(),
+                correlationId
         );
         kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_TOPIC, event);
-
+        jwtUserDto jwtUser = new jwtUserDto(
+                user.getId(),
+                user.getEmail(),
+                user.getApplicantId()
+        );
         // 3. Generate JWT
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(jwtUser);
 
         return new AuthResponse(
                 token,
@@ -61,7 +66,13 @@ public class AuthController {
     public AuthResponse login(@RequestBody LoginRequest request) {
         User user = userService.loginLocalUser(request);
 
-        String token = jwtService.generateToken(user);
+        jwtUserDto jwtUser = new jwtUserDto(
+                user.getId(),
+                user.getEmail(),
+                user.getApplicantId()
+        );
+        // 3. Generate JWT
+        String token = jwtService.generateToken(jwtUser);
 
         return new AuthResponse(
                 token,

@@ -4,30 +4,23 @@ import com.devision.authentication.dto.common.DtoWithProcessId;
 
 public class AuthToApplicantEvent extends DtoWithProcessId {
 
-    private String authUserId;
     private String email;
     private String fullName;
 
     public AuthToApplicantEvent() {
     }
 
-    public AuthToApplicantEvent(String correlationId,
-                                String authUserId,
+    public AuthToApplicantEvent(
                                 String email,
-                                String fullName) {
+                                String fullName,
+                                String correlationId) {
         super(correlationId);
-        this.authUserId = authUserId;
+
         this.email = email;
         this.fullName = fullName;
     }
 
-    public String getAuthUserId() {
-        return authUserId;
-    }
 
-    public void setAuthUserId(String authUserId) {
-        this.authUserId = authUserId;
-    }
 
     public String getEmail() {
         return email;

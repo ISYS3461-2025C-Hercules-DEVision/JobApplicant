@@ -1,5 +1,7 @@
 package com.devision.authentication.jwt;
 
+import com.devision.authentication.dto.UserDto;
+import com.devision.authentication.dto.jwtUserDto;
 import com.devision.authentication.user.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -12,15 +14,15 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
 public class JwtService {
-
-    @Value("${spring.app.auth.jwt-secret}")
+    @Value("${app.auth.jwt-secret}")
     private String jwtSecret;
 
-    @Value("${spring.app.auth.jwt-expiration-ms}")
+    @Value("${app.auth.jwt-expiration-ms}")
     private long jwtExpirationMs;
 
     private Key getSigningKey() {
@@ -28,18 +30,19 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(User user) {
+    public String generateToken(jwtUserDto user) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
+        Map<String, Object> claims = new HashMap<>();
+        if (user.email() != null) claims.put("email", user.email());
+        if (user.applicantId() != null) claims.put("applicantId", user.applicantId());
+
         return Jwts.builder()
-                .setSubject(user.getId())  // userId
+                .setSubject(user.userId())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .addClaims(Map.of(
-                        "email", user.getEmail(),
-                        "applicantId", user.getApplicantId()
-                ))
+                .addClaims(claims)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
