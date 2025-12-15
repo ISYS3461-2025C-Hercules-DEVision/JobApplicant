@@ -28,12 +28,12 @@ function HomeNavbar() {
             >
               Jobs
             </Link>
-            <a
-              href="#pricing"
+            <Link
+              to="/apply/:id"
               className="text-black font-bold uppercase text-sm hover:bg-black hover:text-white px-3 py-2 transition-none"
             >
-              Create CV
-            </a>
+              Application
+            </Link>
 
             <span className="text-sm font-bold uppercase">VN | EN</span>
           </nav>

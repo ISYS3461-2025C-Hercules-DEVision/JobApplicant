@@ -8,7 +8,7 @@ import {
   ProfilePage,
   JobListPage,
   // JobDetailPage,
-  // ApplicationPage,
+  ApplicationPage,
   // DashboardPage,
   // PaymentPage,
   // AdminPage,
@@ -27,7 +27,7 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/jobs" element={<JobListPage />} />
         {/* <Route path="/job/:id" element={<JobDetailPage />} /> */}
-        {/* <Route path="/apply/:id" element={<ApplicationPage />} /> */}
+        <Route path="/apply/:id" element={<ApplicationPage />} />
         {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
         {/* <Route path="/payment" element={<PaymentPage />} /> */}
         {/* <Route path="/admin" element={<AdminPage />} /> */}
