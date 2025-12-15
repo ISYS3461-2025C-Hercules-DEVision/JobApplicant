@@ -6,7 +6,7 @@ export { default as RegisterPage } from './RegisterPage';
 export { default as ProfilePage } from './ProfilePage';
 export { default as JobListPage } from './JobListPage';
 // export { default as JobDetailPage } from './JobDetailPage';
-// export { default as ApplicationPage } from './ApplicationPage';
+export { default as ApplicationPage } from './ApplicationPage';
 // export { default as DashboardPage } from './DashboardPage';
 // export { default as PaymentPage } from './PaymentPage';
 // export { default as AdminPage } from './AdminPage';
