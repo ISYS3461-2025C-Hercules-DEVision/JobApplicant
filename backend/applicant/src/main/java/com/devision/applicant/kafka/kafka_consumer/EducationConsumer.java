@@ -1,6 +1,7 @@
 package com.devision.applicant.kafka.kafka_consumer;
 
 import com.devision.applicant.dto.education.EducationRequestDto;
+import com.devision.applicant.kafka.KafkaConstant;
 import com.devision.applicant.model.Applicant;
 import com.devision.applicant.model.Education;
 import com.devision.applicant.repository.ApplicantRepository;
@@ -24,7 +25,7 @@ public class EducationConsumer {
         this.applicantRepository = applicantRepository;
     }
 
-    @KafkaListener(topics = "applicant-education-update-request", groupId = "applicant-group")
+    @KafkaListener(topics = KafkaConstant.APPLICANT_TOPIC_RESPONSE, groupId = KafkaConstant.APPLICANT_GROUP_ID, containerFactory = "defaultKafkaListenerContainerFactory")
     public void handleEducationUpdateRequest(EducationRequestDto request){
         String correlationId = request.correlationId();
         String applicantId = request.applicantId();

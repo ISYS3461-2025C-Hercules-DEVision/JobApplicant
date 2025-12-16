@@ -20,7 +20,7 @@ public class Education {
     private String degree;
     private Integer fromYear;
     private Integer toYear;
-    private Double gpa;               // nullable
+    private Double gpa;               // nullable (from 0-100)
 
     private Instant createdAt;
     private Instant updatedAt;
