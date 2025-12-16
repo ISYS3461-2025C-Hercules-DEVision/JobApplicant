@@ -9,7 +9,7 @@ public class KafkaGenericProducer<T> {
     @Autowired
     private KafkaTemplate<String, T> kafkaTemplate;
 
-    public void sendMessage(String topic, String key, T message) {
-        kafkaTemplate.send(topic, key, message);
+    public void sendMessage(String topic, T message) {
+        kafkaTemplate.send(topic, message);
     }
 }
