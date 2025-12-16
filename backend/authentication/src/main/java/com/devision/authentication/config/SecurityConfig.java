@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.SecurityFilterChain;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -28,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
+@Slf4j
 @Configuration
 public class SecurityConfig {
 
@@ -82,7 +83,7 @@ public class SecurityConfig {
 
         User user = userService.handleGoogleLogin(attributes);
 
-        // ✅ If already linked to applicant -> DON'T call Kafka, DON'T block
+        // If already linked to applicant -> DON'T call Kafka
         if (user.getApplicantId() != null && !user.getApplicantId().isBlank()) {
             jwtUserDto jwtUser = new jwtUserDto(user.getId(), user.getEmail(), user.getApplicantId());
             String jwt = jwtService.generateToken(jwtUser);
@@ -94,7 +95,7 @@ public class SecurityConfig {
             return;
         }
 
-        // ✅ Only here do we call applicant-service (first time only)
+        //  (first time only)
         String correlationId = UUID.randomUUID().toString();
 
         CompletableFuture<AutheticationApplicantCodeWithUuid> future =
@@ -107,12 +108,31 @@ public class SecurityConfig {
         );
 
         try {
+            log.info("[OAUTH2] Sending event to applicant-service. correlationId={}, email={}",
+                    correlationId, user.getEmail());
+
             kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_TOPIC, event);
 
-            AutheticationApplicantCodeWithUuid reply = future.get(5, TimeUnit.SECONDS);
+            log.info("[OAUTH2] Waiting for applicant reply... correlationId={}", correlationId);
 
-            userService.attachApplicantToUser(user.getEmail(), reply.getApplicantId());
-            User updated = userService.findByEmail(user.getEmail());
+            AutheticationApplicantCodeWithUuid reply = future.get(1, TimeUnit.SECONDS); //
+
+            log.info("[OAUTH2] Applicant reply received. correlationId={}, applicantId={}",
+                    correlationId, reply.getApplicantId());
+
+            //  attach by userId, not email
+            userService.attachApplicantToUser(user.getId(), reply.getApplicantId());
+
+
+            User updated = userService.findById(user.getId());
+            if (updated == null) {
+                throw new IllegalStateException(
+                        "User not found after attach: userId=" + user.getId()
+                );
+            }
+
+            log.info("[OAUTH2] Applicant attached successfully. userId={}, email={}, applicantId={}",
+                    updated.getId(), updated.getEmail(), updated.getApplicantId());
 
             jwtUserDto jwtUser = new jwtUserDto(
                     updated.getId(),
@@ -128,14 +148,31 @@ public class SecurityConfig {
             response.sendRedirect(redirectUrl);
 
         } catch (TimeoutException e) {
+            log.error("[OAUTH2] TIMEOUT waiting for applicant reply. correlationId={}, email={}",
+                    correlationId, user.getEmail(), e);
             response.sendError(504, "Applicant service timeout");
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            log.error("[OAUTH2] INTERRUPTED while waiting for applicant reply. correlationId={}, email={}",
+                    correlationId, user.getEmail(), e);
             response.sendError(500, "Interrupted");
+
         } catch (ExecutionException e) {
+            log.error("[OAUTH2] Reply future failed. correlationId={}, email={}, cause={}",
+                    correlationId, user.getEmail(),
+                    e.getCause() != null ? e.getCause().getMessage() : "null",
+                    e);
             response.sendError(500, "Applicant reply failed");
+
+        } catch (Exception e) {
+            log.error("[OAUTH2] Unexpected error. correlationId={}, email={}",
+                    correlationId, user.getEmail(), e);
+            response.sendError(500, "Unexpected error");
+
         } finally {
             pendingApplicantRequests.remove(correlationId);
+            log.info("[OAUTH2] Pending request removed. correlationId={}", correlationId);
         }
 
     }

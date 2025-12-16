@@ -24,6 +24,9 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found: " + email));
     }
+    public User findById(String id) {
+        return userRepository.findById(id).orElse(null);
+    }
     // -------- LOCAL REGISTER --------
     @Transactional
     public User registerLocalUser(RegisterRequest request) {
@@ -83,11 +86,14 @@ public class UserService {
 
     }
     @Transactional
-    public void attachApplicantToUser(String email, String applicantId) {
-        userRepository.findByEmail(email)
-                .ifPresent(user -> {
+    public void attachApplicantToUser(String userId, String applicantId) {
+        userRepository.findById(userId)
+                .ifPresentOrElse(user -> {
                     user.setApplicantId(applicantId);
                     userRepository.save(user);
+                }, () -> {
+                    throw new IllegalStateException("User not found for id=" + userId);
                 });
     }
+
 }
