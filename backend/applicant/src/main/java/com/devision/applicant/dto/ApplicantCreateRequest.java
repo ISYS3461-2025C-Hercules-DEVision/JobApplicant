@@ -8,7 +8,6 @@ public record ApplicantCreateRequest(
         @NotBlank
         @Size(max = 200)
         String fullName,
-
         @NotBlank
         @Email
         String email,

@@ -104,6 +104,10 @@ public class SecurityConfig {
         AuthToApplicantEvent event = new AuthToApplicantEvent(
                 user.getEmail(),
                 user.getFullName(),
+                null,
+                null,
+                null,
+                null,
                 correlationId
         );
 
@@ -115,7 +119,7 @@ public class SecurityConfig {
 
             log.info("[OAUTH2] Waiting for applicant reply... correlationId={}", correlationId);
 
-            AutheticationApplicantCodeWithUuid reply = future.get(1, TimeUnit.SECONDS); //
+            AutheticationApplicantCodeWithUuid reply = future.get(5, TimeUnit.SECONDS); //
 
             log.info("[OAUTH2] Applicant reply received. correlationId={}, applicantId={}",
                     correlationId, reply.getApplicantId());
