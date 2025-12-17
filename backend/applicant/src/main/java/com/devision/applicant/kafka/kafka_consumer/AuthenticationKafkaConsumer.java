@@ -2,9 +2,9 @@ package com.devision.applicant.kafka.kafka_consumer;
 
 import com.devision.applicant.config.KafkaConstant;
 import com.devision.applicant.connection.ApplicantAutheticationCodeWithUuid;
+import com.devision.applicant.connection.AuthenticationApplicantCodeWithUuid;
 import com.devision.applicant.dto.ApplicantCreateRequest;
 import com.devision.applicant.dto.ApplicantDTO;
-import com.devision.applicant.dto.AutheticationApplicantCodeWithUuid;
 import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.service.ApplicantService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,23 +36,32 @@ public class AuthenticationKafkaConsumer {
         System.out.println("Received message from AUTH: " + message);
 
         // Deserialize AuthToApplicantEvent
-        AutheticationApplicantCodeWithUuid applicant = objectMapper.readValue(message, AutheticationApplicantCodeWithUuid.class);
+        AuthenticationApplicantCodeWithUuid applicant = objectMapper.readValue(message, AuthenticationApplicantCodeWithUuid.class);
 
 
-        String correlationId = applicant.getCorrelationId();
-        String email = applicant.getEmail();
-        String fullName = applicant.getFullName();
+        String correlationId = applicant.correlationId();
+        String email = applicant.email();
+        String fullName = applicant.fullName();
+        String phoneNumber = applicant.phoneNumber();
+        String country = applicant.country();
+        String city = applicant.city();
+        String address = applicant.streetAddress();
         System.out.println("correlationId: " + correlationId);
         System.out.println("email: " + email);
         System.out.println("fullName: " + fullName);
+        System.out.println("phoneNumber: " + phoneNumber);
+        System.out.println("country: " + country);
+        System.out.println("city: " + city);
+        System.out.println("address: " + address);
+
         // Create Applicant from this data
         ApplicantCreateRequest req = new ApplicantCreateRequest(
                 fullName,
                 email,
-                null,   // country
-                null,   // city
-                null,   // streetAddress
-                null,   // phoneNumber
+                country,
+                city,
+                address,
+                phoneNumber,
                 null    // profileImageUrl
         );
 

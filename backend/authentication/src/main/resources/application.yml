@@ -37,7 +37,7 @@ app:
   auth:
     jwt-secret: "DevisionSuperSecretKeyForJWT123456"
     jwt-expiration-ms: 180000
-    frontend-redirect-url: "http://localhost:5173/auth/callback"
+    frontend-redirect-url: "http://localhost:5174/auth/callback"
 
 eureka:
   instance:

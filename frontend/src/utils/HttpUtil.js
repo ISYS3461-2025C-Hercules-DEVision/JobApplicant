@@ -1,0 +1,34 @@
+// src/services/http.js
+export const API_BASE = "http://localhost:10789";
+
+async function parseBody(res) {
+    const text = await res.text();
+    try {
+        return text ? JSON.parse(text) : null;
+    } catch {
+        return text || null;
+    }
+}
+
+export async function request(path, { method = "GET", body, headers } = {}) {
+    const res = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers: {
+            ...(body ? { "Content-Type": "application/json" } : {}),
+            ...(headers || {}),
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: "include", //  cookies/session for oauth
+    });
+
+    const data = await parseBody(res);
+
+    if (!res.ok) {
+        const message =
+            (data && (data.message || data.error || data.detail)) ||
+            `Request failed (${res.status})`;
+        throw new Error(message);
+    }
+
+    return data;
+}

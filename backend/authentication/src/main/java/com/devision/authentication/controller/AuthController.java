@@ -39,9 +39,13 @@ public class AuthController {
         String correlationId = UUID.randomUUID().toString();
         //  Send Kafka event to Applicant service
         AuthToApplicantEvent event = new AuthToApplicantEvent(
+                correlationId,
                 user.getEmail(),
                 user.getFullName(),
-                correlationId
+                request.phoneNumber(),
+                request.country(),
+                request.city(),
+                request.streetAddress()
         );
         kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_TOPIC, event);
         jwtUserDto jwtUser = new jwtUserDto(

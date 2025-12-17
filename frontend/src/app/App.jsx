@@ -13,6 +13,7 @@ import {
   // PaymentPage,
   // AdminPage,
 } from '../pages';
+import AuthCallback from "../utils/AuthCallback.jsx";
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-
+          <Route path="/auth/callback" element={<AuthCallback />}/>
         {/* Future routes */}
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/jobs" element={<JobListPage />} />

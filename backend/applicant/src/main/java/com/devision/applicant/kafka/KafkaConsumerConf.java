@@ -1,7 +1,6 @@
 package com.devision.applicant.kafka;
 
 import com.devision.applicant.config.KafkaConstant;
-import com.devision.applicant.dto.AutheticationApplicantCodeWithUuid;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
