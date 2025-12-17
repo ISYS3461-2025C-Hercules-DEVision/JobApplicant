@@ -1,4 +1,4 @@
-package com.devision.applicant.entity;
+package com.devision.applicant.model;
 
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -9,6 +9,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -30,6 +32,9 @@ public class Applicant {
     @Field(name = "email")
     private String email;      // UNIQUE
 
+    @Field(name = "password")
+    private String password; //store hashed password
+
     @Field(name = "country")
     private String country;    // shard key
 
@@ -42,6 +47,9 @@ public class Applicant {
     @Field(name = "phoneNumber")
     private String phoneNumber;
 
+    @Field(name = "objectiveSummary")
+    private String objectiveSummary;
+
     @Field(name = "profileImageUrl")
     private String profileImageUrl;
 
@@ -52,6 +60,12 @@ public class Applicant {
     @Field(name = "isArchived")
     @Builder.Default
     private Boolean isArchived = false;
+
+    private List<Education> educations = new ArrayList<>();
+    private List<WorkExperience> experiences = new ArrayList<>();
+
+    private List<String> skills = new ArrayList<>();
+    private List<MediaPortfolio> mediaPortfolios = new ArrayList<>();
 
     @CreatedDate
     @Field(name = "createdAt")

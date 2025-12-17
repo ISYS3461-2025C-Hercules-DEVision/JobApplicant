@@ -1,23 +1,30 @@
 package com.devision.applicant.service;
 
 import com.devision.applicant.api.ApplicantMapper;
-import com.devision.applicant.dto.ApplicantCreateRequest;
-import com.devision.applicant.dto.ApplicantDTO;
-import com.devision.applicant.dto.ApplicantUpdateRequest;
-import com.devision.applicant.entity.Applicant;
+import com.devision.applicant.dto.*;
+import com.devision.applicant.enums.Visibility;
+import com.devision.applicant.model.Applicant;
+import com.devision.applicant.model.MediaPortfolio;
+import com.devision.applicant.repository.ApplicantRepository;
+import com.devision.applicant.repository.MediaPortfolioRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class ApplicantServiceImpl implements ApplicantService {
     private final ApplicantRepository repository;
+    private final MediaPortfolioRepository mediaPortfolioRepository;
+    private final MediaService mediaService;
 
-    public ApplicantServiceImpl(ApplicantRepository repository) {
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, MediaService mediaService) {
         this.repository = repository;
+        this.mediaPortfolioRepository = mediaPortfolioRepository;
+        this.mediaService = mediaService;
     }
 
     @Override
@@ -65,4 +72,73 @@ public class ApplicantServiceImpl implements ApplicantService {
         a.setDeletedAt(LocalDateTime.now());
         repository.save(a);
     }
+
+    @Override
+    public ApplicantDTO uploadProfileImage(String id, UploadAvatarRequest request){
+        Applicant a = repository.findById(id)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+
+        try{
+            String avatarUrl = mediaService.uploadProfileImage(request.file(), id);
+            a.setProfileImageUrl(avatarUrl);
+            Applicant saved = repository.save(a);
+            return ApplicantMapper.toDto(saved);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload avatar");
+        }
+    }
+
+    @Override
+    public MediaPortfolio uploadMediaPortfolio(String applicantId, UploadMediaPortfolioRequest request){
+         repository.findById(applicantId)
+                 .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+
+        try{
+            return mediaService.uploadMediaPortfolio(
+                    request.file(),
+                    applicantId,
+                    request.title(),
+                    request.description(),
+                    request.visibility() != null ? request.visibility() : Visibility.PRIVATE
+            );
+
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload portfolio");
+        }
+    }
+    @Override
+    public List<MediaPortfolio> getMediaPortfolio(String applicantId, Visibility visibility){
+        repository.findById(applicantId)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+
+        if(visibility == null){
+            return mediaPortfolioRepository.findByApplicantId(applicantId);
+        }
+        return mediaPortfolioRepository.findByApplicantIdAndVisibility(applicantId, visibility);
+    }
+
+    @Override
+    public void deleteMediaPortfolio(String applicantId, String mediaId){
+        repository.findById(applicantId)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+
+        MediaPortfolio mediaPortfolio = mediaPortfolioRepository.findById(mediaId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found"));
+
+        if(!mediaPortfolio.getApplicantId().equals(applicantId)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own portfolio");
+        }
+
+        try{
+            mediaService.deleteMedia(mediaId, applicantId);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete media from storage");
+        }
+    }
+
+
 }
