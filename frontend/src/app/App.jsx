@@ -14,11 +14,13 @@ import {
   // AdminPage,
 } from '../pages';
 import AuthCallback from "../utils/AuthCallback.jsx";
+import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
 
 function App() {
   return (
     <Router>
       <Routes>
+          <Route path="/adminLogin" element={<AdminLogin />} />
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
