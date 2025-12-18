@@ -1,40 +1,19 @@
 package com.devision.applicant.service;
 
-// ImageService.java (Hypothetical Service Class)
-import com.cloudinary.Cloudinary;
-
-
-import java.util.HashMap;
-import java.util.Map;
-
+import com.devision.applicant.enums.MediaType;
+import com.devision.applicant.enums.Visibility;
+import com.devision.applicant.model.MediaPortfolio;
 import org.springframework.web.multipart.MultipartFile;
 
-public class ImageService {
+import java.io.IOException;
 
-    private final Cloudinary cloudinary;
+public interface ImageService {
 
-    // Constructor Injection
-    public ImageService(Cloudinary cloudinary) {
-        this.cloudinary = cloudinary;
-    }
+    public String uploadProfileImage(MultipartFile file, String applicantId) throws Exception;
 
-    public String uploadImage(MultipartFile file, String folder) throws Exception {
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("File cannot be empty.");
-        }
+    public MediaPortfolio uploadMediaPortfolio(MultipartFile file, String applicantId, String title, String description, Visibility visibility) throws Exception;
 
-        // The raw byte array is what the cloudinary SDK expects
-        byte[] fileBytes = file.getBytes();
+    public MediaType determineMediaType(String resourceType);
 
-        // Configuration for the upload
-        Map<String, Object> options = new HashMap<>();
-        options.put("folder", folder);
-        options.put("resource_type", "auto");
-
-        // Execute the upload and get the result map
-        Map result = cloudinary.uploader().upload(fileBytes, options);
-
-        // Extract the secure URL from the result
-        return (String) result.get("secure_url");
-    }
+    public void deleteMedia(String mediaId, String applicantId) throws IOException;
 }

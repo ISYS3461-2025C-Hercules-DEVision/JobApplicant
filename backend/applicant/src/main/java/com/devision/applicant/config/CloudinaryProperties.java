@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "cloudinary")
 public class CloudinaryProperties {
-    
+
     @Value("${cloudinary.cloud-name}")
     private String cloudName;
 

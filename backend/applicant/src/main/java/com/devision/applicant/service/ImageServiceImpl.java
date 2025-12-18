@@ -7,7 +7,6 @@ import com.devision.applicant.enums.MediaType;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.repository.MediaPortfolioRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,11 +15,11 @@ import java.time.Instant;
 import java.util.Map;
 
 @Service
-public class MediaServiceImpl implements MediaService{
+public class ImageServiceImpl implements ImageService{
     private final Cloudinary cloudinary;
     private final MediaPortfolioRepository mediaRepo;
 
-    public MediaServiceImpl(Cloudinary cloudinary, MediaPortfolioRepository mediaRepo){
+    public ImageServiceImpl(Cloudinary cloudinary, MediaPortfolioRepository mediaRepo){
         this.cloudinary = cloudinary;
         this.mediaRepo = mediaRepo;
     }

@@ -7,6 +7,7 @@ import com.devision.applicant.model.Applicant;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,16 +16,17 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 public class ApplicantServiceImpl implements ApplicantService {
     private final ApplicantRepository repository;
     private final MediaPortfolioRepository mediaPortfolioRepository;
-    private final MediaService mediaService;
+    private final ImageService imageService;
 
-    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, MediaService mediaService) {
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService) {
         this.repository = repository;
         this.mediaPortfolioRepository = mediaPortfolioRepository;
-        this.mediaService = mediaService;
+        this.imageService = mediaService;
     }
 
     @Override
@@ -80,7 +82,7 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
         try{
-            String avatarUrl = mediaService.uploadProfileImage(request.file(), id);
+            String avatarUrl = imageService.uploadProfileImage(request.file(), id);
             a.setProfileImageUrl(avatarUrl);
             Applicant saved = repository.save(a);
             return ApplicantMapper.toDto(saved);
@@ -93,10 +95,10 @@ public class ApplicantServiceImpl implements ApplicantService {
     public MediaPortfolio uploadMediaPortfolio(String applicantId, UploadMediaPortfolioRequest request){
          repository.findById(applicantId)
                  .filter(x -> x.getDeletedAt() == null)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
         try{
-            return mediaService.uploadMediaPortfolio(
+            return imageService.uploadMediaPortfolio(
                     request.file(),
                     applicantId,
                     request.title(),
@@ -108,16 +110,17 @@ public class ApplicantServiceImpl implements ApplicantService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload portfolio");
         }
     }
+
     @Override
-    public List<MediaPortfolio> getMediaPortfolio(String applicantId, Visibility visibility){
+    public List<MediaPortfolio> getMediaPortfolio(String applicantId, Visibility visibility) {
         repository.findById(applicantId)
                 .filter(x -> x.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
-        if(visibility == null){
-            return mediaPortfolioRepository.findByApplicantId(applicantId);
-        }
-        return mediaPortfolioRepository.findByApplicantIdAndVisibility(applicantId, visibility);
+            if (visibility == null) {
+                return mediaPortfolioRepository.findByApplicantId(applicantId);
+            }
+            return mediaPortfolioRepository.findByApplicantIdAndVisibility(applicantId, visibility);
     }
 
     @Override
@@ -134,7 +137,7 @@ public class ApplicantServiceImpl implements ApplicantService {
         }
 
         try{
-            mediaService.deleteMedia(mediaId, applicantId);
+            imageService.deleteMedia(mediaId, applicantId);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete media from storage");
         }

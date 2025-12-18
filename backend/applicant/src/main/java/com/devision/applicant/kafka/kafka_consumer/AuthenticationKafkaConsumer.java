@@ -62,7 +62,11 @@ public class AuthenticationKafkaConsumer {
                 city,
                 address,
                 phoneNumber,
-                null    // profileImageUrl
+                null,
+                null,
+                null,
+                null,
+                null
         );
 
         ApplicantDTO created = applicantService.create(req);
