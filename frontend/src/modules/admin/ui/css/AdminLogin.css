@@ -47,8 +47,7 @@
 }
 
 .dv-shell{
-    width:min(1100px, 100%);
-    display:grid;
+    width:min(600px, 100%);
     grid-template-columns: 1.05fr .95fr;
     gap:22px;
     align-items:stretch;
@@ -87,7 +86,7 @@
 /* Brand panel */
 .dv-brand{
     padding:34px 34px 30px;
-    min-height:580px;
+    min-height:551px;
     display:flex;
     flex-direction:column;
     justify-content:space-between;
@@ -208,7 +207,6 @@
     align-items:center;
     justify-content:space-between;
     gap:12px;
-    margin-bottom:18px;
 }
 
 .dv-formHeader h2{
@@ -234,7 +232,6 @@
     white-space:nowrap;
 }
 
-.dv-formBody{ margin-top:18px; }
 
 .dv-fields{
     display:grid;
