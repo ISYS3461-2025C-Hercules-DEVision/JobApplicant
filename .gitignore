@@ -11,10 +11,7 @@ temp/
 ###########################
 # Environment files
 ###########################
-.env
-.env.local
-.env.development.local
-.env.production.local
+
 
 ###########################
 # Node.js / React frontend
