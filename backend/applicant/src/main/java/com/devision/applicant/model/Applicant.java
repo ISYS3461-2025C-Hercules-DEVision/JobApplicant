@@ -2,6 +2,7 @@ package com.devision.applicant.model;
 
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class Applicant {
 
     @Field(name = "applicantId")
+    @Id
     private String applicantId = UUID.randomUUID().toString();   // PK, UUID
 
     @Field(name = "fullName")
