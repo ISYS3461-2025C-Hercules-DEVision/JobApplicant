@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
+import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
+import "bootstrap/dist/css/bootstrap.min.css";
 import {
   HomePage,
   LoginPage,
@@ -15,6 +15,12 @@ import {
 } from '../pages';
 import AuthCallback from "../utils/AuthCallback.jsx";
 import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
+import  AdminApplication from "../modules/admin/ui/AdminPages/AdminApplication.jsx";
+import CompanyTable from "../modules/admin/ui/AdminPages/CompanyTable.jsx";
+import ApplicantTable from "../modules/admin/ui/AdminPages/ApplicantTable.jsx";
+import JobPostTable from "../modules/admin/ui/AdminPages/JobPostTable.jsx";
+import React from "react";
+import AdminDashboard from "../modules/admin/ui/AdminDashboard.jsx";
 
 function App() {
   return (
@@ -31,9 +37,30 @@ function App() {
         <Route path="/jobs" element={<JobListPage />} />
         {/* <Route path="/job/:id" element={<JobDetailPage />} /> */}
         <Route path="/apply/:id" element={<ApplicationPage />} />
-        {/* <Route path="/dashboard" element={<DashboardPage />} /> */}
-        {/* <Route path="/payment" element={<PaymentPage />} /> */}
-        {/* <Route path="/admin" element={<AdminPage />} /> */}
+
+
+
+
+
+          <Route path="/adminDashboard" element={<AdminDashboard />}>
+              <Route index element={<ApplicantTable />} />  {/* default right page */}
+              <Route path="adminApplicants" element={<ApplicantTable />} />
+              <Route path="adminCompanies" element={<CompanyTable />} />
+              <Route path="adminApplications" element={<AdminApplication />} />
+              <Route path="adminJobs" element={<JobPostTable />} />
+          </Route>
+
+          <Route
+              path="*"
+              element={
+                  <div className="p-6">
+                      <div className="text-lg font-semibold text-slate-900">Not found</div>
+                      <div className="mt-1 text-sm text-slate-500">
+                          The page you are looking for doesn’t exist.
+                      </div>
+                  </div>
+              }
+          />
       </Routes>
     </Router>
   );
