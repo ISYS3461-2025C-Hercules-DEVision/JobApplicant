@@ -38,6 +38,7 @@ public class ApplicantController {
         return service.getAll();
     }
 
+    //WORKED
     @PutMapping("/{id}")
     public ApplicantDTO update(@PathVariable String id,
                                @Valid @RequestBody ApplicantUpdateRequest request) {
