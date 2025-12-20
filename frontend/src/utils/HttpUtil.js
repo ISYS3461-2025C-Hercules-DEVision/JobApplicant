@@ -11,6 +11,10 @@ async function parseBody(res) {
 }
 
 export async function request(path, { method = "GET", body, headers } = {}) {
+
+    const url = `${API_BASE}${path}`;
+    console.log(`Actual url being called: ${url}`);
+
     const res = await fetch(`${API_BASE}${path}`, {
         method,
         headers: {

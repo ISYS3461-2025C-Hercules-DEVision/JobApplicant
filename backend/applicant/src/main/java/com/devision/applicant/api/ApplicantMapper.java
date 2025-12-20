@@ -3,7 +3,9 @@ package com.devision.applicant.api;
 import com.devision.applicant.dto.ApplicantCreateRequest;
 import com.devision.applicant.dto.ApplicantDTO;
 import com.devision.applicant.dto.ApplicantUpdateRequest;
+import com.devision.applicant.dto.EducationDTO;
 import com.devision.applicant.model.Applicant;
+import com.devision.applicant.model.Education;
 
 import java.time.LocalDateTime;
 
