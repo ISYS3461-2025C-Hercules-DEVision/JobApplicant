@@ -1,17 +1,17 @@
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import {useProfile} from "../hooks/useProfile.js";
+function EducationSection() {
 
-function EducationSection({id}) {
-
-  const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(id);
+  const applicantId = "2c79ba28-b646-4426-b140-284f448b3da4";
+  const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
 
   const [educations, setEducations] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   //Sync education when profile load
-  useState(() => {
+  useEffect(() => {
     if(profile?.educations){
       setEducations(profile.educations.map(edu => ({
         educationId: edu.educationId || null,
@@ -70,8 +70,8 @@ function EducationSection({id}) {
     setIsEditing(false);
   };
 
-  if(profileLoading) return <p>Loading Education....</p>;
-  if(profileError) return <p>Error: {profileError.message}</p>;
+  if(profileLoading) return <p className="text-center py-6">Loading Education....</p>;
+  if(profileError) return <p className="text-center py-6">Error: {profileError.message}</p>;
 
   return (
       <SectionWrapper

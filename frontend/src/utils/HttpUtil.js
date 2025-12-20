@@ -15,13 +15,14 @@ export async function request(path, { method = "GET", body, headers } = {}) {
     const url = `${API_BASE}${path}`;
     console.log(`Actual url being called: ${url}`);
 
+    const isFormData = body instanceof FormData;
     const res = await fetch(`${API_BASE}${path}`, {
         method,
         headers: {
-            ...(body ? { "Content-Type": "application/json" } : {}),
+            ...(body && !isFormData ? { "Content-Type": "application/json" } : {}),
             ...(headers || {}),
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
         credentials: "include", //  cookies/session for oauth
     });
 

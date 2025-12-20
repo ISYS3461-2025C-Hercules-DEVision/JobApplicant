@@ -25,16 +25,13 @@ public class ImageServiceImpl implements ImageService{
     }
 
     @Override
-    public String uploadProfileImage(MultipartFile file, String applicantId) throws Exception{
-        Map params = ObjectUtils.asMap(
-                "folder", "applicants/" + applicantId + "/avatar",
-                "transformation", new Transformation()
-                        .width(200).height(200).crop("thumb").gravity("face").radius("max"),
-                "overwrite", true,
-                "public_id", "avatar"
-        );
-        Map result = cloudinary.uploader().upload(file.getBytes(), params);
-        return (String) result.get("secure_url");
+    public String uploadProfileImage(MultipartFile file, String applicantId) throws IOException {
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                "folder", "applicants/avatars",
+                "public_id", "avatar_" + applicantId,
+                "overwrite", true
+        ));
+        return (String) uploadResult.get("secure_url");
     }
 
     public MediaPortfolio uploadMediaPortfolio(MultipartFile file,

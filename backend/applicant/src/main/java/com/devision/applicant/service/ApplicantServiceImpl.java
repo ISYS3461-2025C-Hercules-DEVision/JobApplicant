@@ -1,5 +1,6 @@
 package com.devision.applicant.service;
 
+import com.cloudinary.Cloudinary;
 import com.devision.applicant.api.ApplicantMapper;
 import com.devision.applicant.dto.*;
 import com.devision.applicant.enums.Visibility;
@@ -8,6 +9,7 @@ import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
