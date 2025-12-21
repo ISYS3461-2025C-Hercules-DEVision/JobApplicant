@@ -22,6 +22,7 @@ public class ApplicantController {
         this.service = service;
     }
 
+    //WORKED
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApplicantDTO create(@Valid @RequestBody ApplicantCreateRequest request) {
@@ -58,6 +59,7 @@ public class ApplicantController {
         return service.deleteProfileByField(id, fieldName);
     }
 
+    //WORKED
     //Profile Image
     @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
@@ -66,6 +68,7 @@ public class ApplicantController {
         return service.uploadProfileImage(id, request);
     }
 
+    //WORKED
     //Media Portfolio
     @PostMapping(value = "/{id}/portfolio", consumes = "multipart/form-data")
     public MediaPortfolio uploadPortfolio(@PathVariable String id,
@@ -79,7 +82,7 @@ public class ApplicantController {
 
     }
 
-    //WORKED
+
     @GetMapping("/{id}/portfolio")
     public List<MediaPortfolio> getPortfolio(@PathVariable String id,
                                              @RequestParam(value = "visibility", required = false) Visibility visibility){

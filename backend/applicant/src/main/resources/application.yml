@@ -5,14 +5,20 @@ spring:
   application:
     name: applicant-service
 
+  servlet:
+    multipart:
+      max-request-size: 25MB
+      max-file-size: 25MB
   kafka:
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
   mongodb:
     database: ja_applicant
     uri: mongodb+srv://devision_db_user:s08102000@devision-cluster.odwbbcy.mongodb.net/ja_applicant?retryWrites=true&w=majority&appName=devision-cluster
+
 eureka:
   instance:
     hostname: localhost
@@ -22,7 +28,6 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
-
 
 cloudinary:
   cloud-name: defnnp8q2
