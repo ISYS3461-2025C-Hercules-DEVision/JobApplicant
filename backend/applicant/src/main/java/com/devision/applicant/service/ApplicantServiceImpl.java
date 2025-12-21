@@ -78,6 +78,58 @@ public class ApplicantServiceImpl implements ApplicantService {
     }
 
     @Override
+    public ApplicantDTO deleteProfileByField(String id, String fieldName){
+        Applicant a = repository.findById(id)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+
+        switch (fieldName){
+            case "fullName":
+                a.setFullName(null);
+                break;
+            case "email":
+                a.setEmail(null);
+                break;
+            case "country":
+                a.setCountry(null);
+                break;
+            case "city":
+                a.setCity(null);
+                break;
+            case "streetAddress":
+                a.setStreetAddress(null);
+                break;
+            case "phoneNumber":
+                a.setPhoneNumber(null);
+                break;
+            case "objectiveSummary":
+                a.setObjectiveSummary(null);
+                break;
+            case "profileImageUrl":
+                a.setProfileImageUrl(null);
+                break;
+            case "skills":
+                a.setSkills(null);
+                break;
+            case "educations":
+                a.setEducations(null);
+                break;
+            case "experiences":
+                a.setExperiences(null);
+                break;
+            case "mediaPortfolios":
+                a.setMediaPortfolios(null);
+                break;
+            default:
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid field name: " + fieldName);
+        }
+
+        //Save the updated
+        Applicant saved = repository.save(a);
+        return ApplicantMapper.toDto(saved);
+    }
+
+    @Override
     public ApplicantDTO uploadProfileImage(String id, UploadAvatarRequest request){
         Applicant a = repository.findById(id)
                 .filter(x -> x.getDeletedAt() == null)

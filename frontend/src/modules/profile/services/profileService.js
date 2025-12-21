@@ -27,8 +27,10 @@ export const profileService = {
         });
     },
 
-    //DELETE profile
-    deleteProfile(applicantId){
-        return request(`/api/v1/applicants/${applicantId}`, {method: "DELETE"});
+    //DELETE profile by specific field
+    deleteProfileByField(applicantId, fieldName){
+        return request(`api/v1/applicants/${applicantId}/fieldName/${fieldName}`,{
+            method: "DELETE",
+        });
     },
 };

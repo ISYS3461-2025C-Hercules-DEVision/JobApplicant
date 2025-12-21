@@ -41,6 +41,7 @@ public class ApplicantMapper {
         if (req.objectiveSummary() != null) a.setObjectiveSummary(req.objectiveSummary());
         if (req.educations() != null) a.setEducations(req.educations());
         if (req.experiences() != null) a.setExperiences(req.experiences());
+        if (req.skills() != null) a.setSkills(req.skills());
         if (req.activated() != null) a.setIsActivated(req.activated());
         if (req.archived() != null) a.setIsArchived(req.archived());
         a.setUpdatedAt(LocalDateTime.now());

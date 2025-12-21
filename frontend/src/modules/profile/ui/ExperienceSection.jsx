@@ -1,9 +1,10 @@
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
-import {useExperience} from "../hooks/useExperience.js";
+import {useProfile} from "../hooks/useProfile.js";
 import {useEffect, useState} from "react";
-function ExperienceSection({applicantId}) {
+function ExperienceSection() {
 
-  const {experiences, loading, error, updateExperiences} = useExperience(applicantId);
+  const applicantId = "ef23f942-8a9c-46bb-a68e-ee140b2720c1";
+  const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
 
   const [localExperiences, setLocalExperiences] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -11,13 +12,21 @@ function ExperienceSection({applicantId}) {
 
   //sync local state when data loads
   useEffect(() => {
-    if(experiences) {
-      setLocalExperiences(experiences.map(exp => ({...exp})));
+    if(profile?.experiences){
+      setLocalExperiences(profile.experiences.map(exp => ({
+        workExpId : exp.workExpId || null,
+        applicantId: exp.applicantId || applicantId,
+        jobTitle : exp.jobTitle || '',
+        companyName : exp.companyName || '',
+        fromYear : exp.fromYear || '',
+        toYear : exp.toYear || '',
+        description : exp.description || '',
+      })));
     }
-  }, [experiences]);
+  }, [profile, applicantId]);
 
   //add new experience
-  const addExperience = () => {
+  const handleAdd = () => {
     setLocalExperiences([
         ...localExperiences,
       {
@@ -51,9 +60,9 @@ function ExperienceSection({applicantId}) {
   const handleSave = async () => {
     setSaving(true);
     try{
-      await updateExperiences(localExperiences);
+      await updateProfile({experiences: localExperiences});
       setIsEditing(false);
-      alert('Experience updated successfully!');
+      alert('Experience saved successfully!');
     }catch (err){
       alert('Failed to save: ' + err.message);
     } finally {
@@ -62,20 +71,20 @@ function ExperienceSection({applicantId}) {
   };
 
   const handleCancel = () => {
-    setLocalExperiences(experiences || []);
+    setLocalExperiences(profile?.experiences || []);
     setIsEditing(false);
   };
 
-  if(loading) return <p className="text-center py-6">Loading experiences....</p>;
-  if(error) return <p className="text-center py-6">Error: {error.message}</p>;
+  if(profileLoading) return <p className="text-center py-6">Loading experiences....</p>;
+  if(profileError) return <p className="text-center py-6">Error: {profileError.message}</p>;
 
 
   return (
       <SectionWrapper
         title="Experience"
         onEdit={() => setIsEditing(true)}
-        onAdd={addExperience}
-        showEditButtons={!isEditing} //Hide button when editting
+        onAdd={handleAdd}
+        showEditButtons = {!isEditing} //Hide button when editing
   >
         <div className="space-y-6">
           {isEditing ? (
@@ -158,7 +167,7 @@ function ExperienceSection({applicantId}) {
                   <p className="text-sm text-gray-600">
                     {exp.fromYear} - {exp.toYear || 'Present'}
                   </p>
-                  <p className="mt-2 text-gray-600">{exp.description}</p>
+                  {exp.description && <p className="mt-2 text-gray-600">{exp.description}</p>}
                   </div>
                 ))
                 ) : (

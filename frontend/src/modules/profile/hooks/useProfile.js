@@ -36,10 +36,23 @@ export const useProfile = (applicantId) => {
         }
     };
 
+    //Delete profile by field
+    const deleteField = async (fieldName) => {
+        try{
+            const updated = await profileService.deleteProfileByField(applicantId, fieldName);
+            setProfile(updated);
+            return updated;
+        }catch (err) {
+            setError(err);
+            throw err;
+        }
+    }
+
     return {
         profile,
         loading,
         error,
         updateProfile,
+        deleteField,
     };
 }

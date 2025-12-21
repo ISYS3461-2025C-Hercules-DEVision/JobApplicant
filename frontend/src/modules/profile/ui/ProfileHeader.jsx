@@ -5,7 +5,7 @@ import { useProfile } from "../hooks/useProfile.js";
 import { profileService } from "../services/profileService.js"; // Import service
 
 function ProfileHeader() {
-  const applicantId = "2c79ba28-b646-4426-b140-284f448b3da4"; // Your real ID
+  const applicantId = "ef23f942-8a9c-46bb-a68e-ee140b2720c1"; // Your real ID
   const { profile, loading, error, updateProfile } = useProfile(applicantId);
 
   const [uploading, setUploading] = useState(false);

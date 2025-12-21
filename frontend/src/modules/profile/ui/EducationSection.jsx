@@ -3,7 +3,7 @@ import {useState, useEffect} from "react";
 import {useProfile} from "../hooks/useProfile.js";
 function EducationSection() {
 
-  const applicantId = "2c79ba28-b646-4426-b140-284f448b3da4";
+  const applicantId = "ef23f942-8a9c-46bb-a68e-ee140b2720c1";
   const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
 
   const [educations, setEducations] = useState([]);
@@ -15,6 +15,7 @@ function EducationSection() {
     if(profile?.educations){
       setEducations(profile.educations.map(edu => ({
         educationId: edu.educationId || null,
+        applicantId: edu.applicantId || applicantId,
         institution: edu.institution || '',
         degree : edu.degree || '',
         fromYear : edu.fromYear || '',
@@ -22,7 +23,7 @@ function EducationSection() {
         gpa : edu.gpa || '',
       })));
     }
-  }, [profile]);
+  }, [profile, applicantId]);
 
   const handleAdd = () => {
     setEducations([

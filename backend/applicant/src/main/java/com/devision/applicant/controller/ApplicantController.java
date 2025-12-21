@@ -52,6 +52,12 @@ public class ApplicantController {
         service.delete(id);
     }
 
+    @DeleteMapping("/{id}/field/{fieldName}")
+    @ResponseStatus(HttpStatus.OK)
+    public ApplicantDTO deleteProfileByField(@PathVariable String id, @PathVariable String fieldName){
+        return service.deleteProfileByField(id, fieldName);
+    }
+
     //Profile Image
     @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
