@@ -1,8 +1,8 @@
 package com.devision.applicant.service;
 
-import com.devision.applicant.dto.ApplicantCreateRequest;
-import com.devision.applicant.dto.ApplicantDTO;
-import com.devision.applicant.dto.ApplicantUpdateRequest;
+import com.devision.applicant.dto.*;
+import com.devision.applicant.enums.Visibility;
+import com.devision.applicant.model.MediaPortfolio;
 
 import java.util.List;
 
@@ -16,4 +16,14 @@ public interface ApplicantService {
     ApplicantDTO update(String id, ApplicantUpdateRequest request);
 
     void delete(String id);
+
+    ApplicantDTO deleteProfileByField(String id, String fieldName);
+
+    ApplicantDTO uploadProfileImage(String id, UploadAvatarRequest request);
+
+    MediaPortfolio uploadMediaPortfolio(String applicantId, UploadMediaPortfolioRequest request);
+
+    List<MediaPortfolio> getMediaPortfolio(String applicantId, Visibility visibility);
+
+    void deleteMediaPortfolio(String applicantId, String mediaId);
 }

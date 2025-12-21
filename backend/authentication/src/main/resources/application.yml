@@ -31,8 +31,7 @@ spring:
         spring.json.add.type.headers: false
 
   mongodb:
-    uri: mongodb+srv://ungxuandat11092001_db_user:JukYaMVqL6hlaMdG@authentication.wltiegf.mongodb.net/authentication?retryWrites=true&w=majority&appName=Authentication
-
+    uri: mongodb+srv://devision_db_user:s08102000@devision-cluster.odwbbcy.mongodb.net/ja_applicant?retryWrites=true&w=majority&appName=devision-cluster
 app:
   auth:
     jwt-secret: "DevisionSuperSecretKeyForJWT123456"

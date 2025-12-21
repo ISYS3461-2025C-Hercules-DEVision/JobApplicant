@@ -11,8 +11,8 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   mongodb:
-    uri: mongodb+srv://ungxuandat11092001_db_user:8ZaEZXpeGQ6Zpxbq@applicant.44pbxjf.mongodb.net/applicant-db?retryWrites=true&w=majority&appName=Applicant
-
+    database: ja_applicant
+    uri: mongodb+srv://devision_db_user:s08102000@devision-cluster.odwbbcy.mongodb.net/ja_applicant?retryWrites=true&w=majority&appName=devision-cluster
 eureka:
   instance:
     hostname: localhost
@@ -22,3 +22,9 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+
+cloudinary:
+  cloud-name: defnnp8q2
+  api-key: 698232283227636
+  api-secret: jCNt9BiZG5tth2Ve2uJseZxGCGY

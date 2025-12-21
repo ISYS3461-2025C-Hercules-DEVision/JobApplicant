@@ -1,4 +1,11 @@
 package com.devision.applicant.dto;
+
+import com.devision.applicant.model.Education;
+import com.devision.applicant.model.MediaPortfolio;
+import com.devision.applicant.model.WorkExperience;
+
+import java.util.List;
+
 public record ApplicantDTO(
         String applicantId,
         String fullName,
@@ -7,6 +14,11 @@ public record ApplicantDTO(
         String city,
         String streetAddress,
         String phoneNumber,
+        String objectiveSummary,
+        List<Education> educations,
+        List<WorkExperience> experiences,
+        List<String> skills,
+        List<MediaPortfolio> mediaPortfolios,
         String profileImageUrl,
         boolean activated,
         boolean archived
