@@ -66,6 +66,7 @@ public class AuthenticationKafkaConsumer {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
