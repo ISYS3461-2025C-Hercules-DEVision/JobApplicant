@@ -31,4 +31,5 @@ public class Subscription {
 
     private Instant createdAt;
     private Instant updatedAt;
+    private Instant endAt;
 }
