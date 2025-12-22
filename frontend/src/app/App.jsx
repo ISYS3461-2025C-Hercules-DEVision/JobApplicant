@@ -1,5 +1,5 @@
 import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
-import "bootstrap/dist/css/bootstrap.min.css";
+// import "bootstrap/dist/css/bootstrap.min.css";
 import {
   HomePage,
   LoginPage,
@@ -9,6 +9,7 @@ import {
   JobListPage,
   // JobDetailPage,
   ApplicationPage,
+  SubscriptionPage,
   // DashboardPage,
   // PaymentPage,
   // AdminPage,
@@ -37,6 +38,7 @@ function App() {
         <Route path="/jobs" element={<JobListPage />} />
         {/* <Route path="/job/:id" element={<JobDetailPage />} /> */}
         <Route path="/apply/:id" element={<ApplicationPage />} />
+        <Route path="/subscription" element={<SubscriptionPage />} />
 
 
 
