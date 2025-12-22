@@ -10,6 +10,7 @@ import {
   // JobDetailPage,
   ApplicationPage,
   SubscriptionPage,
+  SearchProfilePage
   // DashboardPage,
   // PaymentPage,
   // AdminPage,
@@ -33,12 +34,12 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
           <Route path="/auth/callback" element={<AuthCallback />}/>
-        {/* Future routes */}
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/jobs" element={<JobListPage />} />
         {/* <Route path="/job/:id" element={<JobDetailPage />} /> */}
         <Route path="/apply/:id" element={<ApplicationPage />} />
         <Route path="/subscription" element={<SubscriptionPage />} />
+        <Route path="/searchProfile" element={<SearchProfilePage />} />
 
 
 

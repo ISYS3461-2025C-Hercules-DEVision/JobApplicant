@@ -11,3 +11,4 @@ export { default as ApplicationPage } from './ApplicationPage';
 // export { default as PaymentPage } from './PaymentPage';
 // export { default as AdminPage } from './AdminPage';
 export { default as SubscriptionPage } from './SubscriptionPage';
+export { default as SearchProfilePage } from './SearchProfilePage';
