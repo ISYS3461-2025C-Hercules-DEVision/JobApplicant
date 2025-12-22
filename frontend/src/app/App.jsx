@@ -8,6 +8,7 @@ import {
   ProfilePage,
   JobListPage,
   // JobDetailPage,
+  NotificationPage,
   ApplicationPage,
   SubscriptionPage,
   SearchProfilePage
@@ -40,6 +41,8 @@ function App() {
         <Route path="/apply/:id" element={<ApplicationPage />} />
         <Route path="/subscription" element={<SubscriptionPage />} />
         <Route path="/searchProfile" element={<SearchProfilePage />} />
+        <Route path="/notifications" element={<NotificationPage />} />
+
 
 
 
