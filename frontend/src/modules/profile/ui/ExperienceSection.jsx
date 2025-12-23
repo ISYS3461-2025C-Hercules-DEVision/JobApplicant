@@ -50,9 +50,18 @@ function ExperienceSection() {
   };
 
   //Delete experience
-  const deleteExperience = (index) => {
-    if(window.confirm('Delete this experience ? ')){
-      setLocalExperiences(localExperiences.filter((_,i) => i !== index));
+  const deleteExperience = async (index) => {
+    if(window.confirm('Delete this experience ? ')) {
+      try {
+        //Remove locally
+        const updateExperience = localExperiences.filter((_,i) => i !== index);
+
+        //Save to backend
+        await updateProfile({experiences: updateExperience});
+        alert('Experience deleted successfully!');
+      }catch (err){
+        alert('Failed to delete' + err.message);
+      }
     }
   };
 
@@ -167,7 +176,7 @@ function ExperienceSection() {
                   <p className="text-sm text-gray-600">
                     {exp.fromYear} - {exp.toYear || 'Present'}
                   </p>
-                  {exp.description && <p className="mt-2 text-gray-600">{exp.description}</p>}
+                  {exp.description && (<p className="mt-2 text-gray-600">{exp.description}</p>)}
                   </div>
                 ))
                 ) : (

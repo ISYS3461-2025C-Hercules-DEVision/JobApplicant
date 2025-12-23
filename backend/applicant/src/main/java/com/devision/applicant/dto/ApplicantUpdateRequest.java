@@ -10,6 +10,8 @@ import java.util.WeakHashMap;
 
 public record ApplicantUpdateRequest(
 
+        String email,
+
         @Nullable
         @Size(max = 200)
         String fullName,

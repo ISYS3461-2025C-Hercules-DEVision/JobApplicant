@@ -42,5 +42,16 @@ export const useMediaPortfolio = (applicantId) => {
             setUploading(false);
         }
     };
-    return {mediaItems, loading, error, uploading, uploadMedia};
+
+    const deleteMedia = async (mediaId) => {
+        try{
+            await profileService.deleteMedia(applicantId, mediaId);
+            setMediaItems(mediaItems.filter(item => item.mediaId !== mediaId));
+        } catch (err) {
+            setError(err);
+            throw err;
+
+        }
+    }
+    return {mediaItems, loading, error, uploading, uploadMedia, deleteMedia};
 }
