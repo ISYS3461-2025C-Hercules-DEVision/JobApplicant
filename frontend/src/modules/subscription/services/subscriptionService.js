@@ -1,13 +1,12 @@
-import http from "@/lib/http";
+// import { request } from "../../../services/http";
 
-export const subscriptionService = {
-  getMySubscription() {
-    return http.get("/subscriptions/me");
-  },
+// export const subscriptionService = {
+//   getStatus: (applicantId) =>
+//     request(`/api/subscriptions/status/${applicantId}`),
 
-  createCheckoutSession() {
-    return http.post("/subscriptions/checkout", {
-      planType: "PREMIUM",
-    });
-  },
-};
+//   checkout: (payload) =>
+//     request("/api/subscriptions/checkout", {
+//       method: "POST",
+//       body: payload,
+//     }),
+// };

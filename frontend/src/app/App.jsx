@@ -10,7 +10,7 @@ import {
   // JobDetailPage,
   NotificationPage,
   ApplicationPage,
-  SubscriptionPage,
+  // SubscriptionPage,
   SearchProfilePage
   // DashboardPage,
   // PaymentPage,
@@ -39,7 +39,7 @@ function App() {
         <Route path="/jobs" element={<JobListPage />} />
         {/* <Route path="/job/:id" element={<JobDetailPage />} /> */}
         <Route path="/apply/:id" element={<ApplicationPage />} />
-        <Route path="/subscription" element={<SubscriptionPage />} />
+        {/* <Route path="/subscription" element={<SubscriptionPage />} /> */}
         <Route path="/searchProfile" element={<SearchProfilePage />} />
         <Route path="/notifications" element={<NotificationPage />} />
 
