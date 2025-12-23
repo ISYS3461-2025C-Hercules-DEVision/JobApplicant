@@ -63,6 +63,13 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .filter(x -> x.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
+        //Check if new updated email is different and already used by another applicant
+        if(req.email() != null && !req.email().equals(a.getEmail())) {
+            if (repository.existsByEmail(req.email())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
+            }
+        }
+
         ApplicantMapper.updateEntity(a, req);
         return ApplicantMapper.toDto(repository.save(a));
     }

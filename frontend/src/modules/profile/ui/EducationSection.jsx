@@ -46,9 +46,18 @@ function EducationSection() {
     setEducations(updated);
   };
 
-  const handleDelete = (index) => {
+  const handleDelete = async (index) => {
     if(window.confirm('Delete this education ?')){
-      setEducations(educations.filter((_, i) => i !== index));
+      try{
+      //Remove locally
+      const updatedEducation = educations.filter((_,i) => i !== index);
+
+      //save to backend
+      await updateProfile({educations: updatedEducation});
+      alert('Delete successfully!');
+      } catch (err){
+        alert('Cant delete this education: ' + err.message);
+      }
     }
   };
 
@@ -164,6 +173,8 @@ function EducationSection() {
                 {edu.fromYear} - {edu.toYear || 'Present'}
               </p>
                     {edu.gpa && <p className="text-sm"> GPA: {edu.gpa} </p> }
+
+                    {index < educations.length - 1 && (<hr className="my-6 border-t border-gray-300"/>)}
                   </div>
             ))
 

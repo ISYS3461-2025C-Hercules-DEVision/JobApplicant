@@ -32,6 +32,7 @@ public class ApplicantMapper {
     }
 
     public static void updateEntity(Applicant a, ApplicantUpdateRequest req) {
+        if (req.email() != null) a.setEmail(req.email());
         if (req.fullName() != null) a.setFullName(req.fullName());
         if (req.country() != null) a.setCountry(req.country());
         if (req.city() != null) a.setCity(req.city());
