@@ -44,6 +44,7 @@ public class ApplicantController {
     @PutMapping("/{id}")
     public ApplicantDTO update(@PathVariable String id,
                                @Valid @RequestBody ApplicantUpdateRequest request) {
+
         return service.update(id, request);
     }
 

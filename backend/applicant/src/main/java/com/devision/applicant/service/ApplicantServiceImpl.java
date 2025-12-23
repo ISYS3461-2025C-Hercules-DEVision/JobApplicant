@@ -1,22 +1,23 @@
 package com.devision.applicant.service;
 
-import com.cloudinary.Cloudinary;
 import com.devision.applicant.api.ApplicantMapper;
 import com.devision.applicant.dto.*;
 import com.devision.applicant.enums.Visibility;
+import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.model.Applicant;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -25,7 +26,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final MediaPortfolioRepository mediaPortfolioRepository;
     private final ImageService imageService;
 
-    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService) {
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, KafkaGenericProducer kafkaGenericProducer) {
         this.repository = repository;
         this.mediaPortfolioRepository = mediaPortfolioRepository;
         this.imageService = mediaService;
@@ -70,8 +71,26 @@ public class ApplicantServiceImpl implements ApplicantService {
             }
         }
 
+        //Flag for checking updating in fields country or skills
+        boolean countryChanged = req.country() != null & !req.country().equals(a.getCountry());
+        boolean skillsChanged = req.skills() != null && !Objects.equals(req.skills(),a.getSkills());
+
         ApplicantMapper.updateEntity(a, req);
-        return ApplicantMapper.toDto(repository.save(a));
+        Applicant saved = repository.save(a);
+        ApplicantDTO dto = ApplicantMapper.toDto(saved);
+
+        //Publish to Kafka when country or skills changed
+        if(countryChanged || skillsChanged){
+            ProfileUpdateEvent event = new ProfileUpdateEvent(
+                    saved.getApplicantId(),
+                    countryChanged ? "country" : "skills",
+                    countryChanged ? a.getCountry() : a.getSkills(),
+                    countryChanged ? req.country() : req.skills(),
+                    Instant.now()
+            );
+        }
+        return dto;
+//        return ApplicantMapper.toDto(repository.save(a));
     }
 
     @Override
