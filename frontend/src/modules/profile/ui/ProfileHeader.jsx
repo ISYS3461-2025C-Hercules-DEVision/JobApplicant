@@ -150,7 +150,7 @@ function ProfileHeader() {
                 border-2 border-black
                 font-bold rounded-md
                 bg-white text-black
-                hover:bg-primary hover:text-white hover:border-primary
+                hover:bg-primary hover:text-white
                 transition-all duration-200
               "
             >
