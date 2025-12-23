@@ -4,11 +4,7 @@ import com.devision.subscription.model.Subscription;
 
 public interface SubscriptionService {
 
-    Subscription activatePremium(String applicantId, String email);
+    Subscription activatePremium(String applicantId);
 
     Subscription getActiveSubscription(String applicantId);
-
-    boolean isPremium(String applicantId);
-
-    void expireSubscriptionIfNeeded(Subscription subscription);
 }

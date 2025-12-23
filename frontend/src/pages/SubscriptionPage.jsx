@@ -1,26 +1,19 @@
-import { useState } from "react";
 import HomeNavbar from "../components/Navbar/HomeNavbar";
 import FooterSection from "../components/Footer/FooterSection";
 
 import PlanCard from "../modules/subscription/ui/PlanCard";
 import SubscribeButton from "../modules/subscription/ui/SubscribeButton";
-import PaymentModal from "../modules/subscription/ui/PaymentModal";
+
+import { useSubscription } from "../modules/subscription/hooks/useSubscription";
+import { useCheckout } from "../modules/subscription/hooks/useCheckout";
 
 function SubscriptionPage() {
-  const [showPayment, setShowPayment] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
+  const { subscription, isPremium, loading } = useSubscription();
+  const { startCheckout } = useCheckout();
 
-  const userEmail = "applicant@email.com";
-
-  const handlePaymentSuccess = () => {
-    setIsPremium(true);
-    setShowPayment(false);
-
-    console.log("Payment recorded:", {
-      email: userEmail,
-      time: new Date().toISOString(),
-    });
-  };
+  if (loading) {
+    return <div className="text-center mt-20 font-black">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-light-gray flex flex-col">
@@ -68,23 +61,16 @@ function SubscriptionPage() {
         </div>
 
         {!isPremium && (
-          <SubscribeButton onClick={() => setShowPayment(true)} />
+          <SubscribeButton onClick={startCheckout} />
         )}
 
-        {isPremium && (
+        {isPremium && subscription?.expiryDate && (
           <div className="text-center mt-8 font-black">
-            You are currently on the Premium plan.
+            Premium valid until{" "}
+            {new Date(subscription.expiryDate).toLocaleDateString()}
           </div>
         )}
       </main>
-
-      {showPayment && (
-        <PaymentModal
-          email={userEmail}
-          onSuccess={handlePaymentSuccess}
-          onClose={() => setShowPayment(false)}
-        />
-      )}
 
       <FooterSection />
     </div>

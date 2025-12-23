@@ -7,8 +7,6 @@ import com.devision.subscription.service.SubscriptionService;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +14,6 @@ import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/subscriptions/webhook")
-@RequiredArgsConstructor
 public class StripeWebhookController {
 
     @Value("${stripe.webhook-secret}")
@@ -25,45 +22,45 @@ public class StripeWebhookController {
     private final PaymentTransactionRepository paymentRepo;
     private final SubscriptionService subscriptionService;
 
-    @PostMapping
-    public void handleWebhook(
+    public StripeWebhookController(
+            PaymentTransactionRepository paymentRepo,
+            SubscriptionService subscriptionService
+    ) {
+        this.paymentRepo = paymentRepo;
+        this.subscriptionService = subscriptionService;
+    }
+
+    @PostMapping("/stripe")
+    public void handleStripeWebhook(
             @RequestBody String payload,
             @RequestHeader("Stripe-Signature") String sigHeader
     ) {
-
         try {
             Event event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
 
             if ("checkout.session.completed".equals(event.getType())) {
 
-                Session session = (Session) event.getDataObjectDeserializer()
+                Session session = (Session) event
+                        .getDataObjectDeserializer()
                         .getObject()
                         .orElseThrow();
 
                 String applicantId = session.getMetadata().get("applicantId");
 
-                // 1️⃣ Save payment transaction
-                PaymentTransaction tx = PaymentTransaction.builder()
-                        .applicantId(applicantId)
-                        .email(session.getCustomerEmail())
-                        .amount(10)
-                        .currency("USD")
-                        .paymentStatus(PaymentStatus.SUCCESS)
-                        .transactionTime(Instant.now())
-                        .stripeSessionId(session.getId())
-                        .build();
+                PaymentTransaction tx = new PaymentTransaction();
+                tx.setApplicantId(applicantId);
+                tx.setEmail(session.getCustomerEmail());
+                tx.setPaymentStatus(PaymentStatus.SUCCESS);
+                tx.setTransactionTime(Instant.now());
+                tx.setStripeSessionId(session.getId());
 
                 paymentRepo.save(tx);
 
-                // 2️⃣ Activate subscription
-                subscriptionService.activatePremium(
-                        applicantId,
-                        session.getCustomerEmail()
-                );
+                subscriptionService.activatePremium(applicantId);
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Stripe webhook error", e);
+            throw new RuntimeException("Stripe webhook failed", e);
         }
     }
 }
