@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { authService } from "../services/authService.js";
+import { useAuthStore } from "../stores/authStore";
+
 
 export function useLogin({ onSuccess } = {}) {
-    const [formData, setFormData] = useState({ email: "", password: "" });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const login = useAuthStore((s) => s.login);
+  const loading = useAuthStore((s) => s.loading);
+  const error = useAuthStore((s) => s.error);
 
     function handleChange(e) {
         const { name, value } = e.target;
