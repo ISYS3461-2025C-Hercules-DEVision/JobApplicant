@@ -1,6 +1,7 @@
 package com.devision.applicant.service;
 
 import com.devision.applicant.api.ApplicantMapper;
+import com.devision.applicant.config.KafkaConstant;
 import com.devision.applicant.dto.*;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
@@ -12,12 +13,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -26,10 +29,13 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final MediaPortfolioRepository mediaPortfolioRepository;
     private final ImageService imageService;
 
-    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, KafkaGenericProducer kafkaGenericProducer) {
+    private final KafkaGenericProducer<Object> kafkaGenericProducer;
+
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, KafkaGenericProducer<Object> kafkaGenericProducer) {
         this.repository = repository;
         this.mediaPortfolioRepository = mediaPortfolioRepository;
         this.imageService = mediaService;
+        this.kafkaGenericProducer = kafkaGenericProducer;
     }
 
     @Override
@@ -65,32 +71,38 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
         //Check if new updated email is different and already used by another applicant
-        if(req.email() != null && !req.email().equals(a.getEmail())) {
+        if (req.email() != null && !req.email().equals(a.getEmail())) {
             if (repository.existsByEmail(req.email())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
             }
         }
 
         //Flag for checking updating in fields country or skills
-        boolean countryChanged = req.country() != null & !req.country().equals(a.getCountry());
-        boolean skillsChanged = req.skills() != null && !Objects.equals(req.skills(),a.getSkills());
+        boolean countryChanged = req.country() != null && !req.country().equals(a.getCountry());
+        boolean skillsChanged = req.skills() != null && !Objects.equals(req.skills(), a.getSkills());
 
         ApplicantMapper.updateEntity(a, req);
         Applicant saved = repository.save(a);
         ApplicantDTO dto = ApplicantMapper.toDto(saved);
 
         //Publish to Kafka when country or skills changed
-        if(countryChanged || skillsChanged){
+        if (countryChanged || skillsChanged) {
+            String correlationId = UUID.randomUUID().toString();
+
             ProfileUpdateEvent event = new ProfileUpdateEvent(
                     saved.getApplicantId(),
-                    countryChanged ? "country" : "skills",
-                    countryChanged ? a.getCountry() : a.getSkills(),
-                    countryChanged ? req.country() : req.skills(),
+                    skillsChanged ? "skills" : "country",
+                    skillsChanged ? a.getSkills() : a.getCountry(),
+                    skillsChanged ? req.skills() : req.country(),
                     Instant.now()
             );
+
+            kafkaGenericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
+            System.out.println("Published profile update to Kafka, correlationId: " + correlationId);
+
+//        return ApplicantMapper.toDto(repository.save(a));
         }
         return dto;
-//        return ApplicantMapper.toDto(repository.save(a));
     }
 
     @Override

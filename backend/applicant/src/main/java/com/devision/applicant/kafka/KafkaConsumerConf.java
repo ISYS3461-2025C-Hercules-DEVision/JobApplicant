@@ -45,6 +45,7 @@ public class KafkaConsumerConf {
         return factory;
     }
 
+    @Bean
     public ConcurrentKafkaListenerContainerFactory<String, JmToApplicantCodeWithUuid> jmKafkaListenerContainerFactory(){
         ConcurrentKafkaListenerContainerFactory<String, JmToApplicantCodeWithUuid> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();

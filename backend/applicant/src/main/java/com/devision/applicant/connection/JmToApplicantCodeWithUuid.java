@@ -1,10 +1,13 @@
 package com.devision.applicant.connection;
 
-public record JmToApplicantCodeWithUuid(String correlationId, Long id, String jmCode) {
-    public String getCorrelationId(){ return correlationId;}
-
-    public String getJmCode(){
-        return jmCode;
+public record JmToApplicantCodeWithUuid(String correlationId, String applicantId){
+    public String getCorrelationId(){
+        return correlationId;
     }
+
+    public String getApplicantId(){
+        return applicantId;
+    }
+
 
 }

@@ -1,44 +1,37 @@
 package com.devision.applicant.kafka.kafka_consumer;
 
 import com.devision.applicant.config.KafkaConstant;
-import com.devision.applicant.connection.ApplicantDescDto;
+import com.devision.applicant.connection.ApplicantToJmDescDto;
 import com.devision.applicant.connection.JmToApplicantCodeWithUuid;
+import com.devision.applicant.dto.ProfileUpdateResponseEvent;
 import com.devision.applicant.dto.common.common.DtoWithProcessId;
 import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.service.ApplicantServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-@Service
+@Component
 public class JmKafkaConsumer {
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private ObjectMapper mapper;
 
     @Autowired
-    private KafkaGenericProducer<DtoWithProcessId>kafkaGenericProducer;
-
-    @Autowired
-    private ApplicantServiceImpl applicantService;
+    private PendingJmRequest pendingJmRequest;
 
     @KafkaListener(
-            topics = KafkaConstant.APPLICATION_TOPIC,
+            topics = KafkaConstant.PROFILE_UPDATE_RESPONSE,
             groupId = KafkaConstant.APPLICANT_GROUP_ID,
-            containerFactory = "JmKafkaListenerContainerFactory"
+            containerFactory = "jmKafkaListenerContainerFactory"
     )
-    public void consume(String message){
+    public void consume(String message) throws Exception{
         //Process the received message
-        try{
-            System.out.println("Receive message: " + message);
-            JmToApplicantCodeWithUuid jm = objectMapper.readValue(message, JmToApplicantCodeWithUuid.class);
+        System.out.println("Received message from JM: " + message);
 
-            System.out.println(jm.getJmCode());
+        ProfileUpdateResponseEvent responseEvent = mapper.readValue(message, ProfileUpdateResponseEvent.class);
 
-            //Get the applicant country and skills
-            ApplicantDescDto applicantDescDto;
-        }
-
+        pendingJmRequest.complete(responseEvent.correlationId(), responseEvent);
     }
 }

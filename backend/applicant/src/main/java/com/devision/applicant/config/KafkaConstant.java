@@ -13,6 +13,4 @@ public class KafkaConstant {
     public static final String PROFILE_UPDATE_TOPIC = "applicant-profile-updates";
     public static final String PROFILE_UPDATE_RESPONSE = PROFILE_UPDATE_TOPIC + RESPONSE;
 
-    public static final String APPLICATION_TOPIC = "application-info";
-    public static final String APPLICATION_TOPIC_RESPONSE = APPLICATION_TOPIC + RESPONSE;
 }
