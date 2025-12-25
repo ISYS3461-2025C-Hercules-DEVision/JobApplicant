@@ -11,12 +11,12 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ApplicantToJmDescDto extends DtoWithProcessId {
+public class ApplicantToJmEvent extends DtoWithProcessId {
 
     private String country;
     private List<String> skills;
 
-    public ApplicantToJmDescDto(String correlationId, String country, List<String> skills){
+    public ApplicantToJmEvent(String correlationId, String country, List<String> skills){
         super(correlationId);
         this.country = country;
         this.skills = skills;

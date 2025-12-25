@@ -77,32 +77,8 @@ public class ApplicantServiceImpl implements ApplicantService {
             }
         }
 
-        //Flag for checking updating in fields country or skills
-        boolean countryChanged = req.country() != null && !req.country().equals(a.getCountry());
-        boolean skillsChanged = req.skills() != null && !Objects.equals(req.skills(), a.getSkills());
-
         ApplicantMapper.updateEntity(a, req);
-        Applicant saved = repository.save(a);
-        ApplicantDTO dto = ApplicantMapper.toDto(saved);
-
-        //Publish to Kafka when country or skills changed
-        if (countryChanged || skillsChanged) {
-            String correlationId = UUID.randomUUID().toString();
-
-            ProfileUpdateEvent event = new ProfileUpdateEvent(
-                    saved.getApplicantId(),
-                    skillsChanged ? "skills" : "country",
-                    skillsChanged ? a.getSkills() : a.getCountry(),
-                    skillsChanged ? req.skills() : req.country(),
-                    Instant.now()
-            );
-
-            kafkaGenericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
-            System.out.println("Published profile update to Kafka, correlationId: " + correlationId);
-
-//        return ApplicantMapper.toDto(repository.save(a));
-        }
-        return dto;
+        return ApplicantMapper.toDto(repository.save(a));
     }
 
     @Override

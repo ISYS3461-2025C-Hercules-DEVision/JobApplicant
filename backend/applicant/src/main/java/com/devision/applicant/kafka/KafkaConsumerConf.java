@@ -1,7 +1,7 @@
 package com.devision.applicant.kafka;
 
 import com.devision.applicant.config.KafkaConstant;
-import com.devision.applicant.connection.JmToApplicantCodeWithUuid;
+import com.devision.applicant.connection.ApplicantToJmCodeWithUuid;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +28,7 @@ public class KafkaConsumerConf {
     }
 
     @Bean
-    public ConsumerFactory<String, JmToApplicantCodeWithUuid> jmConsumerFactory() {
+    public ConsumerFactory<String, ApplicantToJmCodeWithUuid> jmConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KafkaConstant.KAFKA_HOST_URL);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaConstant.APPLICANT_GROUP_ID);
@@ -46,8 +46,8 @@ public class KafkaConsumerConf {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, JmToApplicantCodeWithUuid> jmKafkaListenerContainerFactory(){
-        ConcurrentKafkaListenerContainerFactory<String, JmToApplicantCodeWithUuid> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, ApplicantToJmCodeWithUuid> jmKafkaListenerContainerFactory(){
+        ConcurrentKafkaListenerContainerFactory<String, ApplicantToJmCodeWithUuid> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(jmConsumerFactory());
         return factory;

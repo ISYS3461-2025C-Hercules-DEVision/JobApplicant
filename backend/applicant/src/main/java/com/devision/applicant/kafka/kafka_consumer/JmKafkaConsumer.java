@@ -1,12 +1,7 @@
 package com.devision.applicant.kafka.kafka_consumer;
 
 import com.devision.applicant.config.KafkaConstant;
-import com.devision.applicant.connection.ApplicantToJmDescDto;
-import com.devision.applicant.connection.JmToApplicantCodeWithUuid;
-import com.devision.applicant.dto.ProfileUpdateResponseEvent;
-import com.devision.applicant.dto.common.common.DtoWithProcessId;
-import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
-import com.devision.applicant.service.ApplicantServiceImpl;
+import com.devision.applicant.connection.ApplicantToJmCodeWithUuid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -26,12 +21,18 @@ public class JmKafkaConsumer {
             groupId = KafkaConstant.APPLICANT_GROUP_ID,
             containerFactory = "jmKafkaListenerContainerFactory"
     )
-    public void consume(String message) throws Exception{
+    public void consume(String message) throws Exception {
         //Process the received message
-        System.out.println("Received message from JM: " + message);
+        System.out.println("Received response from JM: " + message);
 
-        ProfileUpdateResponseEvent responseEvent = mapper.readValue(message, ProfileUpdateResponseEvent.class);
+        ApplicantToJmCodeWithUuid payload =
+                mapper.readValue(message, ApplicantToJmCodeWithUuid.class);
 
-        pendingJmRequest.complete(responseEvent.correlationId(), responseEvent);
+        String correlationId = payload.getCorrelationId();
+
+        pendingJmRequest.complete(correlationId, payload);
+
+        System.out.println("Completed pending request for correlationID: " + correlationId);
+        System.out.println("Pending map instance (Kafka): " + pendingJmRequest);
     }
 }

@@ -1,7 +1,10 @@
 package com.devision.applicant.controller;
 
+import com.devision.applicant.config.KafkaConstant;
+import com.devision.applicant.connection.ApplicantToJmEvent;
 import com.devision.applicant.dto.*;
 import com.devision.applicant.enums.Visibility;
+import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.service.ApplicantService;
 import jakarta.validation.Valid;
@@ -12,14 +15,16 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/applicants")
 public class ApplicantController {
     private final ApplicantService service;
-
-    public ApplicantController(ApplicantService service) {
+    private final KafkaGenericProducer<ApplicantToJmEvent> genericProducer;
+    public ApplicantController(ApplicantService service, KafkaGenericProducer<ApplicantToJmEvent> genericProducer) {
         this.service = service;
+        this.genericProducer = genericProducer;
     }
 
     //WORKED
@@ -45,6 +50,14 @@ public class ApplicantController {
     public ApplicantDTO update(@PathVariable String id,
                                @Valid @RequestBody ApplicantUpdateRequest request) {
 
+        String correlationId = UUID.randomUUID().toString();
+        ApplicantToJmEvent event = new ApplicantToJmEvent(
+                correlationId,
+                request.country(),
+                request.skills()
+        );
+
+        genericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
         return service.update(id, request);
     }
 
