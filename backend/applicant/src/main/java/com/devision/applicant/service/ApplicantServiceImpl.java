@@ -1,22 +1,26 @@
 package com.devision.applicant.service;
 
-import com.cloudinary.Cloudinary;
 import com.devision.applicant.api.ApplicantMapper;
+import com.devision.applicant.config.KafkaConstant;
 import com.devision.applicant.dto.*;
 import com.devision.applicant.enums.Visibility;
+import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.model.Applicant;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -25,10 +29,13 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final MediaPortfolioRepository mediaPortfolioRepository;
     private final ImageService imageService;
 
-    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService) {
+    private final KafkaGenericProducer<Object> kafkaGenericProducer;
+
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, KafkaGenericProducer<Object> kafkaGenericProducer) {
         this.repository = repository;
         this.mediaPortfolioRepository = mediaPortfolioRepository;
         this.imageService = mediaService;
+        this.kafkaGenericProducer = kafkaGenericProducer;
     }
 
     @Override
@@ -64,7 +71,7 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
         //Check if new updated email is different and already used by another applicant
-        if(req.email() != null && !req.email().equals(a.getEmail())) {
+        if (req.email() != null && !req.email().equals(a.getEmail())) {
             if (repository.existsByEmail(req.email())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
             }
