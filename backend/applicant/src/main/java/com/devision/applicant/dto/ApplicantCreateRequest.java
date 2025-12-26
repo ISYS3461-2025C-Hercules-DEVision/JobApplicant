@@ -13,9 +13,11 @@ public record ApplicantCreateRequest(
         @NotBlank
         @Size(max = 200)
         String fullName,
+
         @NotBlank
         @Email
         String email,
+
 
         String country,
         String city,
@@ -23,8 +25,8 @@ public record ApplicantCreateRequest(
         String phoneNumber,
         String objectiveSummary,
         String profileImageUrl,
-        List<String> skills,
         List<Education> educations,
         List<WorkExperience> experiences,
+        List<String> skills,
         List<MediaPortfolio> mediaPortfolios
 ) {}
