@@ -1,12 +1,12 @@
-// import { request } from "../../../services/http";
+import { request } from "../../../utils/HttpUtil";
 
-// export const subscriptionService = {
-//   getStatus: (applicantId) =>
-//     request(`/api/subscriptions/status/${applicantId}`),
+export const subscriptionService = {
+  getStatus: (applicantId) =>
+    request(`/api/subscriptions/status/${applicantId}`),
 
-//   checkout: (payload) =>
-//     request("/api/subscriptions/checkout", {
-//       method: "POST",
-//       body: payload,
-//     }),
-// };
+  checkout: (payload) =>
+    request("/api/subscriptions/checkout", {
+      method: "POST",
+      body: payload,
+    }),
+};
