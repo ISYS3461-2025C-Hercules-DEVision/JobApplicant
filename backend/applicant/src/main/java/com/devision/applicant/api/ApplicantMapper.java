@@ -21,11 +21,13 @@ public class ApplicantMapper {
         a.setStreetAddress(req.streetAddress());
         a.setPhoneNumber(req.phoneNumber());
         a.setObjectiveSummary(req.objectiveSummary());
+        a.setProfileImageUrl(req.profileImageUrl());
+        a.setIsActivated(true);
+        a.setIsArchived(true);
         a.setEducations(req.educations());
         a.setExperiences(req.experiences());
-        a.setProfileImageUrl(req.profileImageUrl());
-        a.setIsActivated(false);
-        a.setIsArchived(false);
+        a.setSkills(req.skills());
+        a.setMediaPortfolios(req.mediaPortfolios());
         a.setCreatedAt(LocalDateTime.now());
         a.setUpdatedAt(LocalDateTime.now());
         return a;
@@ -57,13 +59,13 @@ public class ApplicantMapper {
                 a.getStreetAddress(),
                 a.getPhoneNumber(),
                 a.getObjectiveSummary(),
+                a.getProfileImageUrl(),
+                Boolean.TRUE.equals(a.getIsActivated()),
+                Boolean.TRUE.equals(a.getIsArchived()),
                 a.getEducations(),
                 a.getExperiences(),
                 a.getSkills(),
-                a.getMediaPortfolios(),
-                a.getProfileImageUrl(),
-                Boolean.TRUE.equals(a.getIsActivated()),
-                Boolean.TRUE.equals(a.getIsArchived())
+                a.getMediaPortfolios()
         );
     }
 }

@@ -3,7 +3,7 @@ import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import {useMediaPortfolio} from "../hooks/useMediaPortfolio.js";
 
 function ActivitySection() {
-  const applicantId = "ef23f942-8a9c-46bb-a68e-ee140b2720c1";
+  const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
   const {mediaItems, loading, error, uploading, uploadMedia, deleteMedia} = useMediaPortfolio(applicantId);
 
   const [showUploadForm, setShowUploadForm] = useState(false);

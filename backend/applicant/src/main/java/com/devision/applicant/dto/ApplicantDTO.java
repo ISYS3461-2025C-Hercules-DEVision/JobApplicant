@@ -15,12 +15,12 @@ public record ApplicantDTO(
         String streetAddress,
         String phoneNumber,
         String objectiveSummary,
+        String profileImageUrl,
+        boolean activated,
+        boolean archived,
         List<Education> educations,
         List<WorkExperience> experiences,
         List<String> skills,
-        List<MediaPortfolio> mediaPortfolios,
-        String profileImageUrl,
-        boolean activated,
-        boolean archived
+        List<MediaPortfolio> mediaPortfolios
 ) {}
 
