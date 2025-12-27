@@ -1,5 +1,6 @@
 server:
-  port: ${SERVER_PORT}
+  port: ${SERVER_PORT:8087}
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -16,10 +17,11 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope: ${GOOGLE_SCOPES}
+            scope: ${GOOGLE_SCOPES:email,profile}
+            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
         provider:
           google:
-            issuer-uri: ${GOOGLE_ISSUER_URI}
+            issuer-uri: ${GOOGLE_ISSUER_URI:https://accounts.google.com}
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
