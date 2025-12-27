@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:8080}
+  port: ${SERVER_PORT}
 
 spring:
   application:
@@ -9,27 +9,28 @@ spring:
     multipart:
       max-request-size: 25MB
       max-file-size: 25MB
+
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+
   mongodb:
-    database: ja_applicant
-    uri: mongodb+srv://devision_db_user:s08102000@devision-cluster.odwbbcy.mongodb.net/ja_applicant?retryWrites=true&w=majority&appName=devision-cluster
+    database: ${MONGODB_DATABASE}
+    uri: ${MONGODB_URI}
 
 eureka:
   instance:
-    hostname: localhost
-    prefer-ip-address: false
+
+    hostname: ${EUREKA_INSTANCE_HOSTNAME}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_DEFAULT_ZONE}
 
 cloudinary:
-  cloud-name: defnnp8q2
-  api-key: 698232283227636
-  api-secret: jCNt9BiZG5tth2Ve2uJseZxGCGY
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}

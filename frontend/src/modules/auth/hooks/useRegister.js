@@ -1,169 +1,92 @@
-// import { useMemo, useState } from "react";
-// import { authService } from "../services/authService.js";
-
-// const initial = {
-//     fullName: "",
-//     email: "",
-//     password: "",
-//     passwordConfirmation: "",
-//     phoneNumber: "",
-//     country: "",
-//     city: "",
-//     streetAddress: "",
-// };
-
-// export function useRegister({ onSuccess } = {}) {
-//     const [formData, setFormData] = useState(initial);
-//     const [step, setStep] = useState(1);
-//     const [loading, setLoading] = useState(false);
-//     const [error, setError] = useState("");
-
-//     function handleChange(e) {
-//         const { name, value } = e.target;
-//         setFormData((p) => ({ ...p, [name]: value }));
-//     }
-
-//     const isPasswordMismatch = useMemo(() => {
-//         return (
-//             formData.password &&
-//             formData.passwordConfirmation &&
-//             formData.password !== formData.passwordConfirmation
-//         );
-//     }, [formData.password, formData.passwordConfirmation]);
-
-//     async function handleSubmit(e) {
-//         e.preventDefault();
-//         setError("");
-
-
-//         if (isPasswordMismatch) {
-//             setError("Password confirmation does not match.");
-//             return;
-//         }
-
-//         setLoading(true);
-//         try {
-//             // Adapt keys here if backend expects different field names
-//             const payload = {
-//                 fullName: formData.fullName,
-//                 email: formData.email,
-//                 password: formData.password,
-//                 phoneNumber: formData.phoneNumber,
-//                 country: formData.country,
-//                 city: formData.city,
-//                 streetAddress: formData.streetAddress,
-//             };
-
-//             const res = await authService.register(payload);
-
-//             // auto-store token if backend returns it
-//             const token = res?.token || res?.accessToken;
-//             if (token) localStorage.setItem("access_token", token);
-
-
-//             setStep(3);
-//             onSuccess?.(res);
-//         } catch (err) {
-//             setError(err?.message || "Register failed");
-//         } finally {
-//             setLoading(false);
-//         }
-//     }
-
-//     function signupWithGoogle() {
-//         authService.googleLogin();
-//     }
-
-//     return {
-//         formData,
-//         step,
-//         loading,
-//         error,
-//         isPasswordMismatch,
-//         handleChange,
-//         handleSubmit,
-//         signupWithGoogle,
-//         setStep,
-//     };
-// }
-
-
 
 import { useMemo, useState } from "react";
-import { useAuthStore } from "../stores/authStore";
+import { useDispatch, useSelector } from "react-redux";
+import { authService } from "../services/authService.js";
+import { authStart, authSuccess, authFail } from "../auth/authSlice.js";
 
 const initial = {
-  fullName: "",
-  email: "",
-  password: "",
-  passwordConfirmation: "",
-  phoneNumber: "",
-  country: "",
-  city: "",
-  streetAddress: "",
+    fullName: "",
+    email: "",
+    password: "",
+    passwordConfirmation: "",
+    phoneNumber: "",
+    country: "",
+    city: "",
+    streetAddress: "",
 };
 
 export function useRegister({ onSuccess } = {}) {
-  const [formData, setFormData] = useState(initial);
-  const [step, setStep] = useState(1);
+    const dispatch = useDispatch();
+    const auth = useSelector((state) => state.auth);
 
-  // zustand
-  const register = useAuthStore((s) => s.register);
-  const loading = useAuthStore((s) => s.loading);
-  const error = useAuthStore((s) => s.error);
+    const [formData, setFormData] = useState(initial);
+    const [step, setStep] = useState(1);
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
-  }
-
-  const isPasswordMismatch = useMemo(() => {
-    return (
-      formData.password &&
-      formData.passwordConfirmation &&
-      formData.password !== formData.passwordConfirmation
-    );
-  }, [formData.password, formData.passwordConfirmation]);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-
-    if (isPasswordMismatch) return;
-
-    try {
-      const payload = {
-        fullName: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-        phoneNumber: formData.phoneNumber,
-        country: formData.country,
-        city: formData.city,
-        streetAddress: formData.streetAddress,
-      };
-
-      await register(payload); // zustand does API + state
-
-      setStep(3);
-      onSuccess?.();
-    } catch (err) {
-      
+    function handleChange(e) {
+        const { name, value } = e.target;
+        setFormData((p) => ({ ...p, [name]: value }));
     }
-  }
 
-  function signupWithGoogle() {
-    
-    window.location.href = `${import.meta.env.VITE_API_BASE}/oauth2/authorization/google`;
-  }
+    const isPasswordMismatch = useMemo(() => {
+        return (
+            formData.password &&
+            formData.passwordConfirmation &&
+            formData.password !== formData.passwordConfirmation
+        );
+    }, [formData.password, formData.passwordConfirmation]);
 
-  return {
-    formData,
-    step,
-    loading,
-    error,
-    isPasswordMismatch,
-    handleChange,
-    handleSubmit,
-    signupWithGoogle,
-    setStep,
-  };
+    async function handleSubmit(e) {
+        e.preventDefault();
+
+        if (isPasswordMismatch) return;
+
+        try {
+            dispatch(authStart());
+
+            const payload = {
+                fullName: formData.fullName,
+                email: formData.email,
+                password: formData.password,
+                phoneNumber: formData.phoneNumber,
+                country: formData.country,
+                city: formData.city,
+                streetAddress: formData.streetAddress,
+            };
+
+            const data = await authService.register(payload);
+
+            const token = data.token;
+            const user = {
+                userId: data.userId,
+                applicantId: data.applicantId,
+                email: data.email,
+                fullName: data.fullName,
+            };
+
+            if (!token) throw new Error("Token missing from register response");
+
+            dispatch(authSuccess({ token, user }));
+            setStep(3);
+
+            onSuccess?.(data);
+        } catch (err) {
+            dispatch(authFail(err.message));
+        }
+    }
+
+    function signupWithGoogle() {
+        authService.googleLogin();
+    }
+
+    return {
+        formData,
+        step,
+        loading: auth.status === "loading",
+        error: auth.error,
+        isPasswordMismatch,
+        handleChange,
+        handleSubmit,
+        signupWithGoogle,
+        setStep,
+    };
 }

@@ -1,47 +1,42 @@
-import { useState } from "react";
+
+import { useDispatch, useSelector } from "react-redux";
 import { authService } from "../services/authService.js";
-import { useAuthStore } from "../stores/authStore";
+import { authStart, authSuccess, authFail } from "../auth/authSlice.js";
 
+export function useLogin() {
+    const dispatch = useDispatch();
+    const auth = useSelector((state) => state.auth);
 
-export function useLogin({ onSuccess } = {}) {
-    const login = useAuthStore((s) => s.login);
-  const loading = useAuthStore((s) => s.loading);
-  const error = useAuthStore((s) => s.error);
-
-    function handleChange(e) {
-        const { name, value } = e.target;
-        setFormData((p) => ({ ...p, [name]: value }));
-    }
-
-    async function handleSubmit(e) {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
+    const login = async (payload) => {
         try {
-            const res = await authService.login(formData);
+            dispatch(authStart());
 
-            // Common patterns: token in res.token, res.accessToken, etc.
-            const token = res?.token || res?.accessToken;
-            if (token) localStorage.setItem("access_token", token);
+            const data = await authService.login(payload);
 
-            onSuccess?.(res);
+            // Backend AuthResponse mapping
+            const token = data.token;
+            const user = {
+                userId: data.userId,
+                applicantId: data.applicantId,
+                email: data.email,
+                fullName: data.fullName,
+            };
+
+            if (!token) throw new Error("Token missing from login response");
+
+            dispatch(authSuccess({ token, user }));
+            return data;
         } catch (err) {
-            setError(err?.message || "Login failed");
-        } finally {
-            setLoading(false);
+            dispatch(authFail(err.message));
+            throw err;
         }
-    }
-
-    function loginWithGoogle() {
-        authService.googleLogin();
-    }
+    };
 
     return {
-        formData,
-        loading,
-        error,
-        handleChange,
-        handleSubmit,
-        loginWithGoogle,
+        login,
+        loading: auth.status === "loading",
+        error: auth.error,
+        token: auth.token,
+        user: auth.user,
     };
 }

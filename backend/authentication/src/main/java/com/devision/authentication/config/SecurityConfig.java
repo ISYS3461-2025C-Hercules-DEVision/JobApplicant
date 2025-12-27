@@ -102,13 +102,14 @@ public class SecurityConfig {
                 pendingApplicantRequests.create(correlationId);
 
         AuthToApplicantEvent event = new AuthToApplicantEvent(
+                correlationId,
                 user.getEmail(),
                 user.getFullName(),
                 null,
                 null,
                 null,
-                null,
-                correlationId
+                null
+
         );
 
         try {
