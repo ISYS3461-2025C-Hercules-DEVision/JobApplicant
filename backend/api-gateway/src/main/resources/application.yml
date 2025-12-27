@@ -1,3 +1,6 @@
+server:
+  port: ${SERVER_PORT}
+
 spring:
   application:
     name: api-gateway
@@ -11,9 +14,7 @@ spring:
         add-to-simple-url-handler-mapping: true
         corsConfigurations:
           '[/**]':
-            allowedOrigins:
-              - "http://localhost:5173"
-              - "http://localhost:5174"
+            allowedOrigins: ${CORS_ALLOWED_ORIGINS}
             allowedMethods:
               - GET
               - POST
@@ -26,23 +27,21 @@ spring:
 
       routes:
         - id: authentication-service
-          uri: lb://AUTHENTICATION-SERVICE
+          uri: lb://authentication-service
           predicates:
             - Path=/auth/**,/oauth2/**,/login/oauth2/**
 
         - id: applicant-service
-          uri: lb://APPLICANT-SERVICE
+          uri: lb://applicant-service
           predicates:
             - Path=/api/v1/applicants/**
 
 eureka:
   instance:
-    hostname: localhost
+    hostname: ${EUREKA_INSTANCE_HOSTNAME}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka
-
-server:
-  port: ${PORT:10789}
+      defaultZone: ${EUREKA_DEFAULT_ZONE}

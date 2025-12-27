@@ -72,7 +72,6 @@ export const useAuthStore = create((set) => ({
         loading: false,
         isAuthenticated: false,
       });
-
       throw err;
     }
   },

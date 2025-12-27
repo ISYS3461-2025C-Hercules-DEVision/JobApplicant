@@ -18,7 +18,7 @@ export function useLogin({ onSuccess } = {}) {
         setError("");
         setLoading(true);
         try {
-            const res = await authService.login(formData);
+            const res = await login(formData);
 
             // Common patterns: token in res.token, res.accessToken, etc.
             const token = res?.token || res?.accessToken;
