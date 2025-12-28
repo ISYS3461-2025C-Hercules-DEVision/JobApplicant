@@ -7,9 +7,12 @@ public class KafkaConstant {
 
 
 
+    // Applicant -> Authentication
     public static final String RESPONSE = "-response";
-    public static final String AUTHENTICATION_TOPIC = "authentication-info";
-    public static final String AUTHENTICATION_TOPIC_RESPONSE = AUTHENTICATION_TOPIC + RESPONSE;
+    public static final String APPLICANT_AUTHENTICATION_TOPIC = "applicant-authentication-info";
+    public static final String APPLICANT_AUTHENTICATION_TOPIC_RESPONSE = APPLICANT_AUTHENTICATION_TOPIC + RESPONSE;
+
+
 
     //Response message from JM when applicant updates Country or Skills
     public static final String PROFILE_UPDATE_TOPIC = "applicant-profile-updates";

@@ -46,7 +46,7 @@ public class AuthController {
                 request.city(),
                 request.streetAddress()
         );
-        kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_TOPIC, event);
+        kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC, event);
         jwtUserDto jwtUser = new jwtUserDto(
                 user.getId(),
                 user.getEmail(),

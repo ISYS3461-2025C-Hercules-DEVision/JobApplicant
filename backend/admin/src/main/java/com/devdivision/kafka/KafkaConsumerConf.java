@@ -1,6 +1,7 @@
-package com.devision.authentication.kafka;
+package com.devdivision.kafka;
 
-import com.devision.authentication.config.KafkaConstant;
+
+import com.devdivision.config.KafkaConstant;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.context.annotation.Bean;
@@ -18,17 +19,17 @@ import java.util.Map;
 public class KafkaConsumerConf {
     @Bean
     public ConsumerFactory<String, String> defaultConsumerFactory() {
-        Map<String, Object> config = new HashMap<>();
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KafkaConstant.KAFKA_HOST_URL);
-        config.put(ConsumerConfig.GROUP_ID_CONFIG,KafkaConstant.AUTHENTICATION_APPLICANT_GROUP_ID);
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        return new DefaultKafkaConsumerFactory<>(config);
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KafkaConstant.KAFKA_HOST_URL);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaConstant.ADMIN_GROUP_ID);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        return new DefaultKafkaConsumerFactory<>(props);
     }
-
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> defaultKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(defaultConsumerFactory());
         return factory;
     }

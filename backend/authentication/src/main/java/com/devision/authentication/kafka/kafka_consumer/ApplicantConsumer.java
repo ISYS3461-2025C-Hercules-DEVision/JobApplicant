@@ -20,8 +20,8 @@ public class ApplicantConsumer {
     }
 
     @KafkaListener(
-            topics = KafkaConstant.AUTHENTICATION_TOPIC_RESPONSE,
-            groupId = KafkaConstant.AUTHENTICATION_GROUP_ID,
+            topics = KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC_RESPONSE,
+            groupId = KafkaConstant.AUTHENTICATION_APPLICANT_GROUP_ID,
             containerFactory = "defaultKafkaListenerContainerFactory"
     )
     public void handleApplicantApiResponse(String record) throws Exception {

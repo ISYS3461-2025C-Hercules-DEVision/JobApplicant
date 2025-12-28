@@ -129,7 +129,7 @@ public class SecurityConfig {
             log.info("[OAUTH2] Sending event to applicant-service. correlationId={}, email={}",
                     correlationId, user.getEmail());
 
-            kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_TOPIC, event);
+            kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC, event);
 
             log.info("[OAUTH2] Waiting for applicant reply... correlationId={}", correlationId);
 

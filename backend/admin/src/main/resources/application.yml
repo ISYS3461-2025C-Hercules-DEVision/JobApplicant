@@ -5,9 +5,13 @@ server:
 spring:
   application:
     name: admin-service
-  data:
-    mongodb:
-      uri: ${MONGODB_URI:}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  mongodb:
+    uri: ${MONGODB_URI}
 app:
   auth:
     jwt-secret: ${JWT_SECRET}
