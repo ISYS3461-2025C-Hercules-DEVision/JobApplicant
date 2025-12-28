@@ -30,42 +30,55 @@ services:
 
   discovery-server:
     build:
-      context: ./discovery-server
+      context: backend/discovery-server
     ports:
       - "8761:8761"
     restart: unless-stopped
     env_file:
-      - ./discovery-server/.env
+      - backend/discovery-server/.env
 
   authentication:
     build:
-      context: ./authentication
+      context: backend/authentication
     depends_on:
       - kafka
       - discovery-server
     restart: unless-stopped
     env_file:
-      - ./authentication/.env
-
+      - backend/authentication/.env
 
   applicant:
     build:
-      context: ./applicant
+      context: backend/applicant
     depends_on:
       - kafka
       - discovery-server
     env_file:
-      - ./applicant/.env
+      - backend/applicant/.env
 
   api-gateway:
     build:
-      context: ./api-gateway
+      context: backend/api-gateway
     depends_on:
       - discovery-server
     ports:
       - "10789:10789"
     env_file:
-      - ./api-gateway/.env
+      - backend/api-gateway/.env
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - api-gateway
+    ports:
+      - "5173:5173"
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 5173
 
 volumes:
   kafka_data:

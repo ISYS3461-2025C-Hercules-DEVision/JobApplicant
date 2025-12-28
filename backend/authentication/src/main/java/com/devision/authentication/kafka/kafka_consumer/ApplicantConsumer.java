@@ -1,15 +1,11 @@
 package com.devision.authentication.kafka.kafka_consumer;
 
 import com.devision.authentication.config.KafkaConstant;
-import com.devision.authentication.config.SecurityConfig;
 import com.devision.authentication.connection.AutheticationApplicantCodeWithUuid;
-import com.devision.authentication.dto.UserDto;
-import com.devision.authentication.user.UserService;
+import com.devision.authentication.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.CompletableFuture;
 
 @Component
 public class ApplicantConsumer {

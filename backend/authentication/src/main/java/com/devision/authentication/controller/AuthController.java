@@ -5,10 +5,9 @@ import com.devision.authentication.connection.AuthToApplicantEvent;
 import com.devision.authentication.dto.*;
 import com.devision.authentication.jwt.JwtService;
 import com.devision.authentication.kafka.kafka_producer.KafkaGenericProducer;
-import com.devision.authentication.user.User;
-import com.devision.authentication.user.UserService;
+import com.devision.authentication.user.entity.User;
+import com.devision.authentication.user.service.UserService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -51,7 +50,8 @@ public class AuthController {
         jwtUserDto jwtUser = new jwtUserDto(
                 user.getId(),
                 user.getEmail(),
-                user.getApplicantId()
+                user.getApplicantId(),
+                user.getRole()
         );
         // 3. Generate JWT
         String token = jwtService.generateToken(jwtUser);
@@ -73,7 +73,8 @@ public class AuthController {
         jwtUserDto jwtUser = new jwtUserDto(
                 user.getId(),
                 user.getEmail(),
-                user.getApplicantId()
+                user.getApplicantId(),
+                user.getRole()
         );
         // 3. Generate JWT
         String token = jwtService.generateToken(jwtUser);

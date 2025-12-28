@@ -1,11 +1,12 @@
-package com.devdivision.filter;
+package com.devision.authentication.jwt;
 
-import com.devdivision.jwt.JwtUtil;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,14 +18,9 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
-
-public class AuthRequestFilter extends OncePerRequestFilter {
-
-    private final JwtUtil jwtUtil;
-
-    public AuthRequestFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    private final JwtService jwtService;
 
     @Override
     protected void doFilterInternal(
@@ -34,7 +30,6 @@ public class AuthRequestFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -43,30 +38,28 @@ public class AuthRequestFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            Claims claims = jwtUtil.validateAndGetClaims(token);
+            Jws<Claims> parsed = jwtService.validateAndParse(token);
+            Claims claims = parsed.getBody();
 
-            String userId = claims.getSubject();              // sub
-            String role = claims.get("role", String.class);   // role
+            String userId = claims.getSubject();
+            String role = claims.get("role", String.class);
 
-            if (userId != null && role != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userId != null && role != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                //  Convert "ADMIN" -> "ROLE_ADMIN"
-                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        userId, null, authorities
-                );
+                List<SimpleGrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userId, null, authorities);
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
 
         } catch (Exception e) {
-            // Invalid token -> clear context and continue
+            // Invalid token -> clear context and continue (or you can send 401)
             SecurityContextHolder.clearContext();
         }
 

@@ -1,19 +1,24 @@
-package com.devision.authentication.user;
+package com.devision.authentication.user.service;
 
 import com.devision.authentication.dto.LoginRequest;
 import com.devision.authentication.dto.RegisterRequest;
-import com.devision.authentication.dto.UserDto;
+import com.devision.authentication.user.entity.User;
+import com.devision.authentication.user.repo.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    @Value("${app.super-admin.email}")
+    private String superAdminEmail;
+    @Value("${app.super-admin.password}")
+    private String superAdminPassword;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder) {

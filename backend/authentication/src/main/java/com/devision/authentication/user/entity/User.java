@@ -1,4 +1,4 @@
-package com.devision.authentication.user;
+package com.devision.authentication.user.entity;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -19,10 +19,9 @@ public class User {
 
     // For local login
     private String password;      // hashed (BCrypt)
-
+    private UserRole role;
     // For Google SSO
     private String provider;      // "LOCAL" or "GOOGLE"
     private String providerId;    // Google "sub" (unique id)
-
     private String applicantId;
 }
