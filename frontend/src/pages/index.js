@@ -13,3 +13,4 @@ export { default as ApplicationPage } from './ApplicationPage';
 // export { default as SubscriptionPage } from './SubscriptionPage';
 export { default as SearchProfilePage } from './SearchProfilePage';
 export { default as NotificationPage } from "./NotificationPage";
+export { default as AuthCallback} from "./AuthCallback.jsx"

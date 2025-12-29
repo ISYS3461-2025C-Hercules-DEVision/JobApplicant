@@ -1,14 +1,14 @@
 
-import { request, API_BASE } from "../../../utils/HttpUtil.js";
-
+import { request } from "../../../utils/HttpUtil.js";
+import {API_BASE} from "../../../config/api.js";
 export const authService = {
     login(payload) {
-        // payload: { email, password }
+
         return request("/auth/login", { method: "POST", body: payload });
     },
 
     register(payload) {
-        // payload should match your backend DTO
+
         return request("/auth/register", { method: "POST", body: payload });
     },
 

@@ -1,0 +1,71 @@
+name: JA-devision-platform
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    restart: unless-stopped
+    environment:
+      KAFKA_KRAFT_MODE: "true"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+
+      KAFKA_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://kafka:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://${KAFKA_PUBLIC_HOST}:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: "Mk3OEYBSD34fcwNTJENDW233"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  discovery-server:
+    build:
+      context: ./discovery-server
+    ports:
+      - "8761:8761"
+    restart: unless-stopped
+    env_file:
+      - ./discovery-server/.env
+
+  authentication:
+    build:
+      context: ./authentication
+    depends_on:
+      - kafka
+      - discovery-server
+    restart: unless-stopped
+    env_file:
+      - ./authentication/.env
+
+
+  applicant:
+    build:
+      context: ./applicant
+    depends_on:
+      - kafka
+      - discovery-server
+    env_file:
+      - ./applicant/.env
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    depends_on:
+      - discovery-server
+    ports:
+      - "10789:10789"
+    env_file:
+      - ./api-gateway/.env
+
+volumes:
+  kafka_data:

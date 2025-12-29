@@ -1,0 +1,107 @@
+name: CI + CD (Build/Test + Push to ECR)
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  ECR_NAMESPACE: ja-devision-platform
+
+jobs:
+  # -----------------------------
+  # CI: Build (and optional test)
+  # Runs on PRs and pushes
+  # -----------------------------
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: api-gateway
+            folder: backend/api-gateway
+          - name: applicant
+            folder: backend/applicant
+          - name: authentication
+            folder: backend/authentication
+          - name: discovery-server
+            folder: backend/discovery-server
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+          cache: "maven"
+
+      - name: Build (skip tests)
+        working-directory: ./${{ matrix.folder }}
+        run: |
+          chmod +x mvnw
+          ./mvnw -q -DskipTests clean package
+
+     
+
+  # -----------------------------
+  # CD: Build Docker images + push to ECR
+  # Runs ONLY on push to main
+  # -----------------------------
+  cd:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - folder: backend/api-gateway
+            repo: api-gateway
+          - folder: backend/applicant
+            repo: applicant-service
+          - folder: backend/authentication
+            repo: authentication-service
+          - folder: backend/discovery-server
+            repo: discovery-server
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push Docker image
+        run: |
+          set -e
+          SHA_TAG="${GITHUB_SHA::7}"
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/${{ matrix.repo }}"
+
+          echo "Building from folder: ${{ matrix.folder }}"
+          echo "Pushing to: ${IMAGE_URI}"
+
+          docker build \
+            -t ${IMAGE_URI}:latest \
+            -t ${IMAGE_URI}:${SHA_TAG} \
+            ./${{ matrix.folder }}
+
+          docker push ${IMAGE_URI}:latest
+          docker push ${IMAGE_URI}:${SHA_TAG}
+
+          echo "✅ Done: ${IMAGE_URI} pushed as latest and ${SHA_TAG}"
