@@ -20,7 +20,7 @@ public class KafkaConsumerConf {
     public ConsumerFactory<String, String> defaultConsumerFactory() {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, KafkaConstant.KAFKA_HOST_URL);
-        config.put(ConsumerConfig.GROUP_ID_CONFIG,KafkaConstant.AUTHENTICATION_APPLICANT_GROUP_ID);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG,KafkaConstant.AUTHENTICATION_GROUP_ID);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         return new DefaultKafkaConsumerFactory<>(config);

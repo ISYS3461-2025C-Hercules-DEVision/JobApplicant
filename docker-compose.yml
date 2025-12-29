@@ -56,6 +56,15 @@ services:
     env_file:
       - backend/applicant/.env
 
+  admin:
+    build:
+      context: backend/admin
+    depends_on:
+      - kafka
+      - discovery-server
+    env_file:
+      - backend/admin/.env
+
   api-gateway:
     build:
       context: backend/api-gateway

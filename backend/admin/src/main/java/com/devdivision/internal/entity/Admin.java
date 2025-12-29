@@ -1,20 +1,20 @@
 package com.devdivision.internal.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.UUID;
+
+@NoArgsConstructor
+@AllArgsConstructor
 @Document("admins")
 public class Admin {
     @Id
     private String adminId;
     private String adminEmail;
     private AdminRole adminRole;
-
-    public Admin(String adminId, String adminEmail, AdminRole adminRole) {
-        this.adminId = adminId;
-        this.adminEmail = adminEmail;
-        this.adminRole = adminRole;
-    }
 
     public String getAdminId() {
         return adminId;
