@@ -47,7 +47,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
     }
     @Override
     public void run(String... args) throws Exception {
-
+        UserRole role = UserRole.SUPER_ADMIN;
         if (superAdminEmail == null || superAdminEmail.isBlank()
                 || superAdminPassword == null || superAdminPassword.isBlank()) {
             throw new RuntimeException("SuperAdmin email or password is blank");
@@ -63,7 +63,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
                 .fullName("Super Admin")
                 .password(passwordEncoder.encode(superAdminPassword))
                 .provider("LOCAL")
-                .role(UserRole.SUPER_ADMIN)
+                .role(role)
                 .build();
 
         userRepository.save(superAdmin);
@@ -74,7 +74,8 @@ public class SuperAdminSeeder implements CommandLineRunner {
         CompletableFuture<AutheticationAdminCodeWithUuid> future =
                 pendingAdminRequests.create(correlationId);
 
-        AuthToAdminEvent event = new AuthToAdminEvent(correlationId, superAdminEmail);
+        String strRole = role.name();
+        AuthToAdminEvent event = new AuthToAdminEvent(correlationId, superAdminEmail, strRole);
 
         try {
             kafkaGenericProducer.sendMessage(KafkaConstant.AUTHENTICATION_ADMIN_TOPIC, event);
@@ -101,5 +102,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
             log.info("[SEED] Pending request removed. correlationId={}", correlationId);
         }
     }
+
+
 
 }

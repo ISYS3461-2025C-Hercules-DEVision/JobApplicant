@@ -25,8 +25,9 @@ public class AuthenticationKafkaConsumer {
         this.adminService = adminService;
     }
 
+
     @KafkaListener(
-            topics = KafkaConstant.ADMIN_AUTHENTICATION_TOPIC,
+            topics = KafkaConstant.AUTHENTICATION_ADMIN_TOPIC,
             groupId = KafkaConstant.ADMIN_GROUP_ID,
             containerFactory = "defaultKafkaListenerContainerFactory"
     )
@@ -46,8 +47,8 @@ public class AuthenticationKafkaConsumer {
         AdminDTO create = adminService.createSuperAdmin(adminCreateRequestDTO);
 
         // send response back to Authentication
-        AdminAuthenticationCodeWithUuid response =  new AdminAuthenticationCodeWithUuid(correlationId,adminEmail);
+        AdminAuthenticationCodeWithUuid response =  new AdminAuthenticationCodeWithUuid(correlationId,create.adminEmail());
 
-        kafkaGenericProducer.sendMessage(KafkaConstant.ADMIN_AUTHENTICATION_ADMIN_TOPIC_RESPONSE, response);
+        kafkaGenericProducer.sendMessage(KafkaConstant.AUTHENTICATION_ADMIN_TOPIC_RESPONSE, response);
     }
 }

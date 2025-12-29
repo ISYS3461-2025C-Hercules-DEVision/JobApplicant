@@ -10,8 +10,8 @@ public class KafkaConstant {
 
 
     // Applicant -> Authentication
-    public static final String APPLICANT_AUTHENTICATION_TOPIC = "applicant-authentication-info";
-    public static final String APPLICANT_AUTHENTICATION_TOPIC_RESPONSE = APPLICANT_AUTHENTICATION_TOPIC + RESPONSE;
+    public static final String AUTHENTICATION_APPLICANT_TOPIC = "authentication-applicant-info";
+    public static final String AUTHENTICATION_APPLICANT_TOPIC_RESPONSE = AUTHENTICATION_APPLICANT_TOPIC + RESPONSE;
 
 
 

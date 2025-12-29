@@ -87,4 +87,24 @@ public class AuthController {
                 user.getFullName()
         );
     }
+    @PostMapping("/admin/login")
+    public AuthAdminResponse adminLogin(@RequestBody LoginRequest request) {
+        User user = userService.loginLocalAdmin(request);
+
+        jwtUserDto jwtUser = new jwtUserDto(
+                user.getId(),
+                user.getEmail(),
+                user.getApplicantId(),
+                user.getRole()
+        );
+        // 3. Generate JWT
+        String token = jwtService.generateToken(jwtUser);
+
+        return new AuthAdminResponse(
+                token,
+                user.getId(),
+                user.getAdminId(),
+                user.getEmail()
+        );
+    }
 }

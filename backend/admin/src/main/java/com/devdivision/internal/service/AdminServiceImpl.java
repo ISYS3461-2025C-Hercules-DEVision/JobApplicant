@@ -19,9 +19,10 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public AdminDTO createSuperAdmin(AdminCreateRequestDTO req) {
-        if (!adminRepository.existsByAdminEmail(req.adminEmail())){
+        if (adminRepository.existsByAdminEmail(req.adminEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
+
         Admin saved = adminRepository.save(AdminMapper.toEntity(req));
         return AdminMapper.toDTO(saved);
     }
