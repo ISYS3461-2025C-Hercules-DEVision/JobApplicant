@@ -129,5 +129,15 @@ public class UserService {
                     throw new IllegalStateException("User not found for id=" + userId);
                 });
     }
+    @Transactional
+    public void attachApplicantForAdminToUser(String userId, String applicantForAdminId) {
+        userRepository.findById(userId)
+                .ifPresentOrElse(user -> {
+                    user.setApplicantForAdminId(applicantForAdminId);
+                    userRepository.save(user);
+                }, () -> {
+                    throw new IllegalStateException("User not found for id=" + userId);
+                });
+    }
 
 }

@@ -1,4 +1,4 @@
-package com.devdivision.connection;
+package com.devdivision.connection.AdminAuthenticationConnection;
 
 import com.devdivision.dto.DtoWithProcessId;
 

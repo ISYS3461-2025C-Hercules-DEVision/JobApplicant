@@ -9,7 +9,13 @@ public class KafkaConstant {
 
 
 
-    // Admin->Authentication
+    // SuperAdmin->Authentication
     public static final String AUTHENTICATION_ADMIN_TOPIC = "authentication-admin-info";
     public static final String AUTHENTICATION_ADMIN_TOPIC_RESPONSE = AUTHENTICATION_ADMIN_TOPIC + "-response";
+
+    // Applicant For Admin -> Authentication
+    public static final String APPLICANT_FOR_ADMIN_AUTHENTICATION_TOPIC = "authentication-applicant-for-admin-info";
+    public static final String APPLICANT_FOR_ADMIN_AUTHENTICATION_TOPIC_RESPONSE = APPLICANT_FOR_ADMIN_AUTHENTICATION_TOPIC + RESPONSE;
+
+
 }

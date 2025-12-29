@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class AdminConsumer {
     private final ObjectMapper mapper;
-    private PendingApplicantRequests pendingApplicantRequests;
-    public AdminConsumer(ObjectMapper mapper, PendingApplicantRequests pendingApplicantRequests) {
-        this.pendingApplicantRequests = pendingApplicantRequests;
+    private final PendingAdminRequests pendingAdminRequests;
+    public AdminConsumer(ObjectMapper mapper, PendingAdminRequests pendingAdminRequests) {
+        this.pendingAdminRequests = pendingAdminRequests;
         this.mapper = mapper;
     }
 
@@ -25,10 +25,10 @@ public class AdminConsumer {
         AutheticationAdminCodeWithUuid payload =
                 mapper.readValue(record, AutheticationAdminCodeWithUuid.class);
         String correlationId = payload.getCorrelationId();
-        pendingApplicantRequests.complete(correlationId, payload);
+        pendingAdminRequests.complete(correlationId, payload);
 
         System.out.println("Completed pending request for correlationId: " + correlationId);
-        System.out.println("Pending map instance (Kafka): " + pendingApplicantRequests);
+        System.out.println("Pending map instance (Kafka): " + pendingAdminRequests);
 
     }
 }
