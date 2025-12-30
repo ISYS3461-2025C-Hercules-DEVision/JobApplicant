@@ -1,16 +1,18 @@
 package com.devision.application.dto.external.response;
 
+import com.devision.application.enums.ApplicationStatus;
+
 import java.time.Instant;
 
 public class ApplicationSummaryResponse {
-    private String id;
+    private String ApplicationId;
     private String jobPostId;
     private String companyId;
-    private String status;
+    private ApplicationStatus status;
     private Instant createdAt;
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getApplicationId() { return ApplicationId; }
+    public void setApplicationId(String ApplicationId) { this.ApplicationId = ApplicationId; }
 
     public String getJobPostId() { return jobPostId; }
     public void setJobPostId(String jobPostId) { this.jobPostId = jobPostId; }
@@ -18,8 +20,8 @@ public class ApplicationSummaryResponse {
     public String getCompanyId() { return companyId; }
     public void setCompanyId(String companyId) { this.companyId = companyId; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public ApplicationStatus getStatus() { return status; }
+    public void setStatus(ApplicationStatus status) { this.status = status; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

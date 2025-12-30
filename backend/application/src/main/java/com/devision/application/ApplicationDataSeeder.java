@@ -54,7 +54,7 @@ public class ApplicationDataSeeder implements CommandLineRunner {
                 .jobPostId(jobPostId)
                 .companyId(companyId)
                 .status(ApplicationStatus.PENDING)
-                .submissionDate(Instant.now())
+                .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .feedback(null)
                 .applicantCV(cv)            // CV only

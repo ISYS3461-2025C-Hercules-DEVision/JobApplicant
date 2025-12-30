@@ -23,7 +23,7 @@ public class PolicyConfig {
                         Permission.APPLICATION_VIEW_SELF
                 ),
 
-                "ROLE_MANAGER", EnumSet.of(
+                "ROLE_COMPANY", EnumSet.of(
                         Permission.APPLICATION_VIEW_ALL,
                         Permission.APPLICATION_UPDATE_STATUS
                 ),

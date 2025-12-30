@@ -1,26 +1,25 @@
 package com.devision.application.dto.internal.view;
+import com.devision.application.enums.FileType;
+import com.devision.application.enums.ApplicationStatus;
 
 import java.time.Instant;
 
 public class ApplicationView {
-    public String id;
     public String applicantId;
     public String jobPostId;
     public String companyId;
-    public String status;
-    public String coverLetterText;
+    public ApplicationStatus status;
 
-    public FileView cv;
-    public FileView coverLetterFile;
+    public FileView applicantCV;
+    public FileView coverLetter;
 
     public Instant createdAt;
     public Instant updatedAt;
 
     public static class FileView {
-        public String publicId;
-        public String url;
-        public String originalFileName;
-        public String contentType;
-        public long sizeBytes;
+        public String fileId;
+        public String fileUrl;
+        public FileType fileType;
+        public Instant createdAt;
     }
 }

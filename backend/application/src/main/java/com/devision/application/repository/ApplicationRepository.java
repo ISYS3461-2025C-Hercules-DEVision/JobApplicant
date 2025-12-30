@@ -8,9 +8,27 @@ import java.util.List;
 
 public interface ApplicationRepository extends MongoRepository<Application, String> {
 
-    List<Application> findByApplicantId(String applicantId);
+     /**
+     * Applicant: xem danh sách application của chính mình
+     * Used by: GET /api/v1/applications/me
+     */
+    List<Application> findByApplicantIdOrderByCreatedAtDesc(String applicantId);
 
-    List<Application> findByApplicantIdAndStatus(String applicantId, ApplicationStatus status);
+    /**
+     * Partner / Job Manager: xem application theo job post
+     * Used by: GET /api/v1/partner/applications/by-job/{jobPostId}
+     */
+    List<Application> findByJobPostIdOrderByCreatedAtDesc(String jobPostId);
 
-    List<Application> findByCompanyIdAndStatus(String companyId, ApplicationStatus status);
+    /**
+     * Partner / Job Manager: xem tất cả application của company
+     * Used by: GET /api/v1/partner/applications/by-company/{companyId}
+     */
+    List<Application> findByCompanyIdOrderByCreatedAtDesc(String companyId);
+
+    /**
+     * Optional: chặn applicant apply cùng 1 job nhiều lần
+     * Used by: create application flow
+     */
+    boolean existsByApplicantIdAndJobPostId(String applicantId, String jobPostId);
 }
