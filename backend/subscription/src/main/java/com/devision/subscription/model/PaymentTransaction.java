@@ -1,37 +1,67 @@
 package com.devision.subscription.model;
 
-import lombok.*;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 import com.devision.subscription.enums.PaymentStatus;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-
-import java.math.BigDecimal;
 import java.time.Instant;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Document(collection = "payment_transactions")
 public class PaymentTransaction {
 
     @Id
-    private String transactionId;     // UUID
+    private String id;
 
-    @Indexed
-    private String applicantId;       // UUID
-
+    private String applicantId;
     private String email;
+    private PaymentStatus paymentStatus;
+    private Instant transactionTime;
+    private String stripeSessionId;
 
-    private BigDecimal amount;        // Decimal128 in Mongo
-    private String currency;          // e.g. "VND", "USD"
-    private String paymentMethod;     // e.g. "MOMO", "VNPAY", "CARD"
+    public PaymentTransaction() {}
 
-    private PaymentStatus status;     // SUCCESS | FAILED
-    private Instant timestamp;
+    // getters & setters
+    public String getId() {
+        return id;
+    }
 
-    @Indexed
-    private String subscriptionId;    // UUID (FK-like reference)
+    public String getApplicantId() {
+        return applicantId;
+    }
+
+    public void setApplicantId(String applicantId) {
+        this.applicantId = applicantId;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+
+    public Instant getTransactionTime() {
+        return transactionTime;
+    }
+
+    public void setTransactionTime(Instant transactionTime) {
+        this.transactionTime = transactionTime;
+    }
+
+    public String getStripeSessionId() {
+        return stripeSessionId;
+    }
+
+    public void setStripeSessionId(String stripeSessionId) {
+        this.stripeSessionId = stripeSessionId;
+    }
 }

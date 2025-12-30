@@ -1,29 +1,216 @@
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
-
+import {useProfile} from "../hooks/useProfile.js";
+import {useEffect, useState} from "react";
 function ExperienceSection() {
+
+  const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
+  const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
+
+  const [localExperiences, setLocalExperiences] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  //sync local state when data loads
+  useEffect(() => {
+    if(profile?.experiences){
+      setLocalExperiences(profile.experiences.map(exp => ({
+        workExpId : exp.workExpId || null,
+        applicantId: exp.applicantId || applicantId,
+        jobTitle : exp.jobTitle || '',
+        companyName : exp.companyName || '',
+        fromYear : exp.fromYear || '',
+        toYear : exp.toYear || '',
+        description : exp.description || '',
+      })));
+    }
+  }, [profile, applicantId]);
+
+  //add new experience
+  const handleAdd = () => {
+    setLocalExperiences([
+        ...localExperiences,
+      {
+        workExpId: null,
+        applicantId,
+        jobTitle: '',
+        companyName: '',
+        fromYear: '',
+        toYear: '',
+        description: '',
+      },
+    ]);
+    setIsEditing(true);
+  };
+
+  //Update a field
+  const handleChange = (index, field, value) => {
+    const updated = [...localExperiences];
+    updated[index] = {...updated[index],[field] : value};
+    setLocalExperiences(updated);
+  };
+
+  //Delete experience
+  const deleteExperience = async (index) => {
+    if(window.confirm('Delete this experience ? ')) {
+      try {
+        //Remove locally
+        const updateExperience = localExperiences.filter((_,i) => i !== index);
+
+        //Save to backend
+        await updateProfile({experiences: updateExperience});
+        alert('Experience deleted successfully!');
+      }catch (err){
+        alert('Failed to delete' + err.message);
+      }
+    }
+  };
+
+  //Save changes to backend
+  const handleSave = async () => {
+    setSaving(true);
+    try{
+      await updateProfile({experiences: localExperiences});
+      setIsEditing(false);
+      alert('Experience saved successfully!');
+    }catch (err){
+      alert('Failed to save: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setLocalExperiences(profile?.experiences || []);
+    setIsEditing(false);
+  };
+
+  if(profileLoading) return <p className="text-center py-6">Loading experiences....</p>;
+  if(profileError) return <p className="text-center py-6">Error: {profileError.message}</p>;
+
+
   return (
-    <SectionWrapper 
-      title="Experience"
-      onEdit={() => console.log("edit experience")}
-      onAdd={() => console.log("add experience")}
-    >
-      <div className="space-y-6">
+      <SectionWrapper
+        title="Experience"
+        onEdit={() => setIsEditing(true)}
+        onAdd={handleAdd}
+        showEditButtons = {!isEditing} //Hide button when editing
+  >
+        <div className="space-y-6">
+          {isEditing ? (
+              <>
+                {localExperiences.map((exp, index) => (
+                    <div key={index} className="border p-4 rounded-lg bg-gray-50 space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Job Title"
+                        value={exp.jobTitle}
+                        onChange={(e) => handleChange(index, 'jobTitle', e.target.value)}
+                        className="w-full p-2 border grounded"
+                        />
+                      <input
+                        type="text"
+                        placeholder="Company Name"
+                        value={exp.companyName}
+                        onChange={(e) => handleChange(index, 'companyName', e.target.value)}
+                        className="w-full p-2 border grounded"
+                      />
+                      <div className="grid grid-cols-2 gap-4">
+                        <input
+                        type="text"
+                        placeholder="From Year"
+                        value={exp.fromYear}
+                        onChange={(e) => handleChange(index, 'fromYear', e.target.value)}
+                        className="w-full p-2 border grounded"
+                        />
 
-        <div>
-          <h4 className="font-black">Software Engineer Intern</h4>
-          <p className="font-bold">Netway Technology — Internship</p>
-          <p className="text-sm text-gray-600">Oct 2023 – Feb 2024 · Hybrid</p>
+                        <input
+                        type="text"
+                        placeholder="To Year"
+                        value={exp.toYear}
+                        onChange={(e) => handleChange(index, 'toYear', e.target.value)}
+                        className="w-full p-2 border grounded"
+                        />
+
+                      </div>
+
+                      <textarea
+                        placeholder="Description"
+                        value={exp.description}
+                        onChange={(e) => handleChange(index, 'description', e.target.value)}
+                        className="w-full p-2 border grounded h-24"
+                        />
+
+                      <button
+                        onClick={() => deleteExperience(index)}
+                        className={"text-red-600 hover:underline"}
+                        >
+                        Delete
+                        </button>
+                    </div>
+                ))}
+
+                <div className="flex gap-4 mt-4">
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                    >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+
+                  <button
+                    onClick={handleCancel}
+                    className="px-4 py-2 bg-gray-300 rounded hover: bg-gray-400"
+                    >
+                    Cancel
+                  </button>
+                  </div>
+              </>
+          ) : (
+              <>
+                {localExperiences.length > 0 ? (
+                localExperiences.map((exp,index) => (
+                <div key={index} className="border-b pb-4">
+                  <h4 className="font-bold">{exp.jobTitle}</h4>
+                  <p className="text-gray-700">{exp.companyName}</p>
+                  <p className="text-sm text-gray-600">
+                    {exp.fromYear} - {exp.toYear || 'Present'}
+                  </p>
+                  {exp.description && (<p className="mt-2 text-gray-600">{exp.description}</p>)}
+                  </div>
+                ))
+                ) : (
+                <p className="text-gray-500"> No Experiences added yet.</p>
+                )}
+              </>
+          )}
         </div>
-
-        <div>
-          <h4 className="font-black">Machine Learning Intern</h4>
-          <p className="font-bold">PetroVietnam — Internship</p>
-          <p className="text-sm text-gray-600">Oct 2022 – Mar 2023 · Remote</p>
-        </div>
-
-      </div>
-    </SectionWrapper>
+      </SectionWrapper>
   );
 }
+//   return (
+//     <SectionWrapper
+//       title="Experience"
+//       onEdit={() => console.log("edit experience")}
+//       onAdd={() => console.log("add experience")}
+//     >
+//       <div className="space-y-6">
+//
+//         <div>
+//           <h4 className="font-black">Software Engineer Intern</h4>
+//           <p className="font-bold">Netway Technology — Internship</p>
+//           <p className="text-sm text-gray-600">Oct 2023 – Feb 2024 · Hybrid</p>
+//         </div>
+//
+//         <div>
+//           <h4 className="font-black">Machine Learning Intern</h4>
+//           <p className="font-bold">PetroVietnam — Internship</p>
+//           <p className="text-sm text-gray-600">Oct 2022 – Mar 2023 · Remote</p>
+//         </div>
+//
+//       </div>
+//     </SectionWrapper>
+//   );
+// }
 
 export default ExperienceSection;

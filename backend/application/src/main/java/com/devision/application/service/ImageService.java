@@ -1,4 +1,4 @@
-package com.devision.applicant.service;
+package com.devision.application.service;
 
 // ImageService.java (Hypothetical Service Class)
 import com.cloudinary.Cloudinary;
