@@ -1,54 +1,58 @@
 package com.devision.subscription.service;
 
+import com.devision.subscription.enums.PaymentStatus;
 import com.devision.subscription.enums.PlanType;
+import com.devision.subscription.model.PaymentTransaction;
 import com.devision.subscription.model.Subscription;
+import com.devision.subscription.repository.PaymentTransactionRepository;
 import com.devision.subscription.repository.SubscriptionRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Optional;
 
 @Service
 public class SubscriptionServiceImpl implements SubscriptionService {
 
-    private final SubscriptionRepository repository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
 
-    public SubscriptionServiceImpl(SubscriptionRepository repository) {
-        this.repository = repository;
-    }
-
-    @Override
-    public Subscription activatePremium(String applicantId) {
-
-        Instant now = Instant.now();
-
-        Subscription sub = new Subscription();
-        sub.setApplicantId(applicantId);
-        sub.setPlanType(PlanType.PREMIUM);
-        sub.setStartDate(now);
-        sub.setExpiryDate(now.plus(30, ChronoUnit.DAYS));
-        sub.setActive(true);
-
-        return repository.save(sub);
+    public SubscriptionServiceImpl(
+            SubscriptionRepository subscriptionRepository,
+            PaymentTransactionRepository paymentTransactionRepository) {
+        this.subscriptionRepository = subscriptionRepository;
+        this.paymentTransactionRepository = paymentTransactionRepository;
     }
 
     @Override
     public Subscription getActiveSubscription(String applicantId) {
+        return subscriptionRepository
+                .findByApplicantIdAndIsActiveTrue(applicantId)
+                .orElse(null);
+    }
 
-        Optional<Subscription> subOpt =
-                repository.findByApplicantIdAndIsActiveTrue(applicantId);
+    @Override
+    public void activatePremium(String applicantId, String email,
+                                String paymentId, Instant transactionTime) {
 
-        if (subOpt.isEmpty()) return null;
+        paymentTransactionRepository.save(
+                new PaymentTransaction(
+                        applicantId,
+                        email,
+                        PaymentStatus.SUCCESS,
+                        transactionTime,
+                        paymentId
+                )
+        );
 
-        Subscription sub = subOpt.get();
-
-        if (sub.getExpiryDate().isBefore(Instant.now())) {
-            sub.setActive(false);
-            repository.save(sub);
-            return null;
-        }
-
-        return sub;
+        subscriptionRepository.save(
+                new Subscription(
+                        applicantId,
+                        PlanType.PREMIUM,
+                        Instant.now(),
+                        Instant.now().plus(30, ChronoUnit.DAYS),
+                        true
+                )
+        );
     }
 }

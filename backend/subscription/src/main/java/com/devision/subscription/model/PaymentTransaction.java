@@ -11,57 +11,33 @@ public class PaymentTransaction {
 
     @Id
     private String id;
-
     private String applicantId;
     private String email;
     private PaymentStatus paymentStatus;
     private Instant transactionTime;
-    private String stripeSessionId;
+    private String paymentId;
 
     public PaymentTransaction() {}
 
-    // getters & setters
-    public String getId() {
-        return id;
-    }
-
-    public String getApplicantId() {
-        return applicantId;
-    }
-
-    public void setApplicantId(String applicantId) {
+    public PaymentTransaction(String applicantId, String email,
+                              PaymentStatus paymentStatus,
+                              Instant transactionTime, String paymentId) {
         this.applicantId = applicantId;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
         this.email = email;
-    }
-
-    public PaymentStatus getPaymentStatus() {
-        return paymentStatus;
-    }
-
-    public void setPaymentStatus(PaymentStatus paymentStatus) {
         this.paymentStatus = paymentStatus;
-    }
-
-    public Instant getTransactionTime() {
-        return transactionTime;
-    }
-
-    public void setTransactionTime(Instant transactionTime) {
         this.transactionTime = transactionTime;
+        this.paymentId = paymentId;
     }
 
-    public String getStripeSessionId() {
-        return stripeSessionId;
-    }
+    public String getApplicantId() { return applicantId; }
+    public String getEmail() { return email; }
+    public PaymentStatus getPaymentStatus() { return paymentStatus; }
+    public Instant getTransactionTime() { return transactionTime; }
+    public String getPaymentId() { return paymentId; }
 
-    public void setStripeSessionId(String stripeSessionId) {
-        this.stripeSessionId = stripeSessionId;
-    }
+    public void setApplicantId(String applicantId) { this.applicantId = applicantId; }
+    public void setEmail(String email) { this.email = email; }
+    public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
+    public void setTransactionTime(Instant transactionTime) { this.transactionTime = transactionTime; }
+    public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
 }

@@ -36,6 +36,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Required for WebClient (JM payment call) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
         <!-- MongoDB -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

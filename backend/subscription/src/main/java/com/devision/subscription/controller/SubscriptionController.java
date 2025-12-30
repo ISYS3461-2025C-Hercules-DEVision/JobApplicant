@@ -1,45 +1,38 @@
 package com.devision.subscription.controller;
 
-import com.devision.subscription.dto.CheckoutResponse;
+import com.devision.subscription.dto.SubscribeRequest;
 import com.devision.subscription.dto.SubscriptionStatusResponse;
 import com.devision.subscription.model.Subscription;
-import com.devision.subscription.service.StripeService;
+import com.devision.subscription.service.PaymentClientService;
 import com.devision.subscription.service.SubscriptionService;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+
+import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/subscriptions")
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
-    private final StripeService stripeService;
+    private final PaymentClientService paymentClientService;
 
     public SubscriptionController(
             SubscriptionService subscriptionService,
-            StripeService stripeService
+            PaymentClientService paymentClientService
     ) {
         this.subscriptionService = subscriptionService;
-        this.stripeService = stripeService;
+        this.paymentClientService = paymentClientService;
     }
 
-    /**
-     * Get current subscription status.
-     * In dev mode, X-Applicant-Id is optional to avoid noise
-     * from browser / health checks.
-     */
     @GetMapping("/me")
     public SubscriptionStatusResponse getMySubscription(
             @RequestHeader(value = "X-Applicant-Id", required = false) String applicantId
     ) {
-        // Dev-friendly behavior
-        if (applicantId == null || applicantId.isBlank()) {
+        if (applicantId == null) {
             return new SubscriptionStatusResponse("FREE", false, null);
         }
 
-        Subscription sub =
-                subscriptionService.getActiveSubscription(applicantId);
+        Subscription sub = subscriptionService.getActiveSubscription(applicantId);
 
         if (sub == null) {
             return new SubscriptionStatusResponse("FREE", false, null);
@@ -52,24 +45,24 @@ public class SubscriptionController {
         );
     }
 
-    /**
-     * Create Stripe checkout session.
-     * This MUST have applicant identity.
-     */
-    @PostMapping("/checkout")
-    public CheckoutResponse checkout(
-            @RequestHeader(value = "X-Applicant-Id", required = false) String applicantId,
-            @RequestHeader(value = "X-Applicant-Email", required = false) String email
+    @PostMapping("/subscribe")
+    public void subscribe(
+            @RequestHeader("X-Applicant-Id") String applicantId,
+            @RequestBody SubscribeRequest request
     ) {
-        if (applicantId == null || email == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "X-Applicant-Id and X-Applicant-Email headers are required"
+        var response =
+                paymentClientService.initiateApplicantSubscription(
+                        applicantId,
+                        request.getEmail()
+                );
+
+        if ("SUCCESS".equals(response.getStatus())) {
+            subscriptionService.activatePremium(
+                    applicantId,
+                    request.getEmail(),
+                    response.getPaymentId(),
+                    Instant.now()
             );
         }
-
-        return new CheckoutResponse(
-                stripeService.createCheckoutSession(applicantId, email)
-        );
     }
 }
