@@ -24,14 +24,17 @@ import ApplicantTable from "../modules/admin/ui/AdminPages/ApplicantTable.jsx";
 import JobPostTable from "../modules/admin/ui/AdminPages/JobPostTable.jsx";
 import React from "react";
 import AdminDashboard from "../modules/admin/ui/AdminDashboard.jsx";
+import AuthLoader from "../components/AuthLoader.jsx";
 //import AuthCallback from "../pages/AuthCallback.jsx";
 
 function App() {
   return (
     <Router>
+        <AuthLoader/>
       <Routes>
           <Route path="/adminLogin" element={<AdminLogin />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+
         {/* Public routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />

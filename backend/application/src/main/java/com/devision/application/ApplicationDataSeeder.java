@@ -57,7 +57,7 @@ public class ApplicationDataSeeder implements CommandLineRunner {
                 .submissionDate(Instant.now())
                 .updatedAt(Instant.now())
                 .feedback(null)
-                .documents(null)   
+                .documents(null)
                 .createdAt(Instant.now())
                 .isArchived(false)
                 .deletedAt(null)

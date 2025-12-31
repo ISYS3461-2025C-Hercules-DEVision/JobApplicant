@@ -5,9 +5,30 @@ import { useProfile } from "../hooks/useProfile.js";
 import { profileService } from "../services/profileService.js"; // Import service
 import { subscriptionService } from "../../subscription/services/subscriptionService";
 import { useNavigate } from "react-router-dom";
+import {useSelector} from "react-redux";
 
 function ProfileHeader() {
-  const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba"; // Your real ID
+  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba"; // Your real ID
+  const {user, token} = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
+
+  console.log("Profile Header - token: ", !!token, "applicantId: ", applicantId);
+
+  const state = useSelector((state) => state);
+  console.log("FULL REDUX STATE:", state);
+
+  if (!applicantId) {
+    return (
+        <SectionWrapper className="p-12 text-center">
+          <p className="text-xl-center">Loading your profile header....</p>
+        </SectionWrapper>
+    );
+  }
+  return <ProfileContent key={applicantId} applicantId={applicantId}/>;
+
+}
+
+  function ProfileContent({applicantId}){
   const { profile, loading, error, updateProfile } = useProfile(applicantId);
 
   const [uploading, setUploading] = useState(false);
@@ -34,15 +55,12 @@ function ProfileHeader() {
 
   // Check subscription status
   useEffect(() => {
-    subscriptionService
-      .getStatus(applicantId)
-      .then((res) => {
-        setIsPremium(res?.isActive === true);
-      })
-      .catch(() => {
-        // 404 = not subscribed (expected)
-        setIsPremium(false);
-      });
+    if (applicantId) {
+      subscriptionService
+          .getStatus(applicantId)
+          .then((res) => setIsPremium(res?.isActive === true))
+          .catch(() => setIsPremium(false));
+    }
   }, [applicantId]);
 
   // Trigger file input click

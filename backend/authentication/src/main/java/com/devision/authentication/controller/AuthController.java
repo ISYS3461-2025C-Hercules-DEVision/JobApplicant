@@ -2,8 +2,10 @@ package com.devision.authentication.controller;
 
 import com.devision.authentication.config.KafkaConstant;
 import com.devision.authentication.connection.AuthToApplicantEvent;
+import com.devision.authentication.connection.AutheticationApplicantCodeWithUuid;
 import com.devision.authentication.dto.*;
 import com.devision.authentication.jwt.JwtService;
+import com.devision.authentication.kafka.kafka_consumer.PendingApplicantRequests;
 import com.devision.authentication.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.authentication.user.User;
 import com.devision.authentication.user.UserService;
@@ -12,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/auth")
@@ -20,13 +24,15 @@ public class AuthController {
     private final UserService userService;
     private final JwtService jwtService;
     private final KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer;
+    private final PendingApplicantRequests pendingApplicantRequests;
 
     public AuthController(UserService userService,
                           JwtService jwtService,
-                          KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer) {
+                          KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer, PendingApplicantRequests pendingApplicantRequests) {
         this.userService = userService;
         this.jwtService = jwtService;
         this.kafkaProducer = kafkaProducer;
+        this.pendingApplicantRequests = pendingApplicantRequests;
     }
 
     // -------- REGISTER (LOCAL) --------
@@ -37,6 +43,8 @@ public class AuthController {
         User user = userService.registerLocalUser(request);
         // create a correlationId
         String correlationId = UUID.randomUUID().toString();
+
+        CompletableFuture<AutheticationApplicantCodeWithUuid> future = pendingApplicantRequests.create(correlationId);
         //  Send Kafka event to Applicant service
         AuthToApplicantEvent event = new AuthToApplicantEvent(
                 correlationId,
