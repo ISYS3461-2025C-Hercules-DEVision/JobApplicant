@@ -40,7 +40,7 @@ public class SecurityConfig {
     private final KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer;
     private final JwtService jwtService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    PendingApplicantRequests pendingApplicantRequests;
+    private final PendingApplicantRequests pendingApplicantRequests;
     @Value("${app.auth.frontend-redirect-url}")
     private String frontendRedirectUrl;
 
