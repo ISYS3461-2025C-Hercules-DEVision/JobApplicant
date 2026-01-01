@@ -1,11 +1,8 @@
 package com.devdivision.internal.service;
 
-import com.devdivision.dto.AdminAuthenticationDtos.AdminCreateRequestDTO;
-import com.devdivision.dto.AdminAuthenticationDtos.AdminDTO;
-import com.devdivision.dto.ApplicantForAdminAuthenticationDtos.ApplicantForAdminCreateRequestDto;
-import com.devdivision.dto.ApplicantForAdminAuthenticationDtos.ApplicantForAdminDto;
+import com.devdivision.dto.AdminCreateRequestDTO;
+import com.devdivision.dto.AdminDTO;
 
 public interface AdminService {
     AdminDTO createSuperAdmin(AdminCreateRequestDTO req);
-    ApplicantForAdminDto createApplicantForAdmin(ApplicantForAdminCreateRequestDto req);
 }

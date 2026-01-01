@@ -26,7 +26,7 @@ public class ApplicantConsumer {
     )
     public void handleApplicantApiResponse(String record) throws Exception {
 
-        System.out.println("Received response from Applicant: " + record);
+        System.out.println("Received response from Admin: " + record);
 
         AutheticationApplicantCodeWithUuid payload =
                 mapper.readValue(record, AutheticationApplicantCodeWithUuid.class);

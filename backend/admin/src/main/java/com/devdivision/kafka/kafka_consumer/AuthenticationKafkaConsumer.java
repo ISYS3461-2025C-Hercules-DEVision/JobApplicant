@@ -1,10 +1,10 @@
 package com.devdivision.kafka.kafka_consumer;
 
 import com.devdivision.config.KafkaConstant;
-import com.devdivision.connection.AdminAuthenticationConnection.AdminAuthenticationCodeWithUuid;
-import com.devdivision.connection.AdminAuthenticationConnection.AuthenticationAdminCodeWithUuid;
-import com.devdivision.dto.AdminAuthenticationDtos.AdminCreateRequestDTO;
-import com.devdivision.dto.AdminAuthenticationDtos.AdminDTO;
+import com.devdivision.connection.AdminAuthenticationCodeWithUuid;
+import com.devdivision.connection.AuthenticationAdminCodeWithUuid;
+import com.devdivision.dto.AdminCreateRequestDTO;
+import com.devdivision.dto.AdminDTO;
 import com.devdivision.internal.entity.AdminRole;
 import com.devdivision.internal.service.AdminService;
 import com.devdivision.kafka.kafka_producer.KafkaGenericProducer;
@@ -14,12 +14,12 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthenticationAdminKafkaConsumer {
+public class AuthenticationKafkaConsumer {
     private final ObjectMapper objectMapper;
     private final KafkaGenericProducer<Object> kafkaGenericProducer;
     private final AdminService adminService;
 
-    public AuthenticationAdminKafkaConsumer(ObjectMapper objectMapper, KafkaGenericProducer<Object> kafkaGenericProducer, AdminService adminService) {
+    public AuthenticationKafkaConsumer(ObjectMapper objectMapper, KafkaGenericProducer<Object> kafkaGenericProducer, AdminService adminService) {
         this.objectMapper = objectMapper;
         this.kafkaGenericProducer = kafkaGenericProducer;
         this.adminService = adminService;

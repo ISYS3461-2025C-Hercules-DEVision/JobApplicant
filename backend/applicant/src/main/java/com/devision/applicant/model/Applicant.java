@@ -54,7 +54,7 @@ public class Applicant {
 
     @Field(name = "isActivated")
     @Builder.Default
-    private Boolean isActivated = true;
+    private Boolean isActivated = false;
 
     @Field(name = "isArchived")
     @Builder.Default

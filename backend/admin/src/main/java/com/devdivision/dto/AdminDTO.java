@@ -1,4 +1,4 @@
-package com.devdivision.dto.AdminAuthenticationDtos;
+package com.devdivision.dto;
 
 import com.devdivision.internal.entity.AdminRole;
 

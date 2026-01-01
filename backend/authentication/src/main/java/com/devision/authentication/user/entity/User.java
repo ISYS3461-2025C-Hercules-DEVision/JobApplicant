@@ -24,8 +24,5 @@ public class User {
     private String provider;      // "LOCAL" or "GOOGLE"
     private String providerId;    // Google "sub" (unique id)
     private String applicantId;
-    @Builder.Default
-    private Boolean isActive = true ;
     private String adminId;
-    private String applicantForAdminId;
 }

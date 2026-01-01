@@ -1,7 +1,7 @@
 package com.devdivision.mapper;
 
-import com.devdivision.dto.AdminAuthenticationDtos.AdminCreateRequestDTO;
-import com.devdivision.dto.AdminAuthenticationDtos.AdminDTO;
+import com.devdivision.dto.AdminCreateRequestDTO;
+import com.devdivision.dto.AdminDTO;
 import com.devdivision.internal.entity.Admin;
 
 public class AdminMapper {

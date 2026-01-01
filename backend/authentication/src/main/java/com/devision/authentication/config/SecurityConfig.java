@@ -1,11 +1,9 @@
 package com.devision.authentication.config;
 import com.devision.authentication.connection.AuthToApplicantEvent;
-import com.devision.authentication.connection.AuthenticationApplicantForAdminCodeWithUuid;
 import com.devision.authentication.connection.AutheticationApplicantCodeWithUuid;
 import com.devision.authentication.dto.jwtUserDto;
 import com.devision.authentication.jwt.JwtAuthenticationFilter;
 import com.devision.authentication.jwt.JwtService;
-import com.devision.authentication.kafka.kafka_consumer.PendingApplicantForAdminRequests;
 import com.devision.authentication.kafka.kafka_consumer.PendingApplicantRequests;
 import com.devision.authentication.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.authentication.user.entity.User;
@@ -42,22 +40,20 @@ public class SecurityConfig {
     private final KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer;
     private final JwtService jwtService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final PendingApplicantRequests pendingApplicantRequests;
-    private final PendingApplicantForAdminRequests pendingApplicantForAdminRequests;
+    PendingApplicantRequests pendingApplicantRequests;
     @Value("${app.auth.frontend-redirect-url}")
     private String frontendRedirectUrl;
 
     public SecurityConfig(UserService userService,
                           KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer,
                           JwtService jwtService, JwtAuthenticationFilter jwtAuthenticationFilter,
-                          PendingApplicantRequests pendingApplicantRequests, PendingApplicantForAdminRequests pendingApplicantForAdminRequests
+                          PendingApplicantRequests pendingApplicantRequests
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.pendingApplicantRequests = pendingApplicantRequests;
         this.userService = userService;
         this.kafkaProducer = kafkaProducer;
         this.jwtService = jwtService;
-        this.pendingApplicantForAdminRequests = pendingApplicantForAdminRequests;
     }
 
     @Bean
@@ -115,9 +111,9 @@ public class SecurityConfig {
         //  (first time only)
         String correlationId = UUID.randomUUID().toString();
 
-        CompletableFuture<AutheticationApplicantCodeWithUuid> futureApplicant =
+        CompletableFuture<AutheticationApplicantCodeWithUuid> future =
                 pendingApplicantRequests.create(correlationId);
-        CompletableFuture<AuthenticationApplicantForAdminCodeWithUuid>futureApplicantForAdmin = pendingApplicantForAdminRequests.create(correlationId);
+
         AuthToApplicantEvent event = new AuthToApplicantEvent(
                 correlationId,
                 user.getEmail(),
@@ -134,20 +130,16 @@ public class SecurityConfig {
                     correlationId, user.getEmail());
 
             kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC, event);
-            kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_FOR_ADMIN_TOPIC, event);
+
             log.info("[OAUTH2] Waiting for applicant reply... correlationId={}", correlationId);
 
-            AutheticationApplicantCodeWithUuid ApplicantReply = futureApplicant.get(5, TimeUnit.SECONDS); //
-            AuthenticationApplicantForAdminCodeWithUuid ApplicantForAdminReply = futureApplicantForAdmin.get(5, TimeUnit.SECONDS);
+            AutheticationApplicantCodeWithUuid reply = future.get(5, TimeUnit.SECONDS); //
 
             log.info("[OAUTH2] Applicant reply received. correlationId={}, applicantId={}",
-                    correlationId, ApplicantReply.getApplicantId());
-            log.info("[OAUTH2] Applicant reply received. correlationId={}, applicantId={}",
-                    correlationId, ApplicantForAdminReply.getApplicantForAdminId());
+                    correlationId, reply.getApplicantId());
 
             //  attach by userId, not email
-            userService.attachApplicantToUser(user.getId(), ApplicantReply.getApplicantId());
-            userService.attachApplicantForAdminToUser(user.getId(), ApplicantForAdminReply.getApplicantForAdminId());
+            userService.attachApplicantToUser(user.getId(), reply.getApplicantId());
 
 
             User updated = userService.findById(user.getId());
@@ -199,7 +191,6 @@ public class SecurityConfig {
 
         } finally {
             pendingApplicantRequests.remove(correlationId);
-            pendingApplicantForAdminRequests.remove(correlationId);
             log.info("[OAUTH2] Pending request removed. correlationId={}", correlationId);
         }
 
