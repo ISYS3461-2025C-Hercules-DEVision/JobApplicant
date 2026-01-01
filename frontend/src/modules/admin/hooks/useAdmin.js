@@ -35,7 +35,7 @@ export function useAdmin(){
 
         // optimistic update
         setApplicants((prev) =>
-            prev.map((a) => (a.applicantId === id ? { ...a, isActivated: true } : a))
+            prev.map((a) => (a.id === id ? { ...a, status: true } : a))
         );
 
         try {
@@ -44,7 +44,7 @@ export function useAdmin(){
             // rollback if API fails
             setApplicants((prev) =>
                 prev.map((a) =>
-                    a.applicantId === id ? { ...a, isActivated: false } : a
+                    prev.map((a) => (a.id === id ? { ...a, status: false } : a))
                 )
             );
             alert(err?.message || "Activate failed");
@@ -59,7 +59,7 @@ export function useAdmin(){
 
         // optimistic update
         setApplicants((prev) =>
-            prev.map((a) => (a.applicantId === id ? { ...a, isActivated: false } : a))
+            prev.map((a) => (a.id === id ? { ...a, status: false } : a))
         );
 
         try {
@@ -68,7 +68,7 @@ export function useAdmin(){
             // rollback if API fails
             setApplicants((prev) =>
                 prev.map((a) =>
-                    a.applicantId === id ? { ...a, isActivated: true } : a
+                    prev.map((a) => (a.id === id ? { ...a, status: true } : a))
                 )
             );
             alert(err?.message || "Deactivate failed");

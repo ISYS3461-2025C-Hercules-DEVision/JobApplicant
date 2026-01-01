@@ -218,6 +218,12 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
         a.setIsActivated(false);
         Applicant saved = repository.save(a);
+        System.out.println(saved.getApplicantId());
+        System.out.println(saved.getIsActivated());
+        ChangeStatusDto change = new ChangeStatusDto(saved.getApplicantId(), saved.getIsActivated());
+        System.out.println(change.id());
+        System.out.println(change.status());
+        kafkaGenericProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_CHANGE_STATUS_TOPIC,change);
         return ApplicantMapper.toDto(saved);
     }
 
@@ -228,6 +234,12 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
         a.setIsActivated(true);
         Applicant saved = repository.save(a);
+        System.out.println(saved.getApplicantId());
+        System.out.println(saved.getIsActivated());
+        ChangeStatusDto change = new ChangeStatusDto(saved.getApplicantId(), saved.getIsActivated());
+        System.out.println(change.id());
+        System.out.println(change.status());
+        kafkaGenericProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_CHANGE_STATUS_TOPIC,change);
         return ApplicantMapper.toDto(saved);
     }
 

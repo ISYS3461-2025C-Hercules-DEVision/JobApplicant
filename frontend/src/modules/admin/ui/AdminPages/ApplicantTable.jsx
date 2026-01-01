@@ -16,11 +16,13 @@ export default function ApplicantTable() {
 
     const rows = useMemo(() => {
         const list = (applicants || []).map((a) => ({
-            applicantId: a.applicantId,
+            applicantId: a.id,
             fullName: a.fullName ?? "—",
             email: a.email ?? "—",
-            country: a.country ?? "—",
-            isActivated: Boolean(a.isActivated),
+            country: a.Country ?? a.country ?? "—",
+            createdAt: a.isCreated ?? a.createdAt ?? null,
+            isActivated: Boolean(a.status),
+            _rowKey: a.id ?? a.email,
         }));
 
         const s = q.trim().toLowerCase();
@@ -33,7 +35,12 @@ export default function ApplicantTable() {
                 a.country.toLowerCase().includes(s)
         );
     }, [q, applicants]);
-
+    function formatDate(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return "—";
+        return d.toLocaleString();
+    }
     return (
         <div className="card shadow-sm border-0">
             <div className="card-body">
@@ -78,6 +85,7 @@ export default function ApplicantTable() {
                             <th>Full Name</th>
                             <th>Email</th>
                             <th>Country</th>
+                            <th>Create At</th>
                             <th>Activated</th>
                             <th className="text-end" style={{ width: 160 }}>
                                 Action
@@ -95,6 +103,7 @@ export default function ApplicantTable() {
                                     <td className="fw-semibold">{a.fullName}</td>
                                     <td>{a.email}</td>
                                     <td>{a.country}</td>
+                                    <td>{formatDate(a.createdAt)}</td>
                                     <td>
                                         {a.isActivated ? (
                                             <span className="badge text-bg-success">Activated</span>

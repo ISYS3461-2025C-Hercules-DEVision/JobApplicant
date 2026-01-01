@@ -8,6 +8,7 @@ import com.devision.authentication.kafka.kafka_consumer.PendingApplicantRequests
 import com.devision.authentication.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.authentication.user.entity.User;
 import com.devision.authentication.user.service.UserService;
+import com.devision.authentication.user.service.UserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
