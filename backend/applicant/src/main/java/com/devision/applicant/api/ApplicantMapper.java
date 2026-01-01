@@ -2,12 +2,14 @@ package com.devision.applicant.api;
 
 import com.devision.applicant.dto.ApplicantCreateRequest;
 import com.devision.applicant.dto.ApplicantDTO;
+import com.devision.applicant.dto.ApplicantForAdmin;
 import com.devision.applicant.dto.ApplicantUpdateRequest;
 
 import com.devision.applicant.model.Applicant;
 import com.devision.applicant.model.Education;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ApplicantMapper {
     private ApplicantMapper() {}
@@ -62,10 +64,23 @@ public class ApplicantMapper {
                 a.getProfileImageUrl(),
                 Boolean.TRUE.equals(a.getIsActivated()),
                 Boolean.TRUE.equals(a.getIsArchived()),
+                a.getCreatedAt(),
                 a.getEducations(),
                 a.getExperiences(),
                 a.getSkills(),
                 a.getMediaPortfolios()
         );
+    }
+    public static List<ApplicantForAdmin> toApplicantForAdmin(List<ApplicantDTO> a) {
+        return a.stream()
+                .map(dto -> new ApplicantForAdmin(
+                        dto.applicantId(),
+                        dto.email(),
+                        dto.fullName(),
+                        dto.country(),
+                        dto.createdAt(),
+                        dto.activated()
+                ))
+                .toList();
     }
 }

@@ -211,5 +211,25 @@ public class ApplicantServiceImpl implements ApplicantService {
         }
     }
 
+    @Override
+    public ApplicantDTO deactivateApplicantAccount(String applicantId) {
+        Applicant a = repository.findById(applicantId)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+        a.setIsActivated(false);
+        Applicant saved = repository.save(a);
+        return ApplicantMapper.toDto(saved);
+    }
+
+    @Override
+    public ApplicantDTO activateApplicantAccount(String applicantId) {
+        Applicant a = repository.findById(applicantId)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+        a.setIsActivated(true);
+        Applicant saved = repository.save(a);
+        return ApplicantMapper.toDto(saved);
+    }
+
 
 }
