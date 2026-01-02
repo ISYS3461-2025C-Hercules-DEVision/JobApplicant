@@ -3,13 +3,16 @@ package com.devision.authentication.user.service;
 import com.devision.authentication.dto.HandleChangeStatusReqDto;
 import com.devision.authentication.dto.LoginRequest;
 import com.devision.authentication.dto.RegisterRequest;
+import com.devision.authentication.exception.ForbiddenException;
 import com.devision.authentication.user.entity.User;
 import com.devision.authentication.user.entity.UserRole;
 import com.devision.authentication.user.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 
@@ -47,6 +50,7 @@ public class UserServiceImpl implements UserService {
                 .fullName(request.fullName())
                 .password(passwordEncoder.encode(request.password()))
                 .provider("LOCAL")
+                .role(UserRole.USER)
                 .build();
 
         // correlationId for Kafka
@@ -63,6 +67,9 @@ public class UserServiceImpl implements UserService {
 
         if (!"LOCAL".equals(user.getProvider())) {
             throw new RuntimeException("This account is registered via Google");
+        }
+        if (Boolean.FALSE.equals(user.getStatus())) {
+            throw new ForbiddenException("Your account has been banned");
         }
         if (user.getRole() != UserRole.USER) {
             throw new RuntimeException("Access denied: User only");
@@ -103,6 +110,7 @@ public class UserServiceImpl implements UserService {
                         .fullName(name)
                         .provider("GOOGLE")
                         .providerId(sub)
+                        .role(UserRole.USER)
                         .build()
                 );
 

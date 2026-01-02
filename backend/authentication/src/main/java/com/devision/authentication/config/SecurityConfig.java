@@ -8,7 +8,6 @@ import com.devision.authentication.kafka.kafka_consumer.PendingApplicantRequests
 import com.devision.authentication.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.authentication.user.entity.User;
 import com.devision.authentication.user.service.UserService;
-import com.devision.authentication.user.service.UserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -44,7 +43,8 @@ public class SecurityConfig {
     private final PendingApplicantRequests pendingApplicantRequests;
     @Value("${app.auth.frontend-redirect-url}")
     private String frontendRedirectUrl;
-
+    @Value("${app.auth.frontend-banned-url}")
+    private String frontendBannedUrl;
     public SecurityConfig(UserService userService,
                           KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer,
                           JwtService jwtService, JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -73,6 +73,18 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"message\":\"Unauthorized\"}");
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"message\":\"Forbidden\"}");
+                        })
+                )
                 .oauth2Login(oauth -> oauth
                         .successHandler((request, response, authentication) ->
                                 handleOAuth2Success(request, response, authentication)
@@ -96,7 +108,10 @@ public class SecurityConfig {
         Map<String, Object> attributes = oauthToken.getPrincipal().getAttributes();
 
         User user = userService.handleGoogleLogin(attributes);
-
+        if (Boolean.FALSE.equals(user.getStatus())) {
+            response.sendRedirect(frontendBannedUrl);
+            return;
+        }
         // If already linked to applicant -> DON'T call Kafka
         if (user.getApplicantId() != null && !user.getApplicantId().isBlank()) {
             jwtUserDto jwtUser = new jwtUserDto(user.getId(), user.getEmail(), user.getApplicantId(), user.getRole());

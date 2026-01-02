@@ -1,5 +1,7 @@
 package com.devision.authentication.jwt;
 
+import com.devision.authentication.user.entity.User;
+import com.devision.authentication.user.repo.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import jakarta.servlet.FilterChain;
@@ -10,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,7 +23,17 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     private final JwtService jwtService;
+    private final UserRepository userRepo;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/auth/")
+                || path.startsWith("/oauth2/")
+                || path.startsWith("/login/oauth2/");
+    }
 
     @Override
     protected void doFilterInternal(
@@ -30,12 +43,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
+        String token = authHeader.substring(7).trim().replace("\"", "");
 
         try {
             Jws<Claims> parsed = jwtService.validateAndParse(token);
@@ -44,25 +58,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String userId = claims.getSubject();
             String role = claims.get("role", String.class);
 
-            if (userId != null && role != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userId != null && role != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
+                User user = userRepo.findById(userId)
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+                // ✅ banned check -> 403
+                if (Boolean.FALSE.equals(user.getStatus())) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"message\":\"Your account has been banned\"}");
+                    return;
+                }
+
+                // ✅ best practice: use role from DB (in case user role changed)
+                String dbRole = user.getRole().name();
 
                 List<SimpleGrantedAuthority> authorities =
-                        List.of(new SimpleGrantedAuthority("ROLE_" + role));
+                        List.of(new SimpleGrantedAuthority("ROLE_" + dbRole));
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
 
         } catch (Exception e) {
-            // Invalid token -> clear context and continue (or you can send 401)
             SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
     }
 }
+

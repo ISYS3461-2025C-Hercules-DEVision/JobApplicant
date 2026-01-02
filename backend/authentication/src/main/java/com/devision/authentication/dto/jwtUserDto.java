@@ -14,15 +14,9 @@ public record jwtUserDto(
     public Map<String, Object> toClaims() {
         Map<String, Object> claims = new HashMap<>();
 
-        if (email != null) {
-            claims.put("email", email);
-        }
-        if (applicantId != null) {
-            claims.put("applicantId", applicantId);
-        }
-        if (role != null) {
-            claims.put("role", role);
-        }
+        if (email != null) claims.put("email", email);
+        if (applicantId != null) claims.put("applicantId", applicantId);
+        if (role != null) claims.put("role", role.name());
         return claims;
     }
 }

@@ -146,10 +146,11 @@ public class AuthController {
     }
 
 
-    // -------- LOGIN (LOCAL) --------
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest request) {
+        System.out.println("[LOGIN] Received login request");
         User user = userService.loginLocalUser(request);
+
 
         jwtUserDto jwtUser = new jwtUserDto(
                 user.getId(),
@@ -157,7 +158,7 @@ public class AuthController {
                 user.getApplicantId(),
                 user.getRole()
         );
-        // 3. Generate JWT
+
         String token = jwtService.generateToken(jwtUser);
 
         return new AuthResponse(

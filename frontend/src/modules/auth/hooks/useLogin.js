@@ -2,8 +2,10 @@
 import { useDispatch, useSelector } from "react-redux";
 import { authService } from "../services/authService.js";
 import { authStart, authSuccess, authFail } from "../auth/authSlice.js";
+import {useNavigate} from "react-router-dom";
 
 export function useLogin() {
+    const navigate = useNavigate();
     const dispatch = useDispatch();
     const auth = useSelector((state) => state.auth);
 
@@ -27,6 +29,17 @@ export function useLogin() {
             dispatch(authSuccess({ token, user }));
             return data;
         } catch (err) {
+            const status = err?.response?.status;
+
+            if (status === 403) {
+                dispatch(authFail("Your account has been banned."));
+                navigate("/BannedAccount");
+                return;
+            }
+            const message =
+                err?.response?.data?.message ||
+                err?.message ||
+                "Login failed";
             dispatch(authFail(err.message));
             throw err;
         }

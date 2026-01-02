@@ -43,6 +43,7 @@ app:
     jwt-secret: ${JWT_SECRET}
     jwt-expiration-ms: ${JWT_EXPIRATION_MS}
     frontend-redirect-url: ${FRONTEND_REDIRECT_URL}
+    frontend-banned-url: ${FRONTEND_BANNED_URL}
 
 eureka:
   instance:
