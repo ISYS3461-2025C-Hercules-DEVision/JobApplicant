@@ -32,10 +32,6 @@ public class JwtService {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
-        Map<String, Object> claims = new HashMap<>();
-        if (user.email() != null) claims.put("email", user.email());
-        if (user.applicantId() != null) claims.put("applicantId", user.applicantId());
-
         return Jwts.builder()
                 .setSubject(user.userId())
                 .setIssuedAt(now)

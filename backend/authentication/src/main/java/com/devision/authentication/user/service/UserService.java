@@ -24,7 +24,7 @@ public interface UserService {
     // -------- GOOGLE LOGIN/REGISTER --------
     User handleGoogleLogin(Map<String, Object> attributes);
 
-    User updateStatus(HandleChangeStatusReqDto handleChangeStatusReqDto);
+    void updateStatus(HandleChangeStatusReqDto handleChangeStatusReqDto);
 
     void attachApplicantToUser(String userId, String applicantId);
 

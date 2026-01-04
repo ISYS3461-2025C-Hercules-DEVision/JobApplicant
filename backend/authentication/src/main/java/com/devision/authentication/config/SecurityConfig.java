@@ -114,7 +114,7 @@ public class SecurityConfig {
         }
         // If already linked to applicant -> DON'T call Kafka
         if (user.getApplicantId() != null && !user.getApplicantId().isBlank()) {
-            jwtUserDto jwtUser = new jwtUserDto(user.getId(), user.getEmail(), user.getApplicantId(), user.getRole());
+            jwtUserDto jwtUser = new jwtUserDto(user.getId(), user.getEmail(), user.getApplicantId(), user.getRole(), user.getStatus());
             String jwt = jwtService.generateToken(jwtUser);
 
             String redirectUrl = frontendRedirectUrl +
@@ -172,7 +172,8 @@ public class SecurityConfig {
                     updated.getId(),
                     updated.getEmail(),
                     updated.getApplicantId(),
-                    updated.getRole()
+                    updated.getRole(),
+                    updated.getStatus()
             );
 
             String jwt = jwtService.generateToken(jwtUser);

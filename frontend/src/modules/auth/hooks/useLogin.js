@@ -22,25 +22,24 @@ export function useLogin() {
                 applicantId: data.applicantId,
                 email: data.email,
                 fullName: data.fullName,
+                status : data.status,
             };
-
+            if (user.status === false) {
+                dispatch(authFail("Your account has been banned."));
+                navigate("/BannedAccount", { replace: true });
+                return null;
+            }
             if (!token) throw new Error("Token missing from login response");
-
             dispatch(authSuccess({ token, user }));
             return data;
         } catch (err) {
-            const status = err?.response?.status;
-
-            if (status === 403) {
-                dispatch(authFail("Your account has been banned."));
-                navigate("/BannedAccount");
-                return;
-            }
-            const message =
+            const apiMessage =
                 err?.response?.data?.message ||
+                err?.response?.data?.error ||
                 err?.message ||
                 "Login failed";
-            dispatch(authFail(err.message));
+
+            dispatch(authFail(apiMessage));
             throw err;
         }
     };

@@ -86,7 +86,8 @@ public class AuthController {
                     updated.getId(),
                     updated.getEmail(),
                     updated.getApplicantId(),
-                    updated.getRole()
+                    updated.getRole(),
+                    updated.getStatus()
             );
 
             String jwt = jwtService.generateToken(jwtUser);
@@ -156,7 +157,8 @@ public class AuthController {
                 user.getId(),
                 user.getEmail(),
                 user.getApplicantId(),
-                user.getRole()
+                user.getRole(),
+                user.getStatus()
         );
 
         String token = jwtService.generateToken(jwtUser);
@@ -177,7 +179,8 @@ public class AuthController {
                 user.getId(),
                 user.getEmail(),
                 user.getApplicantId(),
-                user.getRole()
+                user.getRole(),
+                user.getStatus()
         );
         // 3. Generate JWT
         String token = jwtService.generateToken(jwtUser);
