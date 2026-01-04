@@ -1,5 +1,6 @@
 server:
-  port: 8087
+  port: ${SERVER_PORT:8087}
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -14,40 +15,41 @@ spring:
       client:
         registration:
           google:
-            client-id: 44667791366-ibsl42q8m2gah6e4pd84c9drsu5igk2d.apps.googleusercontent.com
-            client-secret: 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
-            scope: [email, profile]
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: ${GOOGLE_SCOPES:email,profile}
+            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
         provider:
           google:
-            issuer-uri: https://accounts.google.com
+            issuer-uri: ${GOOGLE_ISSUER_URI:https://accounts.google.com}
 
   kafka:
-    bootstrap-servers: localhost:9092
-
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
         spring.json.add.type.headers: false
 
+
   mongodb:
-    uri: mongodb+srv://devision_db_user:s08102000@devision-cluster.odwbbcy.mongodb.net/ja_applicant?retryWrites=true&w=majority&appName=devision-cluster
+    uri: ${MONGODB_URI}
+
 app:
+  super-admin:
+    email: ${APP_SUPER_ADMIN_EMAIL:s3932156@rmit.edu.vn}
+    password: ${APP_SUPER_ADMIN_PASSWORD:123123}
   auth:
-    jwt-secret: "DevisionSuperSecretKeyForJWT123456"
-    jwt-expiration-ms: 180000
-    frontend-redirect-url: "http://localhost:5174/auth/callback"
+    jwt-secret: ${JWT_SECRET}
+    jwt-expiration-ms: ${JWT_EXPIRATION_MS}
+    frontend-redirect-url: ${FRONTEND_REDIRECT_URL}
 
 eureka:
   instance:
-    hostname: localhost
-    prefer-ip-address: false
+    hostname: ${EUREKA_INSTANCE_HOSTNAME}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: ${EUREKA_DEFAULT_ZONE}
 
-logging:
-  level:
-    org.springframework.boot.context.config: DEBUG
-    org.springframework.data.mongodb.core: DEBUG
-    org.mongodb.driver: INFO
+

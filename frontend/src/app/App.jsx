@@ -1,75 +1,104 @@
-import {BrowserRouter as Router, Routes, Route, Navigate} from 'react-router-dom';
-// import "bootstrap/dist/css/bootstrap.min.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import React from "react";
+
 import {
-  HomePage,
-  LoginPage,
-  RegisterPage,
-  // Future pages:
-  ProfilePage,
-  JobListPage,
-  // JobDetailPage,
-  NotificationPage,
-  ApplicationPage,
-  // SubscriptionPage,
-  SearchProfilePage
-  // DashboardPage,
-  // PaymentPage,
-  // AdminPage,
-} from '../pages';
-import AuthCallback from "../utils/AuthCallback.jsx";
+    HomePage,
+    LoginPage,
+    RegisterPage,
+    ProfilePage,
+    JobListPage,
+    NotificationPage,
+    ApplicationPage,
+    SearchProfilePage,
+    AuthCallback,
+} from "../pages";
+
 import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
-import  AdminApplication from "../modules/admin/ui/AdminPages/AdminApplication.jsx";
+import AdminApplication from "../modules/admin/ui/AdminPages/AdminApplication.jsx";
 import CompanyTable from "../modules/admin/ui/AdminPages/CompanyTable.jsx";
 import ApplicantTable from "../modules/admin/ui/AdminPages/ApplicantTable.jsx";
 import JobPostTable from "../modules/admin/ui/AdminPages/JobPostTable.jsx";
-import React from "react";
 import AdminDashboard from "../modules/admin/ui/AdminDashboard.jsx";
 
+import UserProtectedRoute from "../routes/UserProtectedRoute.jsx";
+import AdminProtectedRoute from "../routes/AdminProtectedRoute.jsx";
+
 function App() {
-  return (
-    <Router>
-      <Routes>
-          <Route path="/adminLogin" element={<AdminLogin />} />
-        {/* Public routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />}/>
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/jobs" element={<JobListPage />} />
-        {/* <Route path="/job/:id" element={<JobDetailPage />} /> */}
-        <Route path="/apply/:id" element={<ApplicationPage />} />
-        {/* <Route path="/subscription" element={<SubscriptionPage />} /> */}
-        <Route path="/searchProfile" element={<SearchProfilePage />} />
-        <Route path="/notifications" element={<NotificationPage />} />
+    return (
+        <Router>
+            <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/jobs" element={<JobListPage />} />
+                <Route path="/searchProfile" element={<SearchProfilePage />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
 
+                {/* Admin login is public */}
+                <Route path="/adminLogin" element={<AdminLogin />} />
 
+                {/*  Protected USER routes */}
+                <Route
+                    path="/profile"
+                    element={
+                        <UserProtectedRoute>
+                            <ProfilePage />
+                        </UserProtectedRoute>
+                    }
+                />
 
+                <Route
+                    path="/apply/:id"
+                    element={
+                        <UserProtectedRoute>
+                            <ApplicationPage />
+                        </UserProtectedRoute>
+                    }
+                />
 
+                <Route
+                    path="/notifications"
+                    element={
+                        <UserProtectedRoute>
+                            <NotificationPage />
+                        </UserProtectedRoute>
+                    }
+                />
 
+                {/*  Protected ADMIN routes */}
+                <Route
+                    path="/adminDashboard"
+                    element={
+                        <AdminProtectedRoute>
+                            <AdminDashboard />
+                        </AdminProtectedRoute>
+                    }
+                >
+                    <Route index element={<ApplicantTable />} />
+                    <Route path="adminApplicants" element={<ApplicantTable />} />
+                    <Route path="adminCompanies" element={<CompanyTable />} />
+                    <Route path="adminApplications" element={<AdminApplication />} />
+                    <Route path="adminJobs" element={<JobPostTable />} />
+                </Route>
 
-          <Route path="/adminDashboard" element={<AdminDashboard />}>
-              <Route index element={<ApplicantTable />} />  {/* default right page */}
-              <Route path="adminApplicants" element={<ApplicantTable />} />
-              <Route path="adminCompanies" element={<CompanyTable />} />
-              <Route path="adminApplications" element={<AdminApplication />} />
-              <Route path="adminJobs" element={<JobPostTable />} />
-          </Route>
-
-          <Route
-              path="*"
-              element={
-                  <div className="p-6">
-                      <div className="text-lg font-semibold text-slate-900">Not found</div>
-                      <div className="mt-1 text-sm text-slate-500">
-                          The page you are looking for doesn’t exist.
-                      </div>
-                  </div>
-              }
-          />
-      </Routes>
-    </Router>
-  );
+                {/* Not found */}
+                <Route
+                    path="*"
+                    element={
+                        <div className="p-6">
+                            <div className="text-lg font-semibold text-slate-900">
+                                Not found
+                            </div>
+                            <div className="mt-1 text-sm text-slate-500">
+                                The page you are looking for doesn’t exist.
+                            </div>
+                        </div>
+                    }
+                />
+            </Routes>
+        </Router>
+    );
 }
 
 export default App;

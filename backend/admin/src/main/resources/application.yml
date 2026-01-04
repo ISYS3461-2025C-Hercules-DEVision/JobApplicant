@@ -1,0 +1,32 @@
+server:
+  port: ${SERVER_PORT:8088}
+  forward-headers-strategy: framework
+
+spring:
+  application:
+    name: admin-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  mongodb:
+    uri: ${MONGODB_URI}
+app:
+  auth:
+    jwt-secret: ${JWT_SECRET}
+    jwt-expiration-ms: ${JWT_EXPIRATION_MS}
+
+
+eureka:
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE}
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO

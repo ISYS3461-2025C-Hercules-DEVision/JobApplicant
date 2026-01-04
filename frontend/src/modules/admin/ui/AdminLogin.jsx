@@ -2,13 +2,15 @@ import "./css/AdminLogin.css"
 import useAdminLogin from "../hooks/AdminLoginHook/useAdminLogin.jsx";
 import { Field,  IconMail, IconLock, IconArrow } from "../../../Share/Admin_Share_Component/AdminHelperComponent.jsx";
 export default function AdminLogin (){
-    const {year,
+    const {
+        year,
         email, setEmail,
         password, setPassword,
         remember, setRemember,
-        showPw, setShowPw,
+        showPassword, setShowPassword,
         loading, status,
-        onSubmit,} = useAdminLogin();
+        onSubmit,
+    } = useAdminLogin();
     return(
         <>
             <div className="dv-page">
@@ -64,7 +66,7 @@ export default function AdminLogin (){
                                             <input
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
-                                                type={showPw ? "text" : "password"}
+                                                type={showPassword ? "text" : "password"}
                                                 placeholder="••••••••••••"
                                                 autoComplete="current-password"
                                                 minLength={6}
@@ -73,11 +75,11 @@ export default function AdminLogin (){
                                             />
                                             <button
                                                 type="button"
-                                                onClick={() => setShowPw((s) => !s)}
+                                                onClick={() => setShowPassword((s) => !s)}
                                                 className="dv-rightBtn"
-                                                aria-label={showPw ? "Hide password" : "Show password"}
+                                                aria-label={showPassword ? "Hide password" : "Show password"}
                                             >
-                                                {showPw ? "Hide" : "Show"}
+                                                {showPassword ? "Hide" : "Show"}
                                             </button>
                                         </div>
                                     </Field>
@@ -106,7 +108,7 @@ export default function AdminLogin (){
                                 </div>
 
                                 <div className="dv-actions">
-                                    <button type="submit" className="dv-btn dv-btnPrimary" disabled={loading}>
+                                    <button type="submit" className="dv-btn dv-btnPrimary" disabled={loading} onClick={() => console.log("submit button clicked")}>
                                         <IconArrow />
                                         {loading ? "Signing in..." : "Sign in"}
                                     </button>

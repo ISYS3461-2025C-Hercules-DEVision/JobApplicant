@@ -1,7 +1,7 @@
 package com.devdivision.filter;
 
 import com.devdivision.jwt.JwtUtil;
-import com.nimbusds.jwt.JWTClaimsSet;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,9 +14,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 @Component
+
 public class AuthRequestFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
@@ -26,54 +27,47 @@ public class AuthRequestFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-        String path = request.getServletPath();
+        String authHeader = request.getHeader("Authorization");
 
-        // --- PUBLIC ENDPOINTS ---
-        if (path.startsWith("/swagger-ui")
-                || path.startsWith("/v3/api-docs")
-                || path.startsWith("/swagger-resources")
-                || path.startsWith("/webjars")
-                || path.startsWith("/api/public")
-                || path.equals("/swagger-ui.html")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // --- READ AUTH HEADER ---
-        String authHeader = request.getHeader("Authorization");
-        String token = null;
+        String token = authHeader.substring(7);
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7); // remove "Bearer "
-        }
+        try {
+            Claims claims = jwtUtil.validateAndGetClaims(token);
 
-        // --- VALIDATE TOKEN IF PRESENT ---
-        if (token != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            try {
-                JWTClaimsSet claims = jwtUtil.parseAndVerify(token);
+            String userId = claims.getSubject();              // sub
+            String role = claims.get("role", String.class);   // role
 
-                String username = claims.getSubject();
+            if (userId != null && role != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                username,
-                                null,
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
-                        );
+                //  Convert "ADMIN" -> "ROLE_ADMIN"
+                var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                var authentication = new UsernamePasswordAuthenticationToken(
+                        userId, null, authorities
+                );
 
-            } catch (Exception e) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid or expired token");
-                return;
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
+
+        } catch (Exception e) {
+            // Invalid token -> clear context and continue
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

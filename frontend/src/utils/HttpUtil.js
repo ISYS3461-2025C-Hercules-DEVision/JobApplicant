@@ -1,5 +1,4 @@
-// src/utils/HttpUtil.js
-export const API_BASE = "http://localhost:10789";
+import { API_BASE } from "../config/api.js";
 
 async function parseBody(res) {
     const text = await res.text();
@@ -11,19 +10,26 @@ async function parseBody(res) {
 }
 
 export async function request(path, { method = "GET", body, headers } = {}) {
-
     const url = `${API_BASE}${path}`;
     console.log(`Actual url being called: ${url}`);
 
     const isFormData = body instanceof FormData;
-    const res = await fetch(`${API_BASE}${path}`, {
+
+    //  Use user token first, fallback to admin token
+    const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("admin_token") ||
+        sessionStorage.getItem("admin_token");
+
+    const res = await fetch(url, {
         method,
         headers: {
             ...(body && !isFormData ? { "Content-Type": "application/json" } : {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
             ...(headers || {}),
         },
         body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-        credentials: "include", //  cookies/session for oauth
+        credentials: "include",
     });
 
     const data = await parseBody(res);
