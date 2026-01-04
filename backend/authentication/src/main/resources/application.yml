@@ -36,6 +36,9 @@ spring:
     uri: ${MONGODB_URI}
 
 app:
+  super-admin:
+    email: ${APP_SUPER_ADMIN_EMAIL:s3932156@rmit.edu.vn}
+    password: ${APP_SUPER_ADMIN_PASSWORD:123123}
   auth:
     jwt-secret: ${JWT_SECRET}
     jwt-expiration-ms: ${JWT_EXPIRATION_MS}

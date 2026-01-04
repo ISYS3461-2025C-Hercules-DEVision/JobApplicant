@@ -1,15 +1,11 @@
 package com.devision.authentication.kafka.kafka_consumer;
 
 import com.devision.authentication.config.KafkaConstant;
-import com.devision.authentication.config.SecurityConfig;
 import com.devision.authentication.connection.AutheticationApplicantCodeWithUuid;
-import com.devision.authentication.dto.UserDto;
-import com.devision.authentication.user.UserService;
+import com.devision.authentication.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.CompletableFuture;
 
 @Component
 public class ApplicantConsumer {
@@ -24,13 +20,13 @@ public class ApplicantConsumer {
     }
 
     @KafkaListener(
-            topics = KafkaConstant.AUTHENTICATION_TOPIC_RESPONSE,
+            topics = KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC_RESPONSE,
             groupId = KafkaConstant.AUTHENTICATION_GROUP_ID,
             containerFactory = "defaultKafkaListenerContainerFactory"
     )
     public void handleApplicantApiResponse(String record) throws Exception {
 
-        System.out.println("Received response from APPLICANT: " + record);
+        System.out.println("Received response from Admin: " + record);
 
         AutheticationApplicantCodeWithUuid payload =
                 mapper.readValue(record, AutheticationApplicantCodeWithUuid.class);
