@@ -44,14 +44,14 @@ public class ApplicantApplicationController implements ApplicantApplicationApi {
     }
 
     @Override
-    public ResponseEntity<List<ApplicationSummaryResponse>> myApplications() {
+    public ResponseEntity<List<ApplicationSummaryResponse>> listMyApplications() {
         String applicantId = currentUserId();
         List<ApplicationSummaryView> list = applicationService.listByApplicant(applicantId);
         return ResponseEntity.ok(list.stream().map(this::toExternal).toList());
     }
 
     @Override
-    public ResponseEntity<ApplicationResponse> myApplicationById(String applicationId) {
+    public ResponseEntity<ApplicationResponse> getMyApplication(String applicationId) {
         String applicantId = currentUserId();
         ApplicationView view = applicationService.getOwnedByApplicant(applicantId, applicationId);
         return ResponseEntity.ok(toExternal(view));
@@ -65,7 +65,7 @@ public class ApplicantApplicationController implements ApplicantApplicationApi {
     }
 
     @Override
-    public ResponseEntity<ApplicationResponse> uploadCoverLetterFile(String applicationId, MultipartFile file) {
+    public ResponseEntity<ApplicationResponse> uploadCoverLetter(String applicationId, MultipartFile file) {
         String applicantId = currentUserId();
         ApplicationView view = applicationService.uploadCoverLetterFile(
                 new UploadCoverLetterCommand(applicantId, applicationId, file)
@@ -76,7 +76,7 @@ public class ApplicantApplicationController implements ApplicantApplicationApi {
     // ---- Helpers ----
 
     private String currentUserId() {
-        // Option A: Gateway forward header
+        // Gateway forward header
         // return RequestContextHolder.... or SecurityContext
         // For now: read from Spring Security principal or custom header
         // Replace with your actual implementation.
@@ -85,7 +85,7 @@ public class ApplicantApplicationController implements ApplicantApplicationApi {
 
     private ApplicationResponse toExternal(ApplicationView v) {
         ApplicationResponse r = new ApplicationResponse();
-        r.setId(v.applicationId);
+        r.setApplicationId(v.applicationId);
         r.setApplicantId(v.applicantId);
         r.setJobPostId(v.jobPostId);
         r.setCompanyId(v.companyId);
@@ -101,16 +101,18 @@ public class ApplicantApplicationController implements ApplicantApplicationApi {
 
     private ApplicationResponse.FileRefResponse toExternalFile(ApplicationView.FileView f) {
         ApplicationResponse.FileRefResponse fr = new ApplicationResponse.FileRefResponse();
-        fr.setFileId(f.fileId);
-        fr.setFileUrl(f.fileUrl);
-        fr.setFileType(f.fileType);
-        fr.setCreatedAt(f.createdAt);
+        fr.setFileId(f.getFileId);
+        fr.setFileUrl(f.getFileUrl);
+        fr.setPublicId(f.getPublicId);
+        fr.setFileType(f.getFileType);
+        fr.setCreatedAt(f.getCreatedAt);
+        fr.setUpdatedAt(f.getUpdatedAt);
         return fr;
     }
 
     private ApplicationSummaryResponse toExternal(ApplicationSummaryView v) {
         ApplicationSummaryResponse r = new ApplicationSummaryResponse();
-        r.setId(v.applicationId);
+        r.setApplicationId(v.applicationId);
         r.setJobPostId(v.jobPostId);
         r.setCompanyId(v.companyId);
         r.setStatus(v.status);

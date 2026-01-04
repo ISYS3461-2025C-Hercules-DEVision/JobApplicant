@@ -1,12 +1,17 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-RUN chmod +x mvnw && ./mvnw -q -DskipTests dependency:go-offline
+# 1) copy pom trước để cache dependencies
+COPY pom.xml ./
 
-COPY src/ src/
-RUN ./mvnw -q -DskipTests package
+# 2) tải dependencies trước (cache layer)
+RUN mvn -q -DskipTests dependency:go-offline
+
+# 3) copy source sau
+COPY src ./src
+
+# 4) build jar
+RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app

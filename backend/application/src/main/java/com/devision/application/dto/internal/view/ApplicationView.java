@@ -19,7 +19,9 @@ public class ApplicationView {
     public static class FileView {
         public String fileId;
         public String fileUrl;
+        public String publicId;    
         public FileType fileType;
         public Instant createdAt;
+        public Instant updatedAt;
     }
 }

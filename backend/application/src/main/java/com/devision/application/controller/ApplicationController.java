@@ -60,7 +60,7 @@ public class ApplicationController {
 
     private ApplicationResponse toExternal(ApplicationView v) {
         ApplicationResponse r = new ApplicationResponse();
-        r.setId(v.applicationId);
+        r.setApplicationId(v.applicationId);
         r.setApplicantId(v.applicantId);
         r.setJobPostId(v.jobPostId);
         r.setCompanyId(v.companyId);
@@ -75,16 +75,18 @@ public class ApplicationController {
 
     private ApplicationResponse.FileRefResponse toExternalFile(ApplicationView.FileView f) {
         ApplicationResponse.FileRefResponse fr = new ApplicationResponse.FileRefResponse();
-        fr.setFileId(f.fileId);
-        fr.setFileUrl(f.fileUrl);
-        fr.setFileType(f.fileType);
-        fr.setCreatedAt(f.createdAt);
+        fr.setFileId(f.getFileId);
+        fr.setFileUrl(f.getFileUrl);
+        fr.setPublicId(f.getPublicId);
+        fr.setFileType(f.getFileType);
+        fr.setCreatedAt(f.getCreatedAt);
+        fr.setUpdatedAt(f.getUpdatedAt);
         return fr;
     }
 
     private ApplicationSummaryResponse toExternal(ApplicationSummaryView v) {
         ApplicationSummaryResponse r = new ApplicationSummaryResponse();
-        r.setId(v.applicationId);
+        r.setApplicationId(v.applicationId);
         r.setJobPostId(v.jobPostId);
         r.setCompanyId(v.companyId);
         r.setStatus(v.status);

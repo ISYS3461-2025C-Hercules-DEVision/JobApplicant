@@ -28,7 +28,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationEventProducer eventProducer;
 
     @Value("${app.kafka.topic.application-events}")
-    private String applicationEventsTopic;
+    private String topic;
 
     public ApplicationServiceImpl(ApplicationRepository repo, FileStorageService storage, ApplicationEventProducer eventProducer) {
         this.repo = repo;
@@ -49,24 +49,20 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Instant now = Instant.now();
 
-        Application app = new Application();
-        app.setApplicantId(cmd.applicantId());
-        app.setJobPostId(cmd.jobPostId());
-        app.setCompanyId(cmd.companyId());
-        app.setStatus(ApplicationStatus.SUBMITTED);
-        app.setCreatedAt(now);
-        app.setUpdatedAt(now);
+        Application app = Application.builder()
+                .applicationId(UUID.randomUUID().toString())
+                .applicantId(cmd.getApplicantId())
+                .jobPostId(cmd.getJobPostId())
+                .companyId(cmd.getCompanyId())
+                .status(ApplicationStatus.SUBMITTED)
+                .createdAt(now)
+                .updatedAt(now)
+                .isArchived(false)
+                .build();
 
         Application saved = repo.save(app);
 
-        eventProducer.publish(applicationEventsTopic, new ApplicationEvent(
-                ApplicationEventType.APPLICATION_CREATED,
-                saved.getApplicationId(),
-                saved.getApplicantId(),
-                saved.getJobPostId(),
-                saved.getCompanyId(),
-                Instant.now()
-        ));
+        eventProducer.publish(topic, ApplicationEvent.created(saved));
 
         return toView(saved);
     }
@@ -104,15 +100,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application saved = repo.save(app);
 
-        eventProducer.publish(applicationEventsTopic, new ApplicationEvent(
-                ApplicationEventType.CV_UPLOADED,
-                saved.getApplicationId(),
-                saved.getApplicantId(),
-                saved.getJobPostId(),
-                saved.getCompanyId(),
-                Instant.now()
-        ));
-
+        eventProducer.publish(topic, ApplicationEvent.cvUploaded(saved));
         return toView(saved);
     }
 
@@ -131,14 +119,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application saved = repo.save(app);
 
-        eventProducer.publish(applicationEventsTopic, new ApplicationEvent(
-                ApplicationEventType.COVER_LETTER_UPLOADED,
-                saved.getApplicationId(),
-                saved.getApplicantId(),
-                saved.getJobPostId(),
-                saved.getCompanyId(),
-                Instant.now()
-        ));
+        eventProducer.publish(topic, ApplicationEvent.cvUploaded(saved));
 
         return toView(saved);
     }
@@ -169,7 +150,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         v.applicantId = a.getApplicantId();
         v.jobPostId = a.getJobPostId();
         v.companyId = a.getCompanyId();
-        v.status = a.getStatus() == null ? null : a.getStatus().name();
+        v.status = a.getStatus();
         v.createdAt = a.getCreatedAt();
         v.updatedAt = a.getUpdatedAt();
 
@@ -183,7 +164,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         v.applicationId = a.getApplicationId();
         v.jobPostId = a.getJobPostId();
         v.companyId = a.getCompanyId();
-        v.status = a.getStatus() == null ? null : a.getStatus().name();
+        v.status = a.getStatus();
         v.createdAt = a.getCreatedAt();
         return v;
     }
@@ -192,8 +173,10 @@ public class ApplicationServiceImpl implements ApplicationService {
         ApplicationView.FileView fv = new ApplicationView.FileView();
         fv.fileId = f.getFileId();
         fv.fileUrl = f.getFileUrl();
+        fv.publicId = f.getPublicId();     
         fv.fileType = f.getFileType();
         fv.createdAt = f.getCreatedAt();
+        fv.updatedAt = f.getUpdatedAt();
         return fv;
     }
 
@@ -207,17 +190,17 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private FileReference uploadToCloudinary(MultipartFile file, String folder) {
-        @Override
-        var stored = storage.upload(file, folder);
+        FileStorageService.StoredFile stored = storage.upload(file, folder);
+        Instant now = Instant.now();
 
-        FileReference ref = new FileReference();
-        ref.setFileId(java.util.UUID.randomUUID().toString());   // logical id
-        ref.setPublicId(stored.publicId());                      // infra id
-        ref.setFileUrl(stored.url());                            // download URL
-        ref.setFileType(detectFileType(file));                   // PDF / DOCX
-        ref.setCreatedAt(now);
-        ref.setUpdatedAt(now);
-        return ref;
+        return FileReference.builder()
+                .fileId(UUID.randomUUID().toString())
+                .fileUrl(stored.url())
+                .publicId(stored.publicId())
+                .fileType(detectFileType(file))
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
     }
 
     private static void require(String v, String field) {
