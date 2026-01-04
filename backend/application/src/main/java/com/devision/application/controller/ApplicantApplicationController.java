@@ -101,12 +101,12 @@ public class ApplicantApplicationController implements ApplicantApplicationApi {
 
     private ApplicationResponse.FileRefResponse toExternalFile(ApplicationView.FileView f) {
         ApplicationResponse.FileRefResponse fr = new ApplicationResponse.FileRefResponse();
-        fr.setFileId(f.getFileId);
-        fr.setFileUrl(f.getFileUrl);
-        fr.setPublicId(f.getPublicId);
-        fr.setFileType(f.getFileType);
-        fr.setCreatedAt(f.getCreatedAt);
-        fr.setUpdatedAt(f.getUpdatedAt);
+        fr.setFileId(f.getFileId());
+        fr.setFileUrl(f.getFileUrl());
+        fr.setPublicId(f.getPublicId());
+        fr.setFileType(f.getFileType());
+        fr.setCreatedAt(f.getCreatedAt());
+        fr.setUpdatedAt(f.getUpdatedAt());
         return fr;
     }
 

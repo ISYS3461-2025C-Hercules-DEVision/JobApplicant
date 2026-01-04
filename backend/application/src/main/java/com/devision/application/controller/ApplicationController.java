@@ -25,6 +25,15 @@ public class ApplicationController {
         this.applicationService = applicationService;
     }
 
+    // Admin get all applications
+    @GetMapping
+    public ResponseEntity<List<ApplicationSummaryResponse>> listAll() {
+        requireAdmin();
+
+        List<ApplicationSummaryView> list = applicationService.listAll();
+        return ResponseEntity.ok(list.stream().map(this::toExternal).toList());
+    }
+
     // Admin gets any application by id
     @GetMapping("/{id}")
     public ResponseEntity<ApplicationResponse> getById(@PathVariable("id") String id) {
@@ -33,7 +42,7 @@ public class ApplicationController {
         return ResponseEntity.ok(toExternal(view));
     }
 
-    // Admin can list by applicant id (if you need)
+    // Admin can list by applicant id
     @GetMapping("/by-applicant/{applicantId}")
     public ResponseEntity<List<ApplicationSummaryResponse>> listByApplicant(@PathVariable String applicantId) {
         requireAdmin();
@@ -41,7 +50,7 @@ public class ApplicationController {
         return ResponseEntity.ok(list.stream().map(this::toExternal).toList());
     }
 
-    // Optional: admin can create application on behalf? (usually no)
+    // admin can create application on behalf? (usually no)
     @PostMapping
     public ResponseEntity<ApplicationResponse> createForApplicant(
             @RequestParam String applicantId,

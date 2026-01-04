@@ -143,6 +143,15 @@ public class ApplicationServiceImpl implements ApplicationService {
         return toView(getByIdOrThrow(applicationId));
     }
 
+    @Override
+    public List<ApplicationSummaryView> listAll() {
+        return repo.findAll()
+                .stream()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .map(this::toSummaryView)
+                .toList();
+    }
+
     // -------- mapping (internal view) --------
     private ApplicationView toView(Application a) {
         ApplicationView v = new ApplicationView();
@@ -210,4 +219,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     private static void requireFile(MultipartFile f, String field) {
         if (f == null || f.isEmpty()) throw new IllegalArgumentException(field + " is required");
     }
+
+
 }
+
+
