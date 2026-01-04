@@ -1,4 +1,4 @@
-package com.devdivision.service;
+package com.devdivision.internal.service;
 
 // ImageService.java (Hypothetical Service Class)
 import com.cloudinary.Cloudinary;

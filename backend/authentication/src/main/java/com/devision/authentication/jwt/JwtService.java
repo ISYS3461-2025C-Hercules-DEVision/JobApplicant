@@ -1,8 +1,6 @@
 package com.devision.authentication.jwt;
 
-import com.devision.authentication.dto.UserDto;
 import com.devision.authentication.dto.jwtUserDto;
-import com.devision.authentication.user.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -42,7 +40,7 @@ public class JwtService {
                 .setSubject(user.userId())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .addClaims(claims)
+                .addClaims(user.toClaims())
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

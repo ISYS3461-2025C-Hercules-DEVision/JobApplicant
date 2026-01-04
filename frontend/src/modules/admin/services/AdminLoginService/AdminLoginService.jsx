@@ -1,24 +1,37 @@
-const API_BASE = "";
+import { request } from "../../../../utils/HttpUtil.js";
 
-export async function adminLoginService({email,password,remember}){
-    const res = await fetch (`${API_BASE}/login`, {
+const TOKEN_KEY = "admin_token";
+
+
+export async function adminLoginService(email, password, remember = true) {
+    //  change this endpoint if needed
+    const data = await request("/auth/admin/login", {
         method: "POST",
-        headers: {
-            "Content-Type" : "application/json",
-        },
-        credentials :"include",
-        body: JSON.stringify({email,password,remember}),
+        body: { email, password },
     });
-    if(!res.ok){
-        let message = "Invalid Credentials";
-        try{
-            const err = await res.json();
-            message = err?.messages || message;
+    console.log("Admin login response:", data);
+    // support different backend formats
+    const token = data?.token || data?.accessToken;
 
-        }catch{
 
-        }
-        throw new Error(message);
+    if (!token) {
+        throw new Error("Token not found in login response.");
     }
-    return res.json();
+
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem(TOKEN_KEY, token);
+
+    return { ...data, token};
 }
+
+export function adminLogoutService() {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+
+}
+
+export function getAdminToken() {
+    return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+}
+
+

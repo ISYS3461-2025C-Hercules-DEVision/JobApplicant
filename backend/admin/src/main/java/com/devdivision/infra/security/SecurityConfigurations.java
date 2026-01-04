@@ -3,6 +3,7 @@ package com.devdivision.infra.security;
 import com.devdivision.filter.AuthRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -22,27 +23,30 @@ public class SecurityConfigurations {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // allow preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/v3/api-docs/**",
-                    "/swagger-resources/**",
-                    "/webjars/**",
-                    "/api/public/**"  // <-- public APIs here
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
+                        // public endpoints (optional)
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
 
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+                        // ✅ role-protected endpoints
+                        .requestMatchers("/super-admin/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
-            .addFilterBefore(authRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                        // ✅ everything else requires authentication
+                        .anyRequest().authenticated()
+                )
+                //  JWT filter
+                .addFilterBefore(authRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -16,8 +16,11 @@ export async function request(path, { method = "GET", body, headers } = {}) {
     //Boolean check for updating Image or Video
     const isFormData = body instanceof FormData;
 
-    // Get JWT token from localStorage
-    const token = localStorage.getItem("token");
+    //  Use user token first, fallback to admin token
+    const token =
+        localStorage.getItem("token") ||
+        localStorage.getItem("admin_token") ||
+        sessionStorage.getItem("admin_token");
 
     const res = await fetch(url, {
         method,
