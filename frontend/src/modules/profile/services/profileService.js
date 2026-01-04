@@ -56,4 +56,11 @@ export const profileService = {
             method : "GET"
         });
     },
+
+    //DELETE portfolio
+    deleteMedia(applicantId, mediaId){
+        return request(`/api/v1/applicants/${applicantId}/portfolio/${mediaId}`,{
+            method : "DELETE"
+        });
+    },
 };

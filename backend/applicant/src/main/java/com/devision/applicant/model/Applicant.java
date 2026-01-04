@@ -34,9 +34,6 @@ public class Applicant {
     @Field(name = "email")
     private String email;      // UNIQUE
 
-    @Field(name = "password")
-    private String password; //store hashed password
-
     @Field(name = "country")
     private String country;    // shard key
 

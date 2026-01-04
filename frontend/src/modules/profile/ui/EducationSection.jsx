@@ -1,9 +1,13 @@
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import {useState, useEffect} from "react";
 import {useProfile} from "../hooks/useProfile.js";
+import {useSelector} from "react-redux";
 function EducationSection() {
 
-  const applicantId = "ef23f942-8a9c-46bb-a68e-ee140b2720c1";
+  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
+  const {user} = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
+
   const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
 
   const [educations, setEducations] = useState([]);
@@ -46,9 +50,18 @@ function EducationSection() {
     setEducations(updated);
   };
 
-  const handleDelete = (index) => {
+  const handleDelete = async (index) => {
     if(window.confirm('Delete this education ?')){
-      setEducations(educations.filter((_, i) => i !== index));
+      try{
+      //Remove locally
+      const updatedEducation = educations.filter((_,i) => i !== index);
+
+      //save to backend
+      await updateProfile({educations: updatedEducation});
+      alert('Delete successfully!');
+      } catch (err){
+        alert('Cant delete this education: ' + err.message);
+      }
     }
   };
 
@@ -164,6 +177,8 @@ function EducationSection() {
                 {edu.fromYear} - {edu.toYear || 'Present'}
               </p>
                     {edu.gpa && <p className="text-sm"> GPA: {edu.gpa} </p> }
+
+                    {index < educations.length - 1 && (<hr className="my-6 border-t border-gray-300"/>)}
                   </div>
             ))
 

@@ -1,11 +1,15 @@
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import {useState, useEffect} from "react";
 import {useProfile} from "../hooks/useProfile.js";
+import {useSelector} from "react-redux";
 
 
 function SkillsSection() {
   // const [profile, loading, error, updateProfile] = useProfile(applicantId);
-  const applicantId = "ef23f942-8a9c-46bb-a68e-ee140b2720c1";
+  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
+  const {user} = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
+
   const {profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
 
   const [localSkills, setSkills] = useState([]);

@@ -1,10 +1,14 @@
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import {useProfile} from "../hooks/useProfile.js";
 import {useEffect, useState} from "react";
+import {useSelector} from "react-redux";
 
 function AboutSection() {
 
-  const applicantId = "ef23f942-8a9c-46bb-a68e-ee140b2720c1";
+  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
+  const {user} = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
+
   const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
 
   const [objectiveSummary, setObjectiveSummary] = useState('');

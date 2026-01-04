@@ -9,19 +9,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 
-public class PendingApplicantRequests {
+public class PendingApplicantRequests<AuthenticationApplicantCodeWithUuid> {
 
-    private final Map<String, CompletableFuture<AutheticationApplicantCodeWithUuid>> pending =
+    private final Map<String, CompletableFuture<AuthenticationApplicantCodeWithUuid>> pending =
             new ConcurrentHashMap<>();
 
-    public CompletableFuture<AutheticationApplicantCodeWithUuid> create(String correlationId) {
-        CompletableFuture<AutheticationApplicantCodeWithUuid> future = new CompletableFuture<>();
+    public CompletableFuture<AuthenticationApplicantCodeWithUuid> create(String correlationId) {
+        CompletableFuture<AuthenticationApplicantCodeWithUuid> future = new CompletableFuture<>();
         pending.put(correlationId, future);
         return future;
     }
 
-    public void complete(String correlationId, AutheticationApplicantCodeWithUuid payload) {
-        CompletableFuture<AutheticationApplicantCodeWithUuid> future = pending.remove(correlationId);
+    public void complete(String correlationId, AuthenticationApplicantCodeWithUuid payload) {
+        CompletableFuture<AuthenticationApplicantCodeWithUuid> future = pending.remove(correlationId);
         if (future != null) {
             future.complete(payload);
         }

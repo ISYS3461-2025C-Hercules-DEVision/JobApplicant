@@ -14,7 +14,7 @@ export function useSubscription() {
 
   return {
     subscription,
-    isPremium: subscription?.active === true,
+    isPremium: subscription?.active === true, // 🔴 FIXED
     loading,
   };
 }

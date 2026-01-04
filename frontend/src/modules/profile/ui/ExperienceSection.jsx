@@ -1,9 +1,13 @@
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import {useProfile} from "../hooks/useProfile.js";
 import {useEffect, useState} from "react";
+import {useSelector} from "react-redux";
 function ExperienceSection() {
 
-  const applicantId = "ef23f942-8a9c-46bb-a68e-ee140b2720c1";
+  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
+  const {user} = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
+
   const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
 
   const [localExperiences, setLocalExperiences] = useState([]);
@@ -50,9 +54,18 @@ function ExperienceSection() {
   };
 
   //Delete experience
-  const deleteExperience = (index) => {
-    if(window.confirm('Delete this experience ? ')){
-      setLocalExperiences(localExperiences.filter((_,i) => i !== index));
+  const deleteExperience = async (index) => {
+    if(window.confirm('Delete this experience ? ')) {
+      try {
+        //Remove locally
+        const updateExperience = localExperiences.filter((_,i) => i !== index);
+
+        //Save to backend
+        await updateProfile({experiences: updateExperience});
+        alert('Experience deleted successfully!');
+      }catch (err){
+        alert('Failed to delete' + err.message);
+      }
     }
   };
 
@@ -167,7 +180,7 @@ function ExperienceSection() {
                   <p className="text-sm text-gray-600">
                     {exp.fromYear} - {exp.toYear || 'Present'}
                   </p>
-                  {exp.description && <p className="mt-2 text-gray-600">{exp.description}</p>}
+                  {exp.description && (<p className="mt-2 text-gray-600">{exp.description}</p>)}
                   </div>
                 ))
                 ) : (

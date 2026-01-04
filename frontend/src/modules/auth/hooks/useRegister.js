@@ -1,5 +1,8 @@
+
 import { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { authService } from "../services/authService.js";
+import { authStart, authSuccess, authFail } from "../auth/authSlice.js";
 
 const initial = {
     fullName: "",
@@ -13,10 +16,11 @@ const initial = {
 };
 
 export function useRegister({ onSuccess } = {}) {
+    const dispatch = useDispatch();
+    const auth = useSelector((state) => state.auth);
+
     const [formData, setFormData] = useState(initial);
     const [step, setStep] = useState(1);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
 
     function handleChange(e) {
         const { name, value } = e.target;
@@ -33,17 +37,12 @@ export function useRegister({ onSuccess } = {}) {
 
     async function handleSubmit(e) {
         e.preventDefault();
-        setError("");
 
+        if (isPasswordMismatch) return;
 
-        if (isPasswordMismatch) {
-            setError("Password confirmation does not match.");
-            return;
-        }
-
-        setLoading(true);
         try {
-            // Adapt keys here if backend expects different field names
+            dispatch(authStart());
+
             const payload = {
                 fullName: formData.fullName,
                 email: formData.email,
@@ -54,19 +53,24 @@ export function useRegister({ onSuccess } = {}) {
                 streetAddress: formData.streetAddress,
             };
 
-            const res = await authService.register(payload);
+            const data = await authService.register(payload);
 
-            // auto-store token if backend returns it
-            const token = res?.token || res?.accessToken;
-            if (token) localStorage.setItem("access_token", token);
+            const token = data.token;
+            const user = {
+                userId: data.userId,
+                applicantId: data.applicantId,
+                email: data.email,
+                fullName: data.fullName,
+            };
 
+            if (!token) throw new Error("Token missing from register response");
 
+            dispatch(authSuccess({ token, user }));
             setStep(3);
-            onSuccess?.(res);
+
+            onSuccess?.(data);
         } catch (err) {
-            setError(err?.message || "Register failed");
-        } finally {
-            setLoading(false);
+            dispatch(authFail(err.message));
         }
     }
 
@@ -77,8 +81,8 @@ export function useRegister({ onSuccess } = {}) {
     return {
         formData,
         step,
-        loading,
-        error,
+        loading: auth.status === "loading",
+        error: auth.error,
         isPasswordMismatch,
         handleChange,
         handleSubmit,

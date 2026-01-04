@@ -18,13 +18,13 @@ public class AuthToApplicantEvent extends DtoWithProcessId {
     private String streetAddress;
 
     public AuthToApplicantEvent(
+            String correlationId,
             String email,
             String fullName,
             String phoneNumber,
             String country,
             String city,
-            String streetAddress,
-            String correlationId
+            String streetAddress
     ) {
         super(correlationId);
         this.email = email;

@@ -28,7 +28,7 @@ public class AuthenticationKafkaConsumer {
     }
 
     @KafkaListener(
-            topics = KafkaConstant.AUTHENTICATION_TOPIC,
+            topics = KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC,
             groupId = KafkaConstant.APPLICANT_GROUP_ID,
             containerFactory = "defaultKafkaListenerContainerFactory"
     )
@@ -66,6 +66,7 @@ public class AuthenticationKafkaConsumer {
                 null,
                 null,
                 null,
+                null,
                 null
         );
 
@@ -81,7 +82,7 @@ public class AuthenticationKafkaConsumer {
 
         // Send response back to AUTHENTICATION_TOPIC_RESPONSE
         kafkaGenericProducer.sendMessage(
-                KafkaConstant.AUTHENTICATION_TOPIC_RESPONSE,
+                KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC_RESPONSE,
                 response
         );
     }
