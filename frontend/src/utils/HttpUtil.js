@@ -1,4 +1,4 @@
-// src/services/http.js
+// src/utils/http.js
 export const API_BASE = "http://localhost:10789";
 
 async function parseBody(res) {

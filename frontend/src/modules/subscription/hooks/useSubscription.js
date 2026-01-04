@@ -14,7 +14,7 @@ export function useSubscription() {
 
   return {
     subscription,
-    isPremium: subscription?.isActive === true,
+    isPremium: subscription?.active === true,
     loading,
   };
 }
