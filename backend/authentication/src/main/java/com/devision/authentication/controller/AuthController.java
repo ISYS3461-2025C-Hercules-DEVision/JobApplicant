@@ -30,6 +30,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final PendingApplicantRequests pendingApplicantRequests;
     private final KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer;
+    private final PendingApplicantRequests pendingApplicantRequests;
 
     public AuthController(UserService userService,
                           JwtService jwtService, PendingApplicantRequests pendingApplicantRequests,
@@ -38,6 +39,7 @@ public class AuthController {
         this.jwtService = jwtService;
         this.pendingApplicantRequests = pendingApplicantRequests;
         this.kafkaProducer = kafkaProducer;
+        this.pendingApplicantRequests = pendingApplicantRequests;
     }
 
     @PostMapping("/register")

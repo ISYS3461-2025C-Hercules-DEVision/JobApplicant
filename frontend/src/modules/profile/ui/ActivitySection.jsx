@@ -1,9 +1,13 @@
 import { useState } from "react";
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import {useMediaPortfolio} from "../hooks/useMediaPortfolio.js";
+import {useSelector} from "react-redux";
 
 function ActivitySection() {
-  const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
+  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
+  const {user} = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
+
   const {mediaItems, loading, error, uploading, uploadMedia, deleteMedia} = useMediaPortfolio(applicantId);
 
   const [showUploadForm, setShowUploadForm] = useState(false);
