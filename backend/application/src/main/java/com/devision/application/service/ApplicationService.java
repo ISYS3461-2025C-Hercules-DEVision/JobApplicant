@@ -94,5 +94,4 @@ public class ApplicationService {
         repository.save(application);
     }
 
-
 }

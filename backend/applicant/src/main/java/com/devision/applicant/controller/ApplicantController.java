@@ -108,6 +108,4 @@ public class ApplicantController {
     public void deleteMediaPortfolio(@PathVariable String id, @PathVariable String mediaId){
         service.deleteMediaPortfolio(id, mediaId);
     }
-
-
 }

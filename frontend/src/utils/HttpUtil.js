@@ -13,6 +13,7 @@ export async function request(path, { method = "GET", body, headers } = {}) {
     const url = `${API_BASE}${path}`;
     console.log(`Actual url being called: ${url}`);
 
+    //Boolean check for updating Image or Video
     const isFormData = body instanceof FormData;
 
     // Get JWT token from localStorage

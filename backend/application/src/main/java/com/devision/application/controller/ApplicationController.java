@@ -19,7 +19,7 @@ public class ApplicationController {
 
     @GetMapping("/applicant/{applicantId}")
     @ResponseStatus(HttpStatus.OK)
-    public List<ApplicationDTO> getApplicationsByApplicant(@PathVariable String applicantId){
+    public List<ApplicationDTO> getApplicationsByApplicantId(@PathVariable String applicantId){
         return applicationService.getApplicationsByApplicantId(applicantId);
     }
 
