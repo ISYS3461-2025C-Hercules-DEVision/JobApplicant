@@ -1,9 +1,8 @@
 package com.devision.authentication.user.service;
 
-import com.devision.authentication.dto.HandleChangeStatusReqDto;
-import com.devision.authentication.dto.LoginRequest;
-import com.devision.authentication.dto.RegisterRequest;
+import com.devision.authentication.dto.*;
 import com.devision.authentication.user.entity.User;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Map;
 

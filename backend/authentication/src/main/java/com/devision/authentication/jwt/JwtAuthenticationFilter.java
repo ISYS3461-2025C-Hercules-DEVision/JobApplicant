@@ -52,19 +52,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7).trim().replace("\"", "");
 
         try {
-            Jws<Claims> parsed = jwtService.validateAndParse(token);
-            Claims claims = parsed.getBody();
+            //  parse claims (throws if invalid / expired)
+            Claims claims = jwtService.parseClaims(token);
+
+            //  ensure token is ACCESS token
+            String type = claims.get("type", String.class);
+            if (!"access".equals(type)) {
+                // someone sent refresh token here -> reject
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"message\":\"Invalid token type\"}");
+                return;
+            }
 
             String userId = claims.getSubject();
-            String role = claims.get("role", String.class);
 
-            if (userId != null && role != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 User user = userRepo.findById(userId)
                         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                // ✅ banned check -> 403
+                //  banned check -> 403
                 if (Boolean.FALSE.equals(user.getStatus())) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
@@ -72,7 +80,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                // ✅ best practice: use role from DB (in case user role changed)
+                // always trust DB role (not token)
                 String dbRole = user.getRole().name();
 
                 List<SimpleGrantedAuthority> authorities =
@@ -86,7 +94,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
+            // invalid token, expired token, signature error, etc.
             SecurityContextHolder.clearContext();
+
+
+
+            //  explicit 401 so frontend can refresh token
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\":\"Unauthorized\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);

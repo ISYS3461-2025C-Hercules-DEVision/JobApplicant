@@ -27,30 +27,31 @@ export default function AuthCallback() {
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const token = params.get("token");
 
-        if (!token) {
-            dispatch(authFail("Google login failed: token missing"));
+        // backend sends accessToken
+        const accessToken = params.get("accessToken");
+        const refreshToken = params.get("refreshToken");
+
+        if (!accessToken) {
+            dispatch(authFail("Google login failed: accessToken missing"));
             navigate("/login", { replace: true });
             return;
         }
 
-        // decode token for quick user display (backend puts email + applicantId in claims)
-        const decoded = decodeJwt(token);
+        const decoded = decodeJwt(accessToken);
 
         const user = decoded
             ? {
                 userId: decoded.sub || null,
                 email: decoded.email || null,
                 applicantId: decoded.applicantId || null,
-                // fullName is not in token claims; you'll need /me endpoint for that
                 fullName: null,
             }
             : null;
 
-        dispatch(authSuccess({ token, user }));
+        dispatch(authSuccess({ token: accessToken, refreshToken, user }));
 
-        // clean URL (remove token from address bar)
+        // clean URL and redirect
         navigate("/", { replace: true });
     }, [dispatch, location.search, navigate]);
 
