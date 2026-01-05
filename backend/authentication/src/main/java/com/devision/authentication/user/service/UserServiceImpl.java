@@ -130,11 +130,6 @@ public class UserServiceImpl implements UserService {
                         .status(true)
                         .build()
                 );
-
-        if (Boolean.FALSE.equals(user.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
-        }
-
         return userRepository.save(user);
     }
 
