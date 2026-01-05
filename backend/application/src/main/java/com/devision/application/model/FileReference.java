@@ -14,6 +14,7 @@ import com.devision.application.enums.FileType;
 public class FileReference {
 
     private String fileId;        // UUID
+    private String applicationId;
     private String fileUrl;       // Cloudinary secure_url
     private String publicId;      // Cloudinary public_id (nên có để delete/update)
     private FileType fileType;    // PDF | DOCX

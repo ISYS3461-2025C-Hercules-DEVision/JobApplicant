@@ -23,10 +23,14 @@ import AdminDashboard from "../modules/admin/ui/AdminDashboard.jsx";
 import UserProtectedRoute from "../routes/UserProtectedRoute.jsx";
 import AdminProtectedRoute from "../routes/AdminProtectedRoute.jsx";
 import AccountBannedPage from "../modules/auth/ui/AccountBannedPage.jsx";
+import AuthInitializer from "../components/AuthInitializer.jsx";
 
 function App() {
     return (
         <Router>
+            {/* Handle when reloading page, the redux resets */}
+            <AuthInitializer/>
+
             <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<HomePage />} />
