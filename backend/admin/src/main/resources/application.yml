@@ -3,6 +3,8 @@ server:
   forward-headers-strategy: framework
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: admin-service
   kafka:
@@ -30,3 +32,4 @@ logging:
   level:
     root: INFO
     org.springframework.security: INFO
+    org.springframework.boot.context.config: DEBUG

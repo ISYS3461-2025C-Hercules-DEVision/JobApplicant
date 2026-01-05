@@ -1,5 +1,6 @@
 package com.devision.applicant.controller;
 
+import com.devision.applicant.api.ApplicantMapper;
 import com.devision.applicant.config.KafkaConstant;
 import com.devision.applicant.connection.ApplicantToJmEvent;
 import com.devision.applicant.dto.*;
@@ -41,8 +42,9 @@ public class ApplicantController {
     }
 
     @GetMapping
-    public List<ApplicantDTO> getAll() {
-        return service.getAll();
+    public List<ApplicantForAdmin> getAll() {
+        List<ApplicantDTO> a = service.getAll();
+        return ApplicantMapper.toApplicantForAdmin(a);
     }
 
     //WORKED
@@ -108,4 +110,17 @@ public class ApplicantController {
     public void deleteMediaPortfolio(@PathVariable String id, @PathVariable String mediaId){
         service.deleteMediaPortfolio(id, mediaId);
     }
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<ApplicantDTO> deactivateApplicant(@PathVariable("id") String id) {
+        ApplicantDTO result = service.deactivateApplicantAccount(id);
+        return ResponseEntity.ok(result);
+    }
+
+
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<ApplicantDTO> activateApplicant(@PathVariable("id") String id) {
+        ApplicantDTO result = service.activateApplicantAccount(id);
+        return ResponseEntity.ok(result);
+    }
+
 }

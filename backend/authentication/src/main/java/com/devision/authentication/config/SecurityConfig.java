@@ -4,6 +4,7 @@ import com.devision.authentication.connection.AutheticationApplicantCodeWithUuid
 import com.devision.authentication.dto.jwtUserDto;
 import com.devision.authentication.jwt.JwtAuthenticationFilter;
 import com.devision.authentication.jwt.JwtService;
+import com.devision.authentication.jwt.tokenStore.RefreshTokenService;
 import com.devision.authentication.kafka.kafka_consumer.PendingApplicantRequests;
 import com.devision.authentication.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.authentication.user.entity.User;
@@ -41,19 +42,22 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final PendingApplicantRequests pendingApplicantRequests;
+    private final RefreshTokenService refreshTokenService;
     @Value("${app.auth.frontend-redirect-url}")
     private String frontendRedirectUrl;
-
+    @Value("${app.auth.frontend-banned-url}")
+    private String frontendBannedUrl;
     public SecurityConfig(UserService userService,
                           KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer,
                           JwtService jwtService, JwtAuthenticationFilter jwtAuthenticationFilter,
-                          PendingApplicantRequests pendingApplicantRequests
+                          PendingApplicantRequests pendingApplicantRequests, RefreshTokenService refreshTokenService
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.pendingApplicantRequests = pendingApplicantRequests;
         this.userService = userService;
         this.kafkaProducer = kafkaProducer;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Bean
@@ -71,6 +75,18 @@ public class SecurityConfig {
                         .requestMatchers("/user/**").hasRole("USER")
 
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"message\":\"Unauthorized\"}");
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            res.setContentType("application/json");
+                            res.getWriter().write("{\"message\":\"Forbidden\"}");
+                        })
                 )
                 .oauth2Login(oauth -> oauth
                         .successHandler((request, response, authentication) ->
@@ -95,20 +111,26 @@ public class SecurityConfig {
         Map<String, Object> attributes = oauthToken.getPrincipal().getAttributes();
 
         User user = userService.handleGoogleLogin(attributes);
-
+        if (Boolean.FALSE.equals(user.getStatus())) {
+            response.sendRedirect(frontendBannedUrl);
+            return;
+        }
         // If already linked to applicant -> DON'T call Kafka
         if (user.getApplicantId() != null && !user.getApplicantId().isBlank()) {
-            jwtUserDto jwtUser = new jwtUserDto(user.getId(), user.getEmail(), user.getApplicantId(), user.getRole());
-            String jwt = jwtService.generateToken(jwtUser);
+            jwtUserDto jwtUser = new jwtUserDto(user.getId(), user.getEmail(), user.getApplicantId(), user.getRole(), user.getStatus());
+            String accessToken = jwtService.generateAccessToken(jwtUser);
+            String refreshToken = jwtService.generateRefreshToken(user.getId());
+            refreshTokenService.save(user.getId(), refreshToken);
 
-            String redirectUrl = frontendRedirectUrl +
-                    "?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8);
+            String redirectUrl = frontendRedirectUrl
+                    + "?accessToken=" + URLEncoder.encode(accessToken, StandardCharsets.UTF_8)
+                    + "&refreshToken=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8);
 
             response.sendRedirect(redirectUrl);
             return;
         }
 
-        //  (first time only)
+
         String correlationId = UUID.randomUUID().toString();
 
         CompletableFuture<AutheticationApplicantCodeWithUuid> future =
@@ -156,13 +178,17 @@ public class SecurityConfig {
                     updated.getId(),
                     updated.getEmail(),
                     updated.getApplicantId(),
-                    updated.getRole()
+                    updated.getRole(),
+                    updated.getStatus()
             );
 
-            String jwt = jwtService.generateToken(jwtUser);
+            String accessToken = jwtService.generateAccessToken(jwtUser);
+            String refreshToken = jwtService.generateRefreshToken(updated.getId());
+            refreshTokenService.save(updated.getId(), refreshToken);
 
-            String redirectUrl = frontendRedirectUrl +
-                    "?token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8);
+            String redirectUrl = frontendRedirectUrl
+                    + "?accessToken=" + URLEncoder.encode(accessToken, StandardCharsets.UTF_8)
+                    + "&refreshToken=" + URLEncoder.encode(refreshToken, StandardCharsets.UTF_8);
 
             response.sendRedirect(redirectUrl);
 
