@@ -1,22 +1,46 @@
-// src/pages/ApplicantAccount.jsx
 import React, { useMemo, useState } from "react";
-import { applicants as mockApplicants } from "../data/mockData";
+import { useAdmin } from "../../hooks/useAdmin";
 
 export default function ApplicantTable() {
     const [q, setQ] = useState("");
 
-    const rows = useMemo(() => {
-        const s = q.trim().toLowerCase();
-        if (!s) return mockApplicants;
-        return mockApplicants.filter(
-            (a) =>
-                a.name.toLowerCase().includes(s) ||
-                a.email.toLowerCase().includes(s) ||
-                a.phone.toLowerCase().includes(s) ||
-                a.status.toLowerCase().includes(s)
-        );
-    }, [q]);
+    const {
+        applicants,
+        loadingApplicants,
+        applicantsError,
+        fetchApplicants,
+        activate,
+        deactivate,
+        loadingToggleId,
+    } = useAdmin();
 
+    const rows = useMemo(() => {
+        const list = (applicants || []).map((a) => ({
+            applicantId: a.id,
+            fullName: a.fullName ?? "—",
+            email: a.email ?? "—",
+            country: a.Country ?? a.country ?? "—",
+            createdAt: a.isCreated ?? a.createdAt ?? null,
+            isActivated: Boolean(a.status),
+            _rowKey: a.id ?? a.email,
+        }));
+
+        const s = q.trim().toLowerCase();
+        if (!s) return list;
+
+        return list.filter(
+            (a) =>
+                a.fullName.toLowerCase().includes(s) ||
+                a.email.toLowerCase().includes(s) ||
+                a.country.toLowerCase().includes(s)
+        );
+    }, [q, applicants]);
+    function formatDate(iso) {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return "—";
+        return d.toLocaleString();
+    }
     return (
         <div className="card shadow-sm border-0">
             <div className="card-body">
@@ -28,62 +52,92 @@ export default function ApplicantTable() {
                             <span className="input-group-text">🔎</span>
                             <input
                                 className="form-control"
-                                placeholder="Search applicant..."
+                                placeholder="Search by name/email/country..."
                                 value={q}
                                 onChange={(e) => setQ(e.target.value)}
                             />
                         </div>
+
+                        <button
+                            className="btn btn-outline-primary"
+                            onClick={fetchApplicants}
+                            disabled={loadingApplicants}
+                        >
+                            {loadingApplicants ? "Refreshing..." : "Refresh"}
+                        </button>
                     </div>
                 </div>
+
+                {loadingApplicants && (
+                    <div className="alert alert-info py-2 mb-3">
+                        Loading applicants...
+                    </div>
+                )}
+
+                {applicantsError && (
+                    <div className="alert alert-danger py-2 mb-3">{applicantsError}</div>
+                )}
 
                 <div className="table-responsive">
                     <table className="table align-middle">
                         <thead className="table-light">
                         <tr>
-                            <th style={{ width: 48 }}>
-                                <input className="form-check-input" type="checkbox" />
-                            </th>
-                            <th>Name</th>
+                            <th>Full Name</th>
                             <th>Email</th>
-                            <th>Phone</th>
-                            <th>Verified</th>
-                            <th>Status</th>
-                            <th style={{ width: 60 }}></th>
+                            <th>Country</th>
+                            <th>Create At</th>
+                            <th>Activated</th>
+                            <th className="text-end" style={{ width: 160 }}>
+                                Action
+                            </th>
                         </tr>
                         </thead>
+
                         <tbody>
-                        {rows.map((a) => (
-                            <tr key={a.id}>
-                                <td>
-                                    <input className="form-check-input" type="checkbox" />
-                                </td>
-                                <td className="fw-semibold">{a.name}</td>
-                                <td>{a.email}</td>
-                                <td>{a.phone}</td>
-                                <td>
-                                    {a.verified ? (
-                                        <span className="badge text-bg-success">✔</span>
-                                    ) : (
-                                        <span className="badge text-bg-secondary">—</span>
-                                    )}
-                                </td>
-                                <td>
-                    <span
-                        className={`badge ${
-                            a.status === "Active" ? "text-bg-success" : "text-bg-danger"
-                        }`}
-                    >
-                      {a.status}
-                    </span>
-                                </td>
-                                <td className="text-end">
-                                    <button className="btn btn-sm btn-outline-secondary">⋮</button>
-                                </td>
-                            </tr>
-                        ))}
-                        {!rows.length && (
+                        {rows.map((a) => {
+
+                            const isUpdating = loadingToggleId === a.applicantId;
+
+                            return (
+                                <tr key={a.applicantId}>
+                                    <td className="fw-semibold">{a.fullName}</td>
+                                    <td>{a.email}</td>
+                                    <td>{a.country}</td>
+                                    <td>{formatDate(a.createdAt)}</td>
+                                    <td>
+                                        {a.isActivated ? (
+                                            <span className="badge text-bg-success">Activated</span>
+                                        ) : (
+                                            <span className="badge text-bg-secondary">Inactive</span>
+                                        )}
+                                    </td>
+
+                                    <td className="text-end">
+                                        {a.isActivated ? (
+                                            <button
+                                                className="btn btn-sm btn-outline-danger"
+                                                disabled={isUpdating}
+                                                onClick={() => deactivate(a.applicantId)}
+                                            >
+                                                {isUpdating ? "Deactivating..." : "Deactivate"}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="btn btn-sm btn-outline-success"
+                                                disabled={isUpdating}
+                                                onClick={() => activate(a.applicantId)}
+                                            >
+                                                {isUpdating ? "Activating..." : "Activate"}
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
+
+                        {!loadingApplicants && !rows.length && (
                             <tr>
-                                <td colSpan={7} className="text-center text-muted py-4">
+                                <td colSpan={5} className="text-center text-muted py-4">
                                     No results.
                                 </td>
                             </tr>

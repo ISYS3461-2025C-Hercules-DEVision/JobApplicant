@@ -23,7 +23,12 @@ spring:
               - DELETE
               - OPTIONS
             allowedHeaders:
-              - "*"
+              - Authorization
+              - Content-Type
+              - Accept
+              - Origin
+            exposedHeaders:
+              - Set-Cookie
             allowCredentials: true
 
       routes:
