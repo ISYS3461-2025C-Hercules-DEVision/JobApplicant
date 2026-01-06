@@ -5,7 +5,7 @@ import {
     adminAuthStart,
     adminAuthSuccess,
     adminAuthFail,
-} from "../../AdminAuth/adminAuthSlice.js";
+} from "../../AdminAuth/AdminAuthSlice.js";
 import { adminLoginService } from "../../services/AdminLoginService/AdminLoginService.jsx";
 
 export default function useAdminLogin() {
