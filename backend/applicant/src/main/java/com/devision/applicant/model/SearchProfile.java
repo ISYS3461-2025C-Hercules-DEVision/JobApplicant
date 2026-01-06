@@ -33,7 +33,7 @@ public class SearchProfile {
     private List<String> technicalBackground;
     private List<String> employmentStatus;
 
-    private boolean isActive;
+    private Boolean isActive;
 
     private Instant createdAt;
     private Instant updatedAt;
