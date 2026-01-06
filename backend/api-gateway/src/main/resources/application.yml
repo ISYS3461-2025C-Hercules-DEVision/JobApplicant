@@ -27,8 +27,6 @@ spring:
               - Content-Type
               - Accept
               - Origin
-              - X-Applicant-Id
-              - X-Applicant-Email
             exposedHeaders:
               - Set-Cookie
             allowCredentials: true
@@ -45,9 +43,9 @@ spring:
             - Path=/api/v1/applicants/**
 
         - id: subscription-service
-          uri: lb://SUBSCRIPTION-SERVICE
+          uri: lb://subscription-service
           predicates:
-            - Path=/api/subscriptions/**
+            - Path=/api/v1/subscriptions/**
       forwarded:
         enabled: true
 

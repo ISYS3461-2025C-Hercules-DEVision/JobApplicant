@@ -1,14 +1,19 @@
 // frontend/src/modules/subscription/hooks/useCheckout.js
-import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { subscriptionService } from "../services/subscriptionService";
+import { useNavigate } from "react-router-dom";
 
 export function useCheckout() {
+  const { user } = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
   const navigate = useNavigate();
 
   const startCheckout = async () => {
-    const res = await subscriptionService.createCheckoutSession();
+    if (!applicantId) return;
 
-    // res = { paymentId, status, message }
+    const res = await subscriptionService.createCheckoutSession(applicantId);
+
+    // mock payment page
     navigate(`/payment/mock?paymentId=${res.paymentId}`);
   };
 

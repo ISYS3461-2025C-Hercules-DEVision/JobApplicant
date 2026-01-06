@@ -2,18 +2,24 @@
 import { request } from "../../../utils/HttpUtil.js";
 
 export const subscriptionService = {
-  getMySubscription() {
-    return request("/api/subscriptions/me");
+
+  // GET current subscription by applicantId
+  getMySubscription(applicantId) {
+    return request(`/api/v1/subscriptions/${applicantId}`, {
+      method: "GET",
+    });
   },
 
-  createCheckoutSession() {
-    return request("/api/subscriptions/checkout", {
+  // Create mock payment
+  createCheckoutSession(applicantId) {
+    return request(`/api/v1/subscriptions/${applicantId}/checkout`, {
       method: "POST",
     });
   },
 
-  confirmMockPayment() {
-    return request("/api/subscriptions/mock/confirm", {
+  // (later) confirm mock payment if needed
+  confirmMockPayment(paymentId) {
+    return request(`/api/v1/subscriptions/mock/confirm?paymentId=${paymentId}`, {
       method: "POST",
     });
   },

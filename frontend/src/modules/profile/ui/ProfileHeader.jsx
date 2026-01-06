@@ -22,7 +22,7 @@ function ProfileHeader() {
   const [localCountry, setLocalCountry] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
 
-  const [isPremium, setIsPremium] = useState(false);
+  const [subscription, setSubscription] = useState(null);
   const navigate = useNavigate();
 
   // Hidden file input ref
@@ -41,11 +41,9 @@ function ProfileHeader() {
     if (!applicantId) return;
 
     subscriptionService
-      .getMySubscription()
-      .then((res) => {
-        setIsPremium(res?.active === true);
-      })
-      .catch(() => setIsPremium(false));
+      .getMySubscription(applicantId)
+      .then(setSubscription)
+      .catch(console.error);
   }, [applicantId]);
 
   // Trigger file input click
@@ -112,6 +110,11 @@ function ProfileHeader() {
     localCountry || "Country"
   }`.trim();
 
+  const planLabel =
+    subscription?.active && subscription?.planType === "PREMIUM"
+      ? "PREMIUM"
+      : "FREE";
+
   return (
     <SectionWrapper className="p-0">
       <div className="px-8 py-12 bg-white">
@@ -164,7 +167,7 @@ function ProfileHeader() {
                 transition-all duration-200
               "
             >
-              {isPremium ? "PREMIUM" : "FREE"}
+              {planLabel}
             </button>
 
             {/* Location/editable */}

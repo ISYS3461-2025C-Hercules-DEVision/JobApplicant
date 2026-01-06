@@ -1,7 +1,7 @@
 package com.devision.subscription.service;
 
-import com.devision.subscription.enums.PaymentStatus;
 import com.devision.subscription.dto.PaymentInitiateResponseDTO;
+import com.devision.subscription.dto.SubscriptionStatusResponse;
 import com.devision.subscription.enums.PlanType;
 import com.devision.subscription.model.PaymentTransaction;
 import com.devision.subscription.model.Subscription;
@@ -9,7 +9,6 @@ import com.devision.subscription.repository.PaymentTransactionRepository;
 import com.devision.subscription.repository.SubscriptionRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -22,53 +21,88 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     public SubscriptionServiceImpl(
             SubscriptionRepository subscriptionRepository,
-            PaymentTransactionRepository paymentTransactionRepository
-    ) {
+            PaymentTransactionRepository paymentTransactionRepository) {
         this.subscriptionRepository = subscriptionRepository;
         this.paymentTransactionRepository = paymentTransactionRepository;
     }
 
     @Override
-    public Subscription getActiveSubscription(String applicantId) {
+    public SubscriptionStatusResponse getMySubscription(String applicantId) {
+
         return subscriptionRepository
                 .findByApplicantIdAndIsActiveTrue(applicantId)
-                .orElse(null);
+                .map(sub -> new SubscriptionStatusResponse(
+                        sub.getPlanType(),
+                        true,
+                        sub.getExpiryDate()))
+                .orElse(new SubscriptionStatusResponse(
+                        PlanType.FREE,
+                        false,
+                        null));
     }
 
     @Override
-    public PaymentInitiateResponseDTO startSubscription(
-            String applicantId,
-            String email
-    ) {
+    public PaymentInitiateResponseDTO createMockPayment(String applicantId) {
+
+        // 1. Create payment transaction
         String paymentId = UUID.randomUUID().toString();
 
-        // Record transaction (Simplex 5.1.2)
         PaymentTransaction tx = new PaymentTransaction();
+        tx.setId(paymentId);
         tx.setApplicantId(applicantId);
-        tx.setEmail(email);
-        tx.setPaymentStatus(PaymentStatus.PENDING);
+        tx.setPaymentStatus(com.devision.subscription.enums.PaymentStatus.SUCCESS);
         tx.setTransactionTime(Instant.now());
-        tx.setStripeSessionId(paymentId);
 
         paymentTransactionRepository.save(tx);
 
-        return new PaymentInitiateResponseDTO(
-                paymentId,
-                "PENDING",
-                "Mock payment created"
-        );
-    }
+        // 2. Deactivate old subscription (if any)
+        subscriptionRepository
+                .findByApplicantIdAndIsActiveTrue(applicantId)
+                .ifPresent(old -> {
+                    old.setActive(false);
+                    subscriptionRepository.save(old);
+                });
 
-    @Override
-    public void markSubscriptionPaid(String applicantId) {
-
+        // 3. Create new PREMIUM subscription
         Subscription sub = new Subscription();
         sub.setApplicantId(applicantId);
         sub.setPlanType(PlanType.PREMIUM);
-        sub.setActive(true);
         sub.setStartDate(Instant.now());
         sub.setExpiryDate(Instant.now().plus(30, ChronoUnit.DAYS));
+        sub.setActive(true);
 
         subscriptionRepository.save(sub);
+
+        return new PaymentInitiateResponseDTO(
+                paymentId,
+                "SUCCESS",
+                "Mock payment successful");
+    }
+
+    @Override
+    public SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId) {
+        // If an active subscription already exists, return it
+        return subscriptionRepository
+                .findByApplicantIdAndIsActiveTrue(applicantId)
+                .map(sub -> new SubscriptionStatusResponse(
+                        sub.getPlanType(),
+                        true,
+                        sub.getExpiryDate()))
+                .orElseGet(() -> {
+                    // Create a FREE active subscription
+                    Subscription sub = new Subscription();
+                    sub.setApplicantId(applicantId);
+                    sub.setPlanType(PlanType.FREE);
+                    sub.setStartDate(Instant.now());
+                    sub.setExpiryDate(null); // Free plan: no expiry
+                    sub.setActive(true);
+
+                    subscriptionRepository.save(sub);
+
+                    return new SubscriptionStatusResponse(
+                            PlanType.FREE,
+                            true,
+                            null);
+                });
     }
 }

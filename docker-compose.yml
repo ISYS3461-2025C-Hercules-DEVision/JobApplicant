@@ -56,6 +56,17 @@ services:
     env_file:
       - backend/applicant/.env
 
+  subscription:
+    build:
+      context: backend/subscription
+    depends_on:
+      - kafka
+      - discovery-server
+    env_file:
+      - backend/subscription/.env
+    ports:
+      - "8086:8086"
+
   admin:
     build:
       context: backend/admin

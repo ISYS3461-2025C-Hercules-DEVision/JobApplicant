@@ -13,9 +13,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * - Integrates with Job Manager Payment Service
  */
 @SpringBootApplication
-public class SubscriptionApplication {
+public class SubscriptionServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SubscriptionApplication.class, args);
+        SpringApplication.run(SubscriptionServiceApplication.class, args);
     }
 }

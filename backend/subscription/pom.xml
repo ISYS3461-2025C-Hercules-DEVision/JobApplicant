@@ -81,6 +81,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Kafka -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
+
         <!-- Devtools (optional) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -89,12 +96,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Spring Security OAuth2 Resource Server -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
-        </dependency>
-        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
