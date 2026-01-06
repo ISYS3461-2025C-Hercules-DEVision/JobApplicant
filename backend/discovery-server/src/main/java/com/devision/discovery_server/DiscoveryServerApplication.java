@@ -9,7 +9,8 @@ import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
 public class DiscoveryServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(DiscoveryServerApplication.class, args);
+        System.out.println("Working directory = " + System.getProperty("user.dir"));
+        SpringApplication.run(DiscoveryServerApplication.class, args);
 	}
 
 }

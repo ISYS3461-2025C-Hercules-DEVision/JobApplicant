@@ -6,7 +6,7 @@ function ProfileNavBar() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const {user} = useSelector(state => state.auth);
-    const fullName = user?.fullName || 'User';
+    const fullName = user?.email || 'User';
 
     const handleLogOut = () => {
         dispatch(logout());

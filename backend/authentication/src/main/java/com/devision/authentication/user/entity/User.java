@@ -21,6 +21,8 @@ public class User {
     private String password;      // hashed (BCrypt)
     private UserRole role;
     // For Google SSO
+    @Builder.Default
+    private Boolean status = true;
     private String provider;      // "LOCAL" or "GOOGLE"
     private String providerId;    // Google "sub" (unique id)
     private String applicantId;

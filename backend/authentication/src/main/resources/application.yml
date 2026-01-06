@@ -36,13 +36,21 @@ spring:
     uri: ${MONGODB_URI}
 
 app:
+  redis:
+    revocation:
+      host: ${REDIS_REVOCATION_HOST:127.0.0.1}
+      port: ${REDIS_REVOCATION_PORT:6380}
+      password: ${REDIS_REVOCATION_PASSWORD}
   super-admin:
     email: ${APP_SUPER_ADMIN_EMAIL:s3932156@rmit.edu.vn}
     password: ${APP_SUPER_ADMIN_PASSWORD:123123}
   auth:
     jwt-secret: ${JWT_SECRET}
-    jwt-expiration-ms: ${JWT_EXPIRATION_MS}
+    cookie-secure: false
+    access-token-expiration-ms: ${ACCESS_TOKEN_EXPIRATION_MS:180000}     # default 3 minutes
+    refresh-token-expiration-ms: ${REFRESH_TOKEN_EXPIRATION_MS:2592000000} # default 30 days
     frontend-redirect-url: ${FRONTEND_REDIRECT_URL}
+    frontend-banned-url: ${FRONTEND_BANNED_URL}
 
 eureka:
   instance:

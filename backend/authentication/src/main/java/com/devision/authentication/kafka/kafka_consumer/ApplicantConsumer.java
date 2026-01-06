@@ -2,7 +2,7 @@ package com.devision.authentication.kafka.kafka_consumer;
 
 import com.devision.authentication.config.KafkaConstant;
 import com.devision.authentication.connection.AutheticationApplicantCodeWithUuid;
-import com.devision.authentication.user.service.UserService;
+import com.devision.authentication.user.service.UserServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -11,9 +11,9 @@ import org.springframework.stereotype.Component;
 public class ApplicantConsumer {
 
     private final ObjectMapper mapper;
-    private final UserService userService;
+    private final UserServiceImpl userService;
     private PendingApplicantRequests pendingApplicantRequests;
-    public ApplicantConsumer(ObjectMapper mapper, UserService userService, PendingApplicantRequests pendingApplicantRequests) {
+    public ApplicantConsumer(ObjectMapper mapper, UserServiceImpl userService, PendingApplicantRequests pendingApplicantRequests) {
         this.pendingApplicantRequests = pendingApplicantRequests;
         this.mapper = mapper;
         this.userService = userService;

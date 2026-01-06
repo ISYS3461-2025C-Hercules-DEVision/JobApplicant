@@ -28,6 +28,25 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
 
+  # ✅ Dedicated Redis instance for token revocation (non-SSO)
+  redis-revocation:
+    image: redis:7-alpine
+    container_name: redis-revocation
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    environment:
+      REDIS_REVOCATION_PASSWORD: ${REDIS_REVOCATION_PASSWORD}
+    command: >
+      sh -c "redis-server --requirepass $$REDIS_REVOCATION_PASSWORD"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_REVOCATION_PASSWORD}", "PING"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_revocation_data:/data
+
   discovery-server:
     build:
       context: backend/discovery-server
@@ -43,9 +62,14 @@ services:
     depends_on:
       - kafka
       - discovery-server
+      - redis-revocation
     restart: unless-stopped
     env_file:
       - backend/authentication/.env
+    environment:
+      REDIS_REVOCATION_HOST: redis-revocation
+      REDIS_REVOCATION_PORT: 6379
+      REDIS_REVOCATION_PASSWORD: ${REDIS_REVOCATION_PASSWORD}
 
   applicant:
     build:
@@ -91,3 +115,4 @@ services:
 
 volumes:
   kafka_data:
+  redis_revocation_data:

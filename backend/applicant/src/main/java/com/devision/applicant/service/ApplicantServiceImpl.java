@@ -211,5 +211,37 @@ public class ApplicantServiceImpl implements ApplicantService {
         }
     }
 
+    @Override
+    public ApplicantDTO deactivateApplicantAccount(String applicantId) {
+        Applicant a = repository.findById(applicantId)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+        a.setIsActivated(false);
+        Applicant saved = repository.save(a);
+        System.out.println(saved.getApplicantId());
+        System.out.println(saved.getIsActivated());
+        ChangeStatusDto change = new ChangeStatusDto(saved.getApplicantId(), saved.getIsActivated());
+        System.out.println(change.id());
+        System.out.println(change.status());
+        kafkaGenericProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_CHANGE_STATUS_TOPIC,change);
+        return ApplicantMapper.toDto(saved);
+    }
+
+    @Override
+    public ApplicantDTO activateApplicantAccount(String applicantId) {
+        Applicant a = repository.findById(applicantId)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+        a.setIsActivated(true);
+        Applicant saved = repository.save(a);
+        System.out.println(saved.getApplicantId());
+        System.out.println(saved.getIsActivated());
+        ChangeStatusDto change = new ChangeStatusDto(saved.getApplicantId(), saved.getIsActivated());
+        System.out.println(change.id());
+        System.out.println(change.status());
+        kafkaGenericProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_CHANGE_STATUS_TOPIC,change);
+        return ApplicantMapper.toDto(saved);
+    }
+
 
 }
