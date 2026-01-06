@@ -27,6 +27,7 @@ const authSlice = createSlice({
             state.error = null;
 
             localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(user));
 
         },
         authFail: (state, action) => {
@@ -40,6 +41,7 @@ const authSlice = createSlice({
             state.error = null;
 
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
 
         },
     },
