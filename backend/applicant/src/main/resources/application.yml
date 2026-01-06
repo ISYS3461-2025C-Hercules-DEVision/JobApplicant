@@ -17,9 +17,12 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 
+#Default MongoDB(VN)
   mongodb:
     database: ${MONGODB_DATABASE}
     uri: ${MONGODB_URI}
+
+#Additional MongoDB URIs for other countries
 
 eureka:
   instance:

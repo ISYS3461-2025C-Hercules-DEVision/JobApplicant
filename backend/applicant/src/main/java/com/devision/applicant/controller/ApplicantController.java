@@ -52,14 +52,6 @@ public class ApplicantController {
     public ApplicantDTO update(@PathVariable String id,
                                @Valid @RequestBody ApplicantUpdateRequest request) {
 
-        String correlationId = UUID.randomUUID().toString();
-        ApplicantToJmEvent event = new ApplicantToJmEvent(
-                correlationId,
-                request.country(),
-                request.skills()
-        );
-
-        genericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
         return service.update(id, request);
     }
 

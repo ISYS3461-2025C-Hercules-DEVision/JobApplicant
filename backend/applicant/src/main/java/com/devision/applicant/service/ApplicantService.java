@@ -28,5 +28,7 @@ public interface ApplicantService {
     void deleteMediaPortfolio(String applicantId, String mediaId);
 
     ApplicantDTO deactivateApplicantAccount(String applicantId);
+
     ApplicantDTO activateApplicantAccount(String applicantId);
+
 }

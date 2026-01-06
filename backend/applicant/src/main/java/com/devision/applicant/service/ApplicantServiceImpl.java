@@ -2,6 +2,7 @@ package com.devision.applicant.service;
 
 import com.devision.applicant.api.ApplicantMapper;
 import com.devision.applicant.config.KafkaConstant;
+import com.devision.applicant.connection.ApplicantToJmEvent;
 import com.devision.applicant.dto.*;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
@@ -10,6 +11,9 @@ import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,12 +34,14 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final ImageService imageService;
 
     private final KafkaGenericProducer<Object> kafkaGenericProducer;
+    private final ShardMigrationService shardMigrationService;
 
-    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, KafkaGenericProducer<Object> kafkaGenericProducer) {
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, KafkaGenericProducer<Object> kafkaGenericProducer, ShardMigrationService shardMigrationService) {
         this.repository = repository;
         this.mediaPortfolioRepository = mediaPortfolioRepository;
         this.imageService = mediaService;
         this.kafkaGenericProducer = kafkaGenericProducer;
+        this.shardMigrationService = shardMigrationService;
     }
 
     @Override
@@ -76,9 +82,33 @@ public class ApplicantServiceImpl implements ApplicantService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
             }
         }
+        String oldCountry = a.getCountry();
+        List<String> oldSkills = a.getSkills();
 
         ApplicantMapper.updateEntity(a, req);
-        return ApplicantMapper.toDto(repository.save(a));
+
+        boolean countryChanged = req.country() != null && !req.country().equals(oldCountry);
+        boolean skillChanged = req.skills() != null && !req.skills().equals(oldSkills);
+
+        //Publish to Kafka
+        if(countryChanged || skillChanged){
+            String correlationId = UUID.randomUUID().toString();
+            ApplicantToJmEvent event = new ApplicantToJmEvent();
+            event.setCorrelationId(correlationId);
+            event.setCountry(req.country() != null ? req.country() : oldCountry);
+            event.setSkills(req.skills() != null ? req.skills() : oldSkills);
+
+            kafkaGenericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
+        }
+
+        if(countryChanged){
+            //Trigger shard migration (copy and delete)
+            shardMigrationService.migrateApplicant(a, oldCountry, req.country());
+        }else {
+            repository.save(a);
+        }
+
+        return ApplicantMapper.toDto(a);
     }
 
     @Override
@@ -242,6 +272,4 @@ public class ApplicantServiceImpl implements ApplicantService {
         kafkaGenericProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_CHANGE_STATUS_TOPIC,change);
         return ApplicantMapper.toDto(saved);
     }
-
-
 }
