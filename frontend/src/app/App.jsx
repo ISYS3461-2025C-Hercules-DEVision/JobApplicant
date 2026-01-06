@@ -11,6 +11,8 @@ import {
     ApplicationPage,
     SearchProfilePage,
     AuthCallback,
+    SubscriptionPage,
+    MockPaymentPage,
 } from "../pages";
 
 import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
@@ -40,6 +42,8 @@ function App() {
                 <Route path="/jobs" element={<JobListPage />} />
                 <Route path="/searchProfile" element={<SearchProfilePage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/payment/mock" element={<MockPaymentPage />} />
 
                 {/* Admin login is public */}
                 <Route path="/adminLogin" element={<AdminLogin />} />

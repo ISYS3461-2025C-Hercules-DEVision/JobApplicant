@@ -1,36 +1,28 @@
 package com.devision.subscription.controller;
 
-import com.devision.subscription.dto.SubscribeRequest;
+import com.devision.subscription.dto.PaymentInitiateResponseDTO;
 import com.devision.subscription.dto.SubscriptionStatusResponse;
 import com.devision.subscription.model.Subscription;
-import com.devision.subscription.service.PaymentClientService;
 import com.devision.subscription.service.SubscriptionService;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/subscriptions")
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
-    private final PaymentClientService paymentClientService;
 
-    public SubscriptionController(
-            SubscriptionService subscriptionService,
-            PaymentClientService paymentClientService
-    ) {
+    public SubscriptionController(SubscriptionService subscriptionService) {
         this.subscriptionService = subscriptionService;
-        this.paymentClientService = paymentClientService;
     }
 
     @GetMapping("/me")
-    public SubscriptionStatusResponse getMySubscription(
-            @RequestHeader(value = "X-Applicant-Id", required = false) String applicantId
-    ) {
-        if (applicantId == null) {
-            return new SubscriptionStatusResponse("FREE", false, null);
-        }
+    public SubscriptionStatusResponse mySubscription(
+            @AuthenticationPrincipal Jwt jwt) {
+
+        String applicantId = jwt.getClaim("applicantId");
 
         Subscription sub = subscriptionService.getActiveSubscription(applicantId);
 
@@ -45,24 +37,22 @@ public class SubscriptionController {
         );
     }
 
-    @PostMapping("/subscribe")
-    public void subscribe(
-            @RequestHeader("X-Applicant-Id") String applicantId,
-            @RequestBody SubscribeRequest request
+    @PostMapping("/checkout")
+    public PaymentInitiateResponseDTO checkout(
+            @AuthenticationPrincipal Jwt jwt
     ) {
-        var response =
-                paymentClientService.initiateApplicantSubscription(
-                        applicantId,
-                        request.getEmail()
-                );
+        String applicantId = jwt.getClaim("applicantId");
+        String email = jwt.getClaim("email");
 
-        if ("SUCCESS".equals(response.getStatus())) {
-            subscriptionService.activatePremium(
-                    applicantId,
-                    request.getEmail(),
-                    response.getPaymentId(),
-                    Instant.now()
-            );
-        }
+        return subscriptionService.startSubscription(applicantId, email);
     }
+
+    @PostMapping("/mock/confirm")
+    public void confirmMockPayment(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        String applicantId = jwt.getClaim("applicantId");
+        subscriptionService.markSubscriptionPaid(applicantId);
+    }
+
 }
