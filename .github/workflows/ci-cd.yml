@@ -26,31 +26,62 @@ jobs:
         include:
           - name: api-gateway
             folder: backend/api-gateway
+            type: java
           - name: applicant
             folder: backend/applicant
+            type: java
           - name: authentication
             folder: backend/authentication
+            type: java
           - name: discovery-server
             folder: backend/discovery-server
+            type: java
+          - name: admin
+            folder: backend/admin
+            type: java
+          - name: frontend
+            folder: frontend
+            type: node
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ---- Java setup ----
       - name: Setup Java 21
+        if: matrix.type == 'java'
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "21"
           cache: "maven"
 
-      - name: Build (skip tests)
+      - name: Setup Maven
+        if: matrix.type == 'java'
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: 3.9.9
+
+      - name: Build Java service (skip tests)
+        if: matrix.type == 'java'
+        working-directory: ./${{ matrix.folder }}
+        run: mvn -B -DskipTests clean package
+
+      # ---- Node setup ----
+      - name: Setup Node.js
+        if: matrix.type == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ./${{ matrix.folder }}/package-lock.json
+
+      - name: Build frontend
+        if: matrix.type == 'node'
         working-directory: ./${{ matrix.folder }}
         run: |
-          chmod +x mvnw
-          ./mvnw -q -DskipTests clean package
-
-     
+          npm ci
+          npm run build
 
   # -----------------------------
   # CD: Build Docker images + push to ECR
@@ -72,6 +103,10 @@ jobs:
             repo: authentication-service
           - folder: backend/discovery-server
             repo: discovery-server
+          - folder: backend/admin
+            repo: admin
+          - folder: frontend
+            repo: front-end
 
     steps:
       - name: Checkout
@@ -87,6 +122,28 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      # ✅ Push Redis official image to ECR (ONLY ONCE PER WORKFLOW RUN)
+      - name: Push Redis image to ECR
+        if: matrix.repo == 'api-gateway'
+        run: |
+          set -e
+          SHA_TAG="${GITHUB_SHA::7}"
+          IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/redis"
+
+          echo "Pulling official redis:7-alpine"
+          docker pull redis:7-alpine
+
+          echo "Tagging for ECR: ${IMAGE_URI}"
+          docker tag redis:7-alpine ${IMAGE_URI}:latest
+          docker tag redis:7-alpine ${IMAGE_URI}:${SHA_TAG}
+
+          echo "Pushing to ECR..."
+          docker push ${IMAGE_URI}:latest
+          docker push ${IMAGE_URI}:${SHA_TAG}
+
+          echo " Done: ${IMAGE_URI} pushed as latest and ${SHA_TAG}"
+
+      #  Build & Push project Docker images (backend + frontend)
       - name: Build & Push Docker image
         run: |
           set -e
