@@ -56,12 +56,16 @@ jobs:
           java-version: "21"
           cache: "maven"
 
+      - name: Setup Maven
+        if: matrix.type == 'java'
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: 3.9.9
+
       - name: Build Java service (skip tests)
         if: matrix.type == 'java'
         working-directory: ./${{ matrix.folder }}
-        run: |
-          chmod +x mvnw
-          ./mvnw -q -DskipTests clean package
+        run: mvn -B -DskipTests clean package
 
       # ---- Node setup ----
       - name: Setup Node.js
