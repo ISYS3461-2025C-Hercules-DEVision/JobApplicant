@@ -99,7 +99,7 @@ export default function ApplicantTable() {
                             const isUpdating = loadingToggleId === a.applicantId;
 
                             return (
-                                <tr key={a.applicantId}>
+                                <tr key={a._rowKey}>
                                     <td className="fw-semibold">{a.fullName}</td>
                                     <td>{a.email}</td>
                                     <td>{a.country}</td>
@@ -137,7 +137,7 @@ export default function ApplicantTable() {
 
                         {!loadingApplicants && !rows.length && (
                             <tr>
-                                <td colSpan={5} className="text-center text-muted py-4">
+                                <td colSpan={6} className="text-center text-muted py-4">
                                     No results.
                                 </td>
                             </tr>

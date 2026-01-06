@@ -9,24 +9,68 @@ async function parseBody(res) {
     }
 }
 
-function getAccessToken() {
-    // new key + fallback to old key
-    return localStorage.getItem("access_token");
+/**
+ * auth = "user" | "admin"
+ */
+function getAccessToken(auth = "user") {
+    if (auth === "admin") {
+        return (
+            localStorage.getItem("admin_access_token") ||
+            sessionStorage.getItem("admin_access_token") ||
+            localStorage.getItem("admin_token") || // legacy fallback
+            sessionStorage.getItem("admin_token")  // legacy fallback
+        );
+    }
+
+    // user token
+    return (
+        localStorage.getItem("access_token") ||
+        localStorage.getItem("token") // legacy fallback
+    );
 }
 
-function setAccessToken(token) {
+function setAccessToken(token, auth = "user", remember = true) {
     if (!token) return;
+
+    if (auth === "admin") {
+        const storage = remember ? localStorage : sessionStorage;
+        storage.setItem("admin_access_token", token);
+
+        // legacy cleanup
+        localStorage.removeItem("admin_token");
+        sessionStorage.removeItem("admin_token");
+        return;
+    }
+
+    // user token
     localStorage.setItem("access_token", token);
     localStorage.removeItem("token"); // legacy cleanup
 }
 
-function clearAccessToken() {
+function clearAccessToken(auth = "user") {
+    if (auth === "admin") {
+        localStorage.removeItem("admin_access_token");
+        sessionStorage.removeItem("admin_access_token");
+
+        // legacy cleanup
+        localStorage.removeItem("admin_token");
+        sessionStorage.removeItem("admin_token");
+        localStorage.removeItem("admin_user");
+        return;
+    }
+
     localStorage.removeItem("access_token");
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 }
 
-async function refreshAccessToken() {
+/**
+ * Refresh access token using HttpOnly refreshToken cookie.
+ * This will be used for BOTH user and admin sessions (same cookie).
+ *
+ * If you want separate admin refresh response later, we can add /auth/admin/refresh.
+ */
+async function refreshAccessToken(auth = "user") {
     const url = `${API_BASE}/auth/refresh`;
 
     const res = await fetch(url, {
@@ -47,10 +91,12 @@ async function refreshAccessToken() {
         throw new Error("Refresh response missing accessToken");
     }
 
-    setAccessToken(data.accessToken);
+    //  store token in the correct place (user/admin)
+    // For admin, default remember=true because refresh happens silently anyway
+    setAccessToken(data.accessToken, auth, true);
 
-    // Optionally update user too (recommended)
-    if (data.userId) {
+    //  update user info (only if user auth)
+    if (auth === "user" && data.userId) {
         const user = {
             userId: data.userId,
             applicantId: data.applicantId,
@@ -64,13 +110,21 @@ async function refreshAccessToken() {
     return data.accessToken;
 }
 
-export async function request(path, { method = "GET", body, headers, retry = true } = {}) {
+/**
+ * request(path, { auth: "user" | "admin", remember: boolean })
+ *
+ * - auth: which token to attach
+ * - remember: only used for admin token storage when setting token manually (login)
+ */
+export async function request(
+    path,
+    { method = "GET", body, headers, retry = true, auth = "user" } = {}
+) {
     const url = `${API_BASE}${path}`;
     console.log(`Actual url being called: ${url}`);
 
-    //Boolean check for updating Image or Video
     const isFormData = body instanceof FormData;
-    const token = getAccessToken();
+    const token = getAccessToken(auth);
 
     const res = await fetch(url, {
         method,
@@ -80,13 +134,13 @@ export async function request(path, { method = "GET", body, headers, retry = tru
             ...(headers || {}),
         },
         body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-        credentials: "include", // cookie refresh token
+        credentials: "include",
     });
 
-    // Auto refresh when token expired
+    // Auto refresh when access token expired
     if (res.status === 401 && retry && path !== "/auth/refresh") {
         try {
-            const newToken = await refreshAccessToken();
+            const newToken = await refreshAccessToken(auth);
 
             return request(path, {
                 method,
@@ -96,9 +150,10 @@ export async function request(path, { method = "GET", body, headers, retry = tru
                     Authorization: `Bearer ${newToken}`,
                 },
                 retry: false,
+                auth,
             });
         } catch (refreshErr) {
-            clearAccessToken();
+            clearAccessToken(auth);
             throw refreshErr;
         }
     }
@@ -108,15 +163,21 @@ export async function request(path, { method = "GET", body, headers, retry = tru
     if (!res.ok) {
         // banned check
         if (res.status === 403) {
-            clearAccessToken();
-            window.location.href = "/BannedAccount";
+            // if user banned
+            clearAccessToken(auth);
+
+            // You can redirect differently for admin if you want:
+            if (auth === "admin") {
+                window.location.href = "/adminLogin";
+            } else {
+                window.location.href = "/BannedAccount";
+            }
         }
 
         const message =
             (data && (data.message || data.error || data.detail)) ||
             `Request failed (${res.status})`;
 
-        // Preserve status in the thrown error (helpful later)
         const err = new Error(message);
         err.status = res.status;
         err.data = data;
