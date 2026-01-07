@@ -1,59 +1,80 @@
-// package com.devision.subscription.kafka;
+package com.devision.subscription.kafka;
 
-// import com.devision.subscription.dto.PaymentEventDTO;
-// import com.devision.subscription.enums.PaymentStatus;
-// import com.devision.subscription.enums.PlanType;
-// import com.devision.subscription.model.PaymentTransaction;
-// import com.devision.subscription.model.Subscription;
-// import com.devision.subscription.repository.PaymentTransactionRepository;
-// import com.devision.subscription.repository.SubscriptionRepository;
-// import org.springframework.kafka.annotation.KafkaListener;
-// import org.springframework.stereotype.Service;
+import com.devision.subscription.dto.PaymentEventDTO;
+import com.devision.subscription.enums.PaymentStatus;
+import com.devision.subscription.enums.PlanType;
+import com.devision.subscription.model.PaymentTransaction;
+import com.devision.subscription.model.Subscription;
+import com.devision.subscription.repository.PaymentTransactionRepository;
+import com.devision.subscription.repository.SubscriptionRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Service;
 
-// import java.time.Instant;
-// import java.time.temporal.ChronoUnit;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
-// @Service
-// public class PaymentEventConsumer {
+@Service
+@ConditionalOnProperty(name = "payment.consumer.enabled", havingValue = "true", matchIfMissing = false)
+public class PaymentEventConsumer {
 
-//     private final SubscriptionRepository subscriptionRepository;
-//     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
+    private final ObjectMapper objectMapper;
 
-//     public PaymentEventConsumer(
-//             SubscriptionRepository subscriptionRepository,
-//             PaymentTransactionRepository paymentTransactionRepository
-//     ) {
-//         this.subscriptionRepository = subscriptionRepository;
-//         this.paymentTransactionRepository = paymentTransactionRepository;
-//     }
+    public PaymentEventConsumer(
+            SubscriptionRepository subscriptionRepository,
+            PaymentTransactionRepository paymentTransactionRepository,
+            ObjectMapper objectMapper) {
+        this.subscriptionRepository = subscriptionRepository;
+        this.paymentTransactionRepository = paymentTransactionRepository;
+        this.objectMapper = objectMapper;
+    }
 
-//     @KafkaListener(
-//         topics = "${kafka.topics.payment-success}",
-//         groupId = "subscription-service"
-//     )
-//     public void onPaymentSuccess(PaymentEventDTO event) {
+    // Consume payment success events from JM Payment API
+    @KafkaListener(topics = "${kafka.topics.payment-success}", groupId = "subscription-service", containerFactory = "defaultKafkaListenerContainerFactory")
+    public void onPaymentSuccess(String message) throws Exception {
+        PaymentEventDTO event = objectMapper.readValue(message, PaymentEventDTO.class);
 
-//         PaymentTransaction tx =
-//             paymentTransactionRepository.findById(event.getTransactionId())
-//                 .orElseThrow();
+        // Only handle Job Applicant subscription success
+        if (!"JOB_APPLICANT".equalsIgnoreCase(event.getSubsystem()))
+            return;
+        if (!"SUBSCRIPTION".equalsIgnoreCase(event.getPaymentType()))
+            return;
+        if (!"SUCCESS".equalsIgnoreCase(event.getStatus()))
+            return;
 
-//         tx.setPaymentStatus(PaymentStatus.SUCCESS);
-//         paymentTransactionRepository.save(tx);
+        PaymentTransaction tx = paymentTransactionRepository.findById(event.getTransactionId())
+                .orElseGet(() -> {
+                    PaymentTransaction p = new PaymentTransaction();
+                    p.setId(event.getTransactionId());
+                    p.setApplicantId(event.getCustomerId());
+                    return p;
+                });
 
-//         subscriptionRepository
-//             .findByApplicantIdAndIsActiveTrue(event.getCustomerId())
-//             .ifPresent(old -> {
-//                 old.setActive(false);
-//                 subscriptionRepository.save(old);
-//             });
+        tx.setPaymentStatus(PaymentStatus.SUCCESS);
+        if (event.getTimestamp() != null) {
+            tx.setTransactionTime(event.getTimestamp().atZone(java.time.ZoneId.systemDefault()).toInstant());
+        } else {
+            tx.setTransactionTime(Instant.now());
+        }
+        paymentTransactionRepository.save(tx);
 
-//         Subscription sub = new Subscription();
-//         sub.setApplicantId(event.getCustomerId());
-//         sub.setPlanType(PlanType.PREMIUM);
-//         sub.setStartDate(Instant.now());
-//         sub.setExpiryDate(Instant.now().plus(30, ChronoUnit.DAYS));
-//         sub.setActive(true);
+        subscriptionRepository
+                .findByApplicantIdAndIsActiveTrue(event.getCustomerId())
+                .ifPresent(old -> {
+                    old.setActive(false);
+                    subscriptionRepository.save(old);
+                });
 
-//         subscriptionRepository.save(sub);
-//     }
-// }
+        Subscription sub = new Subscription();
+        sub.setApplicantId(event.getCustomerId());
+        sub.setPlanType(PlanType.PREMIUM);
+        sub.setStartDate(Instant.now());
+        sub.setExpiryDate(Instant.now().plus(30, ChronoUnit.DAYS));
+        sub.setActive(true);
+
+        subscriptionRepository.save(sub);
+    }
+}

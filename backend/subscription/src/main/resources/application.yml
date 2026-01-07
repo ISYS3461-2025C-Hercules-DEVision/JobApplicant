@@ -16,6 +16,15 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
+# kafka:
+#   topics:
+#     payment-success: ${KAFKA_PAYMENT_SUCCESS_TOPIC:payment.success}
+#     payment-failed: ${KAFKA_PAYMENT_FAILED_TOPIC:payment.failed}
+
+# payment:
+#   consumer:
+#     enabled: ${PAYMENT_CONSUMER_ENABLED:false}
+
   data:
     mongodb:
       database: ${MONGODB_DATABASE}
