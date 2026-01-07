@@ -55,7 +55,7 @@ public class PaymentEventConsumer {
 
         tx.setPaymentStatus(PaymentStatus.SUCCESS);
         if (event.getTimestamp() != null) {
-            tx.setTransactionTime(event.getTimestamp().atZone(java.time.ZoneId.systemDefault()).toInstant());
+            tx.setTransactionTime(event.getTimestamp().atZone(java.time.ZoneOffset.UTC).toInstant());
         } else {
             tx.setTransactionTime(Instant.now());
         }
