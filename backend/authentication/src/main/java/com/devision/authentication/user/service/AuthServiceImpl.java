@@ -12,9 +12,9 @@ import com.devision.authentication.jwt.tokenStore.RefreshToken;
 import com.devision.authentication.jwt.tokenStore.RefreshTokenService;
 import com.devision.authentication.kafka.kafka_consumer.PendingApplicantRequests;
 import com.devision.authentication.kafka.kafka_producer.KafkaGenericProducer;
+import com.devision.authentication.redis.TokenRevocationService;
 import com.devision.authentication.user.entity.User;
 import com.devision.authentication.user.repo.UserRepository;
-import com.devision.authentication.user.service.UserService;
 import io.jsonwebtoken.Claims;
 import io.netty.handler.timeout.TimeoutException;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,6 +37,7 @@ public class AuthServiceImpl {
         private final UserService userService;
         private final UserRepository userRepository;
         private final JwtService jwtService;
+        private final TokenRevocationService tokenRevocationService;
         private final RefreshTokenService refreshTokenService;
         private final CookieService cookieService;
         private final PendingApplicantRequests pendingApplicantRequests;
@@ -209,21 +210,21 @@ public class AuthServiceImpl {
                                 user.getStatus());
         }
 
-        // LOGOUT (clear cookie + revoke refresh)
-        public void logout(String refreshToken, HttpServletResponse response) {
+    //  LOGOUT (clear cookie + revoke refresh)
+    public void logout(String refreshToken, HttpServletResponse response) {
 
-                cookieService.clearRefreshTokenCookie(response);
+        cookieService.clearRefreshTokenCookie(response);
 
-                if (refreshToken == null || refreshToken.isBlank()) {
-                        return;
-                }
-
-                try {
-                        RefreshToken stored = refreshTokenService.validate(refreshToken);
-                        refreshTokenService.revokeRefreshToken(stored);
-                } catch (Exception ignored) {
-                }
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
         }
+
+        try {
+            RefreshToken stored = refreshTokenService.validate(refreshToken);
+            refreshTokenService.revokeRefreshToken(stored);
+        } catch (Exception ignored) {
+        }
+    }
 
         // =========================
         // Helpers

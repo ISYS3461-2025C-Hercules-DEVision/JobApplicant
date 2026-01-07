@@ -15,7 +15,6 @@ export const useProfile = (applicantId) => {
         setLoading(true);
 
         if (!applicantId) {
-            console.log("No applicantId — skipping fetch");
             setLoading(false); // no ID → not loading
             return;
         }

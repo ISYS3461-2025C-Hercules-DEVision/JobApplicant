@@ -3,6 +3,7 @@ package com.devision.authentication.controller;
 
 import com.devision.authentication.dto.*;
 import com.devision.authentication.user.service.AuthServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -41,13 +42,20 @@ public class AuthController {
     ) {
         return authService.refreshAccessToken(refreshToken, response);
     }
-
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            HttpServletRequest request,
             HttpServletResponse response
     ) {
-        authService.logout(refreshToken, response);
+        String authHeader = request.getHeader("Authorization");
+        String accessToken = null;
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            accessToken = authHeader.substring(7).trim().replace("\"", "");
+        }
+
+        authService.logout(accessToken, refreshToken, response);
     }
 }
