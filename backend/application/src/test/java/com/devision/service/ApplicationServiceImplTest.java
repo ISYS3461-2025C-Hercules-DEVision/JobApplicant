@@ -47,7 +47,7 @@ class ApplicationServiceImplTest {
         saved.setApplicantId("applicant-1");
         saved.setJobPostId("job-1");
         saved.setCompanyId("company-1");
-        saved.setStatus(ApplicationStatus.SUBMITTED);
+        saved.setStatus(ApplicationStatus.PENDING);
         saved.setCreatedAt(Instant.now());
         saved.setUpdatedAt(Instant.now());
 
@@ -67,7 +67,7 @@ class ApplicationServiceImplTest {
         a.setApplicantId("applicant-1");
         a.setJobPostId("job-1");
         a.setCompanyId("company-1");
-        a.setStatus(ApplicationStatus.SUBMITTED);
+        a.setStatus(ApplicationStatus.PENDING);
         a.setCreatedAt(Instant.now());
 
         when(repo.findByApplicantIdOrderByCreatedAtDesc("applicant-1"))

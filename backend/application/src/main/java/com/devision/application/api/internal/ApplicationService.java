@@ -25,4 +25,6 @@ public interface ApplicationService {
     List<ApplicationSummaryView> listByCompany(String companyId);
 
     ApplicationView getById(String applicationId);
+
+    List<ApplicationView> listAll();
 }

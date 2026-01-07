@@ -12,9 +12,9 @@ import com.devision.application.dto.internal.view.ApplicationSummaryView;
 import com.devision.application.dto.internal.view.ApplicationView;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.bind.annotation.RequestBody;
+
+import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
@@ -67,7 +67,7 @@ public class ApplicantApplicationController implements ApplicantApplicationApi {
     @Override
     public ResponseEntity<ApplicationResponse> uploadCoverLetter(String applicationId, MultipartFile file) {
         String applicantId = currentUserId();
-        ApplicationView view = applicationService.uploadCoverLetterFile(
+        ApplicationView view = applicationService.uploadCoverLetter(
                 new UploadCoverLetterCommand(applicantId, applicationId, file)
         );
         return ResponseEntity.ok(toExternal(view));

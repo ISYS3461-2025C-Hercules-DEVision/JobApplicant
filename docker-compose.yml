@@ -37,34 +37,7 @@ services:
     env_file:
       - backend/discovery-server/.env
 
-  authentication:
-    build:
-      context: backend/authentication
-    depends_on:
-      - kafka
-      - discovery-server
-    restart: unless-stopped
-    env_file:
-      - backend/authentication/.env
-
-  applicant:
-    build:
-      context: backend/applicant
-    depends_on:
-      - kafka
-      - discovery-server
-    env_file:
-      - backend/applicant/.env
-
-  admin:
-    build:
-      context: backend/admin
-    depends_on:
-      - kafka
-      - discovery-server
-    env_file:
-      - backend/admin/.env
-
+    
   api-gateway:
     build:
       context: backend/api-gateway
@@ -74,6 +47,53 @@ services:
       - "10789:10789"
     env_file:
       - backend/api-gateway/.env
+
+
+  authentication:
+    build:
+      context: backend/authentication
+    depends_on:
+      - kafka
+      - discovery-server
+    restart: unless-stopped
+    env_file:
+      - backend/authentication/.env
+    ports:
+      - "8087:8087"
+
+  applicant:
+    build:
+      context: backend/applicant
+    depends_on:
+      - kafka
+      - discovery-server
+    env_file:
+      - backend/applicant/.env
+    ports:
+      - "8083:8083"
+
+  admin:
+    build:
+      context: backend/admin
+    depends_on:
+      - kafka
+      - discovery-server
+    env_file:
+      - backend/admin/.env
+    ports:
+      - "8088:8088"
+
+  application:
+    build:
+      context: backend/application
+    depends_on:
+      - kafka
+      - discovery-server
+    restart: unless-stopped
+    env_file:
+      - backend/application/.env
+    ports:
+      - "8084:8084"
 
   frontend:
     build:
@@ -88,6 +108,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
     command: npm run dev -- --host 0.0.0.0 --port 5173
+
+
 
 volumes:
   kafka_data:

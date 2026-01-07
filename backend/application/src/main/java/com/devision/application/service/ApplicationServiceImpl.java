@@ -16,9 +16,12 @@ import com.devision.application.kafka.event.ApplicationEvent;
 import com.devision.application.kafka.event.ApplicationEventType;
 import com.devision.application.kafka.producer.ApplicationEventProducer;
 import org.springframework.beans.factory.annotation.Value;
+import com.devision.application.api.internal.FileStorageService;
+import com.devision.application.api.internal.ApplicationService;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
@@ -38,9 +41,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public ApplicationView create(CreateApplicationCommand cmd) {
-        require(cmd.applicantId(), "applicantId");
-        require(cmd.jobPostId(), "jobPostId");
-        require(cmd.companyId(), "companyId");
+        require(cmd.getApplicantId(), "applicantId");
+        require(cmd.getJobPostId(), "jobPostId");
+        require(cmd.getCompanyId(), "companyId");
 
         // Optional anti-duplicate:
         // if (repo.existsByApplicantIdAndJobPostId(cmd.applicantId(), cmd.jobPostId())) {
@@ -54,7 +57,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .applicantId(cmd.getApplicantId())
                 .jobPostId(cmd.getJobPostId())
                 .companyId(cmd.getCompanyId())
-                .status(ApplicationStatus.SUBMITTED)
+                .status(ApplicationStatus.PENDING)
                 .createdAt(now)
                 .updatedAt(now)
                 .isArchived(false)
@@ -87,14 +90,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public ApplicationView uploadCv(UploadCvCommand cmd) {
-        require(cmd.applicantId(), "applicantId");
-        require(cmd.applicationId(), "applicationId");
-        requireFile(cmd.file(), "file");
+        require(cmd.getApplicantId(), "applicantId");
+        require(cmd.getApplicationId(), "applicationId");
+        requireFile(cmd.getFile(), "file");
 
-        Application app = getByIdOrThrow(cmd.applicationId());
-        enforceOwnership(cmd.applicantId(), app);
+        Application app = getByIdOrThrow(cmd.getApplicationId());
+        enforceOwnership(cmd.getApplicantId(), app);
 
-        FileReference ref = uploadToCloudinary(cmd.file(), "applications/" + app.getApplicationId() + "/cv");
+        FileReference ref = uploadToCloudinary(cmd.getFile(), "applications/" + app.getApplicationId() + "/cv");
         app.setApplicantCV(ref);
         app.setUpdatedAt(Instant.now());
 
@@ -106,14 +109,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public ApplicationView uploadCoverLetter(UploadCoverLetterCommand cmd) {
-        require(cmd.applicantId(), "applicantId");
-        require(cmd.applicationId(), "applicationId");
-        requireFile(cmd.file(), "file");
+        require(cmd.getApplicantId(), "applicantId");
+        require(cmd.getApplicationId(), "applicationId");
+        requireFile(cmd.getFile(), "file");
 
-        Application app = getByIdOrThrow(cmd.applicationId());
-        enforceOwnership(cmd.applicantId(), app);
+        Application app = getByIdOrThrow(cmd.getApplicationId());
+        enforceOwnership(cmd.getApplicantId(), app);
 
-        FileReference ref = uploadToCloudinary(cmd.file(), "applications/" + app.getApplicationId() + "/cover-letter");
+        FileReference ref = uploadToCloudinary(cmd.getFile(), "applications/" + app.getApplicationId() + "/cover-letter");
         app.setCoverLetter(ref);
         app.setUpdatedAt(Instant.now());
 
@@ -220,7 +223,19 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (f == null || f.isEmpty()) throw new IllegalArgumentException(field + " is required");
     }
 
+    private String detectFileType(MultipartFile file) {
+        String contentType = file.getContentType();
+        if (contentType != null && !contentType.isBlank()) return contentType;
 
+        String name = file.getOriginalFilename();
+        if (name == null) return "application/octet-stream";
+
+        String lower = name.toLowerCase();
+        if (lower.endsWith(".pdf")) return "application/pdf";
+        if (lower.endsWith(".doc")) return "application/msword";
+        if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        return "application/octet-stream";
+    }
 }
 
 

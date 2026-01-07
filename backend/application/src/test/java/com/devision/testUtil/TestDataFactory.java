@@ -18,7 +18,7 @@ public final class TestDataFactory {
         v.applicantId = applicantId;
         v.jobPostId = jobPostId;
         v.companyId = companyId;
-        v.status = ApplicationStatus.SUBMITTED.name();
+        v.status = ApplicationStatus.PENDING.name();
         v.createdAt = Instant.now();
         v.updatedAt = Instant.now();
 
@@ -32,7 +32,7 @@ public final class TestDataFactory {
         v.applicationId = UUID.randomUUID().toString();
         v.jobPostId = jobPostId;
         v.companyId = companyId;
-        v.status = ApplicationStatus.SUBMITTED.name();
+        v.status = ApplicationStatus.PENDING.name();
         v.createdAt = Instant.now();
         return v;
     }

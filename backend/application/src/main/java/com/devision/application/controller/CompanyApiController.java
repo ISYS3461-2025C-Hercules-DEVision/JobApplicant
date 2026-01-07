@@ -7,8 +7,8 @@ import com.devision.application.dto.external.response.ApplicationSummaryResponse
 import com.devision.application.dto.internal.view.ApplicationSummaryView;
 import com.devision.application.dto.internal.view.ApplicationView;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
+
+import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
@@ -65,12 +65,12 @@ public class CompanyApiController implements CompanyApplicationApi {
 
     private ApplicationResponse.FileRefResponse toExternalFile(ApplicationView.FileView f) {
         ApplicationResponse.FileRefResponse fr = new ApplicationResponse.FileRefResponse();
-        fr.setFileId(f.getFileId);
-        fr.setFileUrl(f.getFileUrl);
-        fr.setPublicId(f.getPublicId);   
-        fr.setFileType(f.getFileType);
-        fr.setCreatedAt(f.getCreatedAt);
-        fr.setUpdatedAt(f.getUpdatedAt);
+        fr.setFileId(f.getFileId());
+        fr.setFileUrl(f.getFileUrl());
+        fr.setPublicId(f.getPublicId());   
+        fr.setFileType(f.getFileType());
+        fr.setCreatedAt(f.getCreatedAt());
+        fr.setUpdatedAt(f.getUpdatedAt());
         return fr;
     }
 

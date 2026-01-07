@@ -35,7 +35,7 @@ public class ApplicationMockDataLoader implements CommandLineRunner {
                 .applicantId(MockIds.APPLICANT_1)
                 .jobPostId(MockIds.JOB_1)
                 .companyId(MockIds.COMPANY_1)
-                .status(ApplicationStatus.SUBMITTED)
+                .status(ApplicationStatus.PENDING)
                 .createdAt(now.minusSeconds(86400))
                 .updatedAt(now.minusSeconds(86400))
                 .applicantCV(fakePdf("cv"))
@@ -47,7 +47,7 @@ public class ApplicationMockDataLoader implements CommandLineRunner {
                 .applicantId(MockIds.APPLICANT_1)
                 .jobPostId(MockIds.JOB_2)
                 .companyId(MockIds.COMPANY_1)
-                .status(ApplicationStatus.SUBMITTED)
+                .status(ApplicationStatus.PENDING)
                 .createdAt(now.minusSeconds(3600))
                 .updatedAt(now.minusSeconds(3600))
                 .build();
@@ -57,7 +57,7 @@ public class ApplicationMockDataLoader implements CommandLineRunner {
                 .applicantId(MockIds.APPLICANT_2)
                 .jobPostId(MockIds.JOB_3)
                 .companyId(MockIds.COMPANY_2)
-                .status(ApplicationStatus.SUBMITTED)
+                .status(ApplicationStatus.PENDING)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();

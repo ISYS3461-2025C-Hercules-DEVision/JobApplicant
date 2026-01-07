@@ -29,7 +29,7 @@ class ApplicationRepositoryIT {
         a.setApplicantId(applicantId);
         a.setJobPostId(jobPostId);
         a.setCompanyId(companyId);
-        a.setStatus(ApplicationStatus.SUBMITTED);
+        a.setStatus(ApplicationStatus.PENDING);
         a.setCreatedAt(Instant.now());
         a.setUpdatedAt(Instant.now());
 
