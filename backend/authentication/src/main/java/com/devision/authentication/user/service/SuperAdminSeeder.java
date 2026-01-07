@@ -3,10 +3,7 @@ package com.devision.authentication.user.service;
 import com.devision.authentication.config.KafkaConstant;
 import com.devision.authentication.connection.AuthToAdminEvent;
 import com.devision.authentication.connection.AutheticationAdminCodeWithUuid;
-import com.devision.authentication.connection.AutheticationApplicantCodeWithUuid;
-import com.devision.authentication.dto.jwtUserDto;
 import com.devision.authentication.kafka.kafka_consumer.PendingAdminRequests;
-import com.devision.authentication.kafka.kafka_consumer.PendingApplicantRequests;
 import com.devision.authentication.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.authentication.user.entity.User;
 import com.devision.authentication.user.entity.UserRole;
@@ -17,11 +14,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 @Slf4j
@@ -37,7 +31,7 @@ public class SuperAdminSeeder implements CommandLineRunner {
     private String superAdminPassword;
     private final PendingAdminRequests pendingAdminRequests;
     public SuperAdminSeeder(UserRepository userRepository,
-                            PasswordEncoder passwordEncoder, KafkaGenericProducer<AuthToAdminEvent> kafkaGenericProducer, UserService userService,  PendingAdminRequests pendingAdminRequests) {
+                            PasswordEncoder passwordEncoder, KafkaGenericProducer<AuthToAdminEvent> kafkaGenericProducer, UserServiceImpl userService, PendingAdminRequests pendingAdminRequests) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.kafkaGenericProducer = kafkaGenericProducer;

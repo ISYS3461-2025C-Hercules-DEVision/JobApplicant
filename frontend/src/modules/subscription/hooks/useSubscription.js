@@ -1,20 +1,29 @@
-// import { useEffect, useState } from "react";
-// import { subscriptionService } from "../services/subscriptionService";
+// frontend/src/modules/subscription/hooks/useSubscription.js
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { subscriptionService } from "../services/subscriptionService";
 
-// export function useSubscription() {
-//   const [subscription, setSubscription] = useState(null);
-//   const [loading, setLoading] = useState(true);
+export function useSubscription() {
+  const { user } = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
 
-//   useEffect(() => {
-//     subscriptionService
-//       .getMySubscription()
-//       .then(res => setSubscription(res.data))
-//       .finally(() => setLoading(false));
-//   }, []);
+  const [subscription, setSubscription] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-//   return {
-//     subscription,
-//     isPremium: subscription?.isActive === true,
-//     loading,
-//   };
-// }
+  useEffect(() => {
+    if (!applicantId) return;
+
+    subscriptionService
+      .getMySubscription(applicantId)
+      .then((res) => setSubscription(res))
+      .finally(() => setLoading(false));
+  }, [applicantId]);
+
+  return {
+    subscription,
+    isPremium: subscription?.planType === "PREMIUM" && subscription?.active === true,
+    loading,
+  };
+}
+
+

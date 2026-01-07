@@ -1,29 +1,30 @@
 package com.devision.subscription.dto;
 
+import com.devision.subscription.enums.PlanType;
 import java.time.Instant;
 
 public class SubscriptionStatusResponse {
 
-    private String planType;
-    private boolean isActive;
+    private PlanType planType;
+    private boolean active;
     private Instant expiryDate;
 
     public SubscriptionStatusResponse(
-            String planType,
-            boolean isActive,
+            PlanType planType,
+            boolean active,
             Instant expiryDate
     ) {
         this.planType = planType;
-        this.isActive = isActive;
+        this.active = active;
         this.expiryDate = expiryDate;
     }
 
-    public String getPlanType() {
+    public PlanType getPlanType() {
         return planType;
     }
 
     public boolean isActive() {
-        return isActive;
+        return active;
     }
 
     public Instant getExpiryDate() {

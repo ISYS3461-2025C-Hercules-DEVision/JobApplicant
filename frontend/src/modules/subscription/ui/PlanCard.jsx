@@ -22,7 +22,7 @@ function PlanCard({
 
       <div className={`text-4xl font-black mb-6 ${highlight ? "text-primary" : ""}`}>
         {price}
-        <span className="text-base font-bold text-black"> / month</span>
+        
       </div>
 
       <ul className="font-bold space-y-3">

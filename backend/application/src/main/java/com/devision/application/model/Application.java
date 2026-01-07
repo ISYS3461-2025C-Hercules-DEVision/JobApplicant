@@ -9,6 +9,8 @@ import com.devision.application.enums.ApplicationStatus;
 
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -32,10 +34,10 @@ public class Application {
     private String feedback;         // nullable
 
     // File references
-    private FileReference applicantCV;     // CVFileReference | nullable
-    private FileReference coverLetter;     // CoverLetterReference | nullable
+    private List<FileReference> documents = new ArrayList<>();
+
 
     private Instant createdAt;
-    private boolean isArchived;
+    private Boolean isArchived = false;
     private Instant deletedAt;            // nullable
 }

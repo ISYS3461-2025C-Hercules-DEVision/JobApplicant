@@ -5,7 +5,7 @@ import {
     adminAuthStart,
     adminAuthSuccess,
     adminAuthFail,
-} from "../../AdminAuth/adminAuthSlice.js";
+} from "../../AdminAuth/AdminAuthSlice.js";
 import { adminLoginService } from "../../services/AdminLoginService/AdminLoginService.jsx";
 
 export default function useAdminLogin() {
@@ -52,14 +52,18 @@ export default function useAdminLogin() {
             dispatch(
                 adminAuthSuccess({
                     token: data.token,
-                    admin: data.admin || { email },
+                    remember,
+                    admin: {
+                        userId: data.userId,
+                        adminId: data.adminId,
+                        email: data.email || email,
+                        status: data.status,
+                    },
                 })
             );
-
+            console.log("success");
             setStatus({ type: "ok", msg: "Login Successful. Redirecting..." });
-
-            // NAVIGATE
-            navigate("/adminDashboard");
+            navigate("/adminDashboard", { replace: true });
 
             return data;
         } catch (e) {

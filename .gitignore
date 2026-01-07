@@ -102,3 +102,7 @@ __pycache__/
 # VSCode settings
 ###########################
 .vscode/
+
+# Maven CI local cache
+**/.m2-ci/
+

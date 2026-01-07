@@ -9,19 +9,29 @@ export const useProfile = (applicantId) => {
     console.log('Fetching for ID: ', applicantId);
 
     useEffect(() => {
+        // Reset state when applicantId changes
+        setProfile(null);
+        setError(null);
+        setLoading(true);
 
-        (async () => {
-            if(!applicantId) return;
+        if (!applicantId) {
+            setLoading(false); // no ID → not loading
+            return;
+        }
+
+        const fetchProfile = async () => {
             try {
                 const data = await profileService.getProfile(applicantId);
                 setProfile(data);
             } catch (err) {
+                console.error("Profile fetch error:", err);
                 setError(err);
             } finally {
                 setLoading(false);
             }
-        })
-        ();
+        };
+
+        fetchProfile();
     }, [applicantId]);
 
     // Function to update profile

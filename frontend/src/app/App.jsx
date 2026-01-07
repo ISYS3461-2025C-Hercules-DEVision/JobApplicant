@@ -11,6 +11,8 @@ import {
     ApplicationPage,
     SearchProfilePage,
     AuthCallback,
+    SubscriptionPage,
+    MockPaymentPage,
 } from "../pages";
 
 import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
@@ -22,18 +24,26 @@ import AdminDashboard from "../modules/admin/ui/AdminDashboard.jsx";
 
 import UserProtectedRoute from "../routes/UserProtectedRoute.jsx";
 import AdminProtectedRoute from "../routes/AdminProtectedRoute.jsx";
+import AccountBannedPage from "../modules/auth/ui/AccountBannedPage.jsx";
+import AuthInitializer from "../components/AuthInitializer.jsx";
 
 function App() {
     return (
         <Router>
+            {/* Handle when reloading page, the redux resets */}
+            <AuthInitializer/>
+
             <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<HomePage />} />
+                <Route path="/BannedAccount" element={<AccountBannedPage/>}/>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/jobs" element={<JobListPage />} />
                 <Route path="/searchProfile" element={<SearchProfilePage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/payment/mock" element={<MockPaymentPage />} />
 
                 {/* Admin login is public */}
                 <Route path="/adminLogin" element={<AdminLogin />} />

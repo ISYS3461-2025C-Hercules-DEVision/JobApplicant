@@ -1,37 +1,41 @@
 import { request } from "../../../../utils/HttpUtil.js";
 
-const TOKEN_KEY = "admin_token";
-
+const TOKEN_KEY = "admin_access_token";
 
 export async function adminLoginService(email, password, remember = true) {
-    //  change this endpoint if needed
     const data = await request("/auth/admin/login", {
         method: "POST",
         body: { email, password },
+        auth: "admin", // tell HttpUtil to use admin token slot
     });
-    console.log("Admin login response:", data);
-    // support different backend formats
-    const token = data?.token || data?.accessToken;
 
+    const token = data?.accessToken || data?.token;
 
     if (!token) {
-        throw new Error("Token not found in login response.");
+        throw new Error("Access token not found in admin login response.");
     }
 
     const storage = remember ? localStorage : sessionStorage;
     storage.setItem(TOKEN_KEY, token);
 
-    return { ...data, token};
+    return { ...data, token };
 }
 
-export function adminLogoutService() {
+export async function adminLogoutService() {
+    try {
+        await request("/auth/logout", { method: "POST", auth: "admin" });
+    } catch {
+        // ignore
+    }
+
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
-
+    localStorage.removeItem("admin_user");
 }
 
 export function getAdminToken() {
-    return localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+    return (
+        localStorage.getItem(TOKEN_KEY) ||
+        sessionStorage.getItem(TOKEN_KEY)
+    );
 }
-
-

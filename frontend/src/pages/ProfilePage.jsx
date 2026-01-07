@@ -1,4 +1,4 @@
-import HomeNavbar from "../components/Navbar/HomeNavbar";
+    import HomeNavbar from "../components/Navbar/HomeNavbar";
 import FooterSection from "../components/Footer/FooterSection";
 
 import ProfileHeader from "../modules/profile/ui/ProfileHeader";
@@ -8,11 +8,14 @@ import ExperienceSection from "../modules/profile/ui/ExperienceSection";
 import EducationSection from "../modules/profile/ui/EducationSection";
 import ContactSection from "../modules/profile/ui/ContactSection";
 import SkillsSection from "../modules/profile/ui/SkillsSection";
+    import ProfileNavBar from "../components/Navbar/ProfileNavBar.jsx";
+    import {useSelector} from "react-redux";
 
 function ProfilePage() {
+    const {token} = useSelector((state) => state.auth); //Check if logged in
   return (
     <div className="min-h-screen bg-light-gray flex flex-col">
-      <HomeNavbar />
+        {token ? <ProfileNavBar /> : <HomeNavbar/> }
 
       {/* Main content container */}
       <main className="flex-grow max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">

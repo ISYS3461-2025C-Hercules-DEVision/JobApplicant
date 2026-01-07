@@ -57,8 +57,7 @@ public class ApplicationDataSeeder implements CommandLineRunner {
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .feedback(null)
-                .applicantCV(cv)            // CV only
-                .coverLetter(coverLetter)   // Cover letter only
+                .documents(null)
                 .createdAt(Instant.now())
                 .isArchived(false)
                 .deletedAt(null)

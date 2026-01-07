@@ -1,16 +1,12 @@
 FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# 1) copy pom trước để cache dependencies
+# Copy pom first to leverage Docker cache for dependencies
 COPY pom.xml ./
-
-# 2) tải dependencies trước (cache layer)
 RUN mvn -q -DskipTests dependency:go-offline
 
-# 3) copy source sau
+# Copy sources and build
 COPY src ./src
-
-# 4) build jar
 RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:21-jre

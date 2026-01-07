@@ -1,24 +1,28 @@
 // src/modules/profile/ui/ProfileHeader.jsx
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import { useProfile } from "../hooks/useProfile.js";
 import { profileService } from "../services/profileService.js"; // Import service
 import { subscriptionService } from "../../subscription/services/subscriptionService";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 function ProfileHeader() {
-  const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba"; // Your real ID
+  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba"; // Your real ID
+  const { user } = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
+
   const { profile, loading, error, updateProfile } = useProfile(applicantId);
 
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
 
   const [isEditingLocation, setIsEditingLocation] = useState(false);
-  const [localCity, setLocalCity] = useState('');
-  const [localCountry, setLocalCountry] = useState('');
+  const [localCity, setLocalCity] = useState("");
+  const [localCountry, setLocalCountry] = useState("");
   const [savingLocation, setSavingLocation] = useState(false);
 
-  const [isPremium, setIsPremium] = useState(false);
+  const [subscription, setSubscription] = useState(null);
   const navigate = useNavigate();
 
   // Hidden file input ref
@@ -27,22 +31,19 @@ function ProfileHeader() {
   // Sync location when profile loads
   useEffect(() => {
     if (profile) {
-      setLocalCity(profile.city || '');
-      setLocalCountry(profile.country || '');
+      setLocalCity(profile.city || "");
+      setLocalCountry(profile.country || "");
     }
   }, [profile]);
 
   // Check subscription status
   useEffect(() => {
+    if (!applicantId) return;
+
     subscriptionService
-      .getStatus(applicantId)
-      .then((res) => {
-        setIsPremium(res?.isActive === true);
-      })
-      .catch(() => {
-        // 404 = not subscribed (expected)
-        setIsPremium(false);
-      });
+      .getMySubscription(applicantId)
+      .then(setSubscription)
+      .catch(console.error);
   }, [applicantId]);
 
   // Trigger file input click
@@ -59,11 +60,14 @@ function ProfileHeader() {
     setUploadError(null);
 
     try {
-      const updatedProfile = await profileService.uploadAvatar(applicantId, file);
+      const updatedProfile = await profileService.uploadAvatar(
+        applicantId,
+        file
+      );
       await updateProfile({ profileImageUrl: updatedProfile.profileImageUrl });
-      alert('Avatar uploaded successfully!');
+      alert("Avatar uploaded successfully!");
     } catch (err) {
-      setUploadError(err.message || 'Failed to upload avatar');
+      setUploadError(err.message || "Failed to upload avatar");
     } finally {
       setUploading(false);
       e.target.value = null; // reset input
@@ -79,33 +83,42 @@ function ProfileHeader() {
         country: localCountry.trim(),
       });
       setIsEditingLocation(false);
-      alert('Location updated!');
+      alert("Location updated!");
     } catch (err) {
-      alert('Failed to update location: ' + err.message);
+      alert("Failed to update location: " + err.message);
     } finally {
       setSavingLocation(false);
     }
   };
 
   const handleCancelUpdateLocation = () => {
-    setLocalCity(profile?.city || '');
-    setLocalCountry(profile?.country || '');
+    setLocalCity(profile?.city || "");
+    setLocalCountry(profile?.country || "");
     setIsEditingLocation(false);
   };
 
   if (loading) return <p className="p-12 text-center">Loading profile...</p>;
-  if (error) return <p className="text-center p-12 text-red-600">Error loading profile</p>;
+  if (error)
+    return (
+      <p className="text-center p-12 text-red-600">Error loading profile</p>
+    );
   if (!profile) return <p className="text-center p-12">No profile found</p>;
 
-  const name = profile.fullName || 'Unknown';
-  const skills = profile.skills?.join(', ') || 'No skills added';
-  const location = `${localCity || 'City'}, ${localCountry || 'Country'}`.trim();
+  const name = profile.fullName || "Unknown";
+  const skills = profile.skills?.join(", ") || "No skills added";
+  const location = `${localCity || "City"}, ${
+    localCountry || "Country"
+  }`.trim();
+
+  const planLabel =
+    subscription?.active && subscription?.planType === "PREMIUM"
+      ? "PREMIUM"
+      : "FREE";
 
   return (
     <SectionWrapper className="p-0">
       <div className="px-8 py-12 bg-white">
         <div className="flex flex-col md:flex-row gap-8 items-start max-w-5xl mx-auto">
-          
           {/* Avatar */}
           <div
             className="relative group cursor-pointer flex-shrink-0"
@@ -154,7 +167,7 @@ function ProfileHeader() {
                 transition-all duration-200
               "
             >
-              {isPremium ? "PREMIUM" : "FREE"}
+              {planLabel}
             </button>
 
             {/* Location/editable */}
@@ -173,7 +186,9 @@ function ProfileHeader() {
                   </div>
 
                   <div className="flex-1">
-                    <label className="block text-sm font-bold mb-1">Country</label>
+                    <label className="block text-sm font-bold mb-1">
+                      Country
+                    </label>
                     <input
                       type="text"
                       value={localCountry}
@@ -189,7 +204,7 @@ function ProfileHeader() {
                       disabled={savingLocation}
                       className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                     >
-                      {savingLocation ? 'Saving...' : 'Save'}
+                      {savingLocation ? "Saving..." : "Save"}
                     </button>
 
                     <button
@@ -203,7 +218,7 @@ function ProfileHeader() {
               ) : (
                 <div className="flex items-center gap-3">
                   <p className="text-lg text-gray-700">
-                    {location === ',' ? 'Location not set' : location}
+                    {location === "," ? "Location not set" : location}
                   </p>
                   <button
                     onClick={() => setIsEditingLocation(true)}
@@ -216,7 +231,9 @@ function ProfileHeader() {
             </div>
 
             {/* Upload status */}
-            {uploading && <p className="text-blue-600 mt-2">Uploading Avatar...</p>}
+            {uploading && (
+              <p className="text-blue-600 mt-2">Uploading Avatar...</p>
+            )}
             {uploadError && <p className="text-red-600 mt-2">{uploadError}</p>}
           </div>
         </div>
