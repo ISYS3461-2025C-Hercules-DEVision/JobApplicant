@@ -47,3 +47,45 @@ db.applicants.find().pretty()
 ```
 
 This will display all the records from the `applicants` collection.
+
+## Payment Consumer (Kafka)
+
+- The subscription service includes a Kafka consumer for payment events from the Job Manager Payment API.
+- It is disabled by default and can be toggled via environment variables.
+
+### Topics (dev)
+- Success: `payment-success`
+- Failed: `payment-failed`
+- Initiated: `payment-initiated` (not consumed by default)
+
+### Bootstrap servers (dev)
+- Outside Docker: `localhost:29092`
+- Inside Docker: `kafka:9092`
+
+### Enable the consumer in Docker Compose
+Add the following environment variables to the `subscription` service (for example in an `.env.local` or directly under the service):
+
+```yaml
+services:
+   subscription:
+      environment:
+         - PAYMENT_CONSUMER_ENABLED=true
+         - KAFKA_PAYMENT_SUCCESS_TOPIC=payment-success
+         - KAFKA_PAYMENT_FAILED_TOPIC=payment-failed
+```
+
+Then rebuild only the subscription service:
+
+```bash
+docker compose up -d --build subscription
+```
+
+### Behavior
+- On `payment-success` for `subsystem=JOB_APPLICANT` and `paymentType=SUBSCRIPTION`:
+   - Records the payment transaction with `status=SUCCESS` and UTC timestamp
+   - Activates a 30-day PREMIUM subscription (deactivates any previous active one)
+- On `payment-failed` for `subsystem=JOB_APPLICANT` and `paymentType=SUBSCRIPTION`:
+   - Records the payment transaction with `status=FAILED` and UTC timestamp
+   - Does not modify subscriptions
+
+Note: We create the transaction with email at initiation via the REST `POST /payments/initiate`, so email is captured even though the event does not include it.

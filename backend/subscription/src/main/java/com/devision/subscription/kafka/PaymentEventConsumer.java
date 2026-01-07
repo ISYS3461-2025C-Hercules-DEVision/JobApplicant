@@ -77,4 +77,35 @@ public class PaymentEventConsumer {
 
         subscriptionRepository.save(sub);
     }
+
+    // Consume payment failed events from JM Payment API
+    @KafkaListener(topics = "${kafka.topics.payment-failed}", groupId = "subscription-service", containerFactory = "defaultKafkaListenerContainerFactory")
+    public void onPaymentFailed(String message) throws Exception {
+        PaymentEventDTO event = objectMapper.readValue(message, PaymentEventDTO.class);
+
+        // Only handle Job Applicant subscription failures
+        if (!"JOB_APPLICANT".equalsIgnoreCase(event.getSubsystem()))
+            return;
+        if (!"SUBSCRIPTION".equalsIgnoreCase(event.getPaymentType()))
+            return;
+        if (!"FAILED".equalsIgnoreCase(event.getStatus()))
+            return;
+
+        PaymentTransaction tx = paymentTransactionRepository.findById(event.getTransactionId())
+                .orElseGet(() -> {
+                    PaymentTransaction p = new PaymentTransaction();
+                    p.setId(event.getTransactionId());
+                    p.setApplicantId(event.getCustomerId());
+                    return p;
+                });
+
+        tx.setPaymentStatus(PaymentStatus.FAILED);
+        if (event.getTimestamp() != null) {
+            tx.setTransactionTime(event.getTimestamp().atZone(java.time.ZoneOffset.UTC).toInstant());
+        } else {
+            tx.setTransactionTime(Instant.now());
+        }
+        paymentTransactionRepository.save(tx);
+        // Do not modify subscriptions on failure.
+    }
 }
