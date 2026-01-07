@@ -112,6 +112,13 @@ public class SearchProfileServiceImpl implements SearchProfileService {
                         p.getMinSalary(),
                         p.getMaxSalary(),
                         p.getDesiredJobTitles()))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Search profile not found"));
+                .orElseGet(() -> new SearchProfileResponse(
+                        applicantId,
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        null,
+                        null,
+                        null,
+                        Collections.emptyList()));
     }
 }

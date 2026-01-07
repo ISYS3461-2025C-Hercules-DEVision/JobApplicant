@@ -21,7 +21,7 @@ export function useSubscription() {
 
   return {
     subscription,
-    isPremium: subscription?.active === true,
+    isPremium: subscription?.planType === "PREMIUM" && subscription?.active === true,
     loading,
   };
 }

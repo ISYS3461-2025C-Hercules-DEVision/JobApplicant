@@ -1,29 +1,90 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import SkillTagInput from "./SkillTagInput";
 import EmploymentTypeSelector from "./EmploymentTypeSelector";
 import SalaryRangeInput from "./SalaryRangeInput";
 import JobTitleInput from "./JobTitleInput";
+import { searchProfileService } from "../services/searchProfileService";
 
-function SearchProfileForm() {
+function SearchProfileForm({ isPremium = false }) {
+  const { user } = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
   const [skills, setSkills] = useState([]);
   const [employmentTypes, setEmploymentTypes] = useState([]);
   const [salaryRange, setSalaryRange] = useState({ min: "", max: "" });
   const [jobTitles, setJobTitles] = useState("");
   const [country, setCountry] = useState("");
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (!applicantId) return;
+    searchProfileService
+      .get(applicantId)
+      .then((res) => {
+        setSkills(res.technicalTags || []);
+        // Map enums to UI labels
+        const mapStatus = (s) =>
+          s === "FULL_TIME"
+            ? "Full-time"
+            : s === "PART_TIME"
+            ? "Part-time"
+            : s === "FRESHER"
+            ? "Fresher"
+            : s === "INTERNSHIP"
+            ? "Internship"
+            : s === "CONTRACT"
+            ? "Contract"
+            : s;
+
+        setEmploymentTypes((res.employmentStatuses || []).map(mapStatus));
+        setCountry(res.country || "");
+        setSalaryRange({
+          min: res.minSalary ?? "",
+          max: res.maxSalary ?? "",
+        });
+        setJobTitles((res.desiredJobTitles || []).join("; "));
+      })
+      .catch(() => {});
+  }, [applicantId]);
+
+  const handleSave = async () => {
+    if (!applicantId) return;
+    const employmentStatuses = (employmentTypes || []).map((t) =>
+      t.replace(/\s+/g, "_").replace("-", "_").toUpperCase()
+    );
+
     const payload = {
-      skills,
-      employmentTypes,
-      salaryRange: {
-        min: salaryRange.min || 0,
-        max: salaryRange.max || null,
-      },
+      technicalTags: skills,
+      employmentStatuses,
       country,
-      jobTitles,
+      minSalary: salaryRange.min ? parseInt(salaryRange.min, 10) : 0,
+      maxSalary: salaryRange.max ? parseInt(salaryRange.max, 10) : null,
+      jobTitles: jobTitles || "",
     };
 
-    console.log("Search profile saved:", payload);
+    const res = await searchProfileService.upsert(applicantId, payload);
+    setSkills(res.technicalTags || []);
+    setEmploymentTypes(
+      (res.employmentStatuses || []).map((s) =>
+        s === "FULL_TIME"
+          ? "Full-time"
+          : s === "PART_TIME"
+          ? "Part-time"
+          : s === "FRESHER"
+          ? "Fresher"
+          : s === "INTERNSHIP"
+          ? "Internship"
+          : s === "CONTRACT"
+          ? "Contract"
+          : s
+      )
+    );
+    setCountry(res.country || "");
+    setSalaryRange({
+      min: res.minSalary ?? "",
+      max: res.maxSalary ?? "",
+    });
+    setJobTitles((res.desiredJobTitles || []).join("; "));
+
     alert("Search profile saved successfully!");
   };
 
@@ -36,15 +97,10 @@ function SearchProfileForm() {
         setSelected={setEmploymentTypes}
       />
 
-      <SalaryRangeInput
-        value={salaryRange}
-        onChange={setSalaryRange}
-      />
+      <SalaryRangeInput value={salaryRange} onChange={setSalaryRange} />
 
       <div className="bg-white border-4 border-black p-6 mb-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-        <h2 className="text-2xl font-black uppercase mb-4">
-          Location
-        </h2>
+        <h2 className="text-2xl font-black uppercase mb-4">Location</h2>
 
         <select
           value={country}
@@ -60,18 +116,33 @@ function SearchProfileForm() {
 
       <JobTitleInput value={jobTitles} onChange={setJobTitles} />
 
-      <button
-        onClick={handleSave}
-        className="
-          w-full bg-primary text-white font-black uppercase
-          border-4 border-black py-4
-          hover:translate-x-1 hover:translate-y-1 hover:shadow-none
-          shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]
-          transition-none
-        "
-      >
-        Save Search Profile
-      </button>
+      {isPremium ? (
+        <button
+          onClick={handleSave}
+          className="
+            w-full bg-primary text-white font-black uppercase
+            border-4 border-black py-4
+            hover:translate-x-1 hover:translate-y-1 hover:shadow-none
+            shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]
+            transition-none
+          "
+        >
+          Save Search Profile
+        </button>
+      ) : (
+        <a
+          href="/subscription"
+          className="
+            block w-full text-center bg-black text-white font-black uppercase
+            border-4 border-black py-4
+            hover:translate-x-1 hover:translate-y-1 hover:shadow-none
+            shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]
+            transition-none
+          "
+        >
+          Subscribe to save search profile
+        </a>
+      )}
     </>
   );
 }
