@@ -8,16 +8,17 @@ public class PaymentEventDTO {
     private String transactionId;
     private String subsystem;
     private String paymentType;
-    private String customerId;     // applicantId
-    private String referenceId;    // subscriptionId
+    private String customerId; // applicantId
+    private String referenceId; // subscriptionId
     private BigDecimal amount;
     private String currency;
     private String gateway;
-    private String status;         // SUCCESS | FAILED
+    private String status; // SUCCESS | FAILED
     private LocalDateTime timestamp;
-    private String eventType;      // INITIATED | SUCCESS | FAILED
+    private String eventType; // INITIATED | SUCCESS | FAILED
 
-    public PaymentEventDTO() {}
+    public PaymentEventDTO() {
+    }
 
     // getters & setters
     public PaymentEventDTO(
@@ -31,8 +32,7 @@ public class PaymentEventDTO {
             String gateway,
             String status,
             LocalDateTime timestamp,
-            String eventType
-    ) {
+            String eventType) {
         this.transactionId = transactionId;
         this.subsystem = subsystem;
         this.paymentType = paymentType;
@@ -49,33 +49,43 @@ public class PaymentEventDTO {
     public String getTransactionId() {
         return transactionId;
     }
+
     public String getSubsystem() {
         return subsystem;
     }
+
     public String getPaymentType() {
         return paymentType;
     }
+
     public String getCustomerId() {
         return customerId;
     }
+
     public String getReferenceId() {
         return referenceId;
     }
+
     public BigDecimal getAmount() {
         return amount;
     }
+
     public String getCurrency() {
         return currency;
     }
+
     public String getGateway() {
         return gateway;
     }
+
     public String getStatus() {
         return status;
     }
+
     public LocalDateTime getTimestamp() {
         return timestamp;
     }
+
     public String getEventType() {
         return eventType;
     }

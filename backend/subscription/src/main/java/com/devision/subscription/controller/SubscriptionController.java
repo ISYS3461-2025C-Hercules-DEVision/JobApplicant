@@ -15,14 +15,12 @@ public class SubscriptionController {
         this.subscriptionService = subscriptionService;
     }
 
-    // SAME STYLE AS: GET /api/v1/applicants/{id}
     @GetMapping("/{applicantId}")
     public SubscriptionStatusResponse getMySubscription(
             @PathVariable String applicantId) {
         return subscriptionService.getMySubscription(applicantId);
     }
-
-    // SAME STYLE AS: POST /api/v1/applicants/{id}/avatar
+    
     @PostMapping("/{applicantId}/checkout")
     public PaymentInitiateResponseDTO checkout(
             @PathVariable String applicantId,
