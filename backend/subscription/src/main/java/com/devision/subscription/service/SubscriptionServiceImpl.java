@@ -42,7 +42,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public PaymentInitiateResponseDTO createMockPayment(String applicantId) {
+    public PaymentInitiateResponseDTO createMockPayment(String applicantId, String email) {
 
         // 1. Create payment transaction
         String paymentId = UUID.randomUUID().toString();
@@ -51,6 +51,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         tx.setId(paymentId);
         tx.setApplicantId(applicantId);
         tx.setPaymentStatus(com.devision.subscription.enums.PaymentStatus.SUCCESS);
+        tx.setEmail(email);
         tx.setTransactionTime(Instant.now());
 
         paymentTransactionRepository.save(tx);

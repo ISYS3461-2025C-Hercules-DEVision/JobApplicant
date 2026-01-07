@@ -11,7 +11,7 @@ function SubscribeButton({ onClick }) {
           transition-none
         "
       >
-        Subscribe Now
+        SUBSCRIBE NOW
       </button>
     </div>
   );

@@ -7,7 +7,7 @@ public interface SubscriptionService {
 
     SubscriptionStatusResponse getMySubscription(String applicantId);
 
-    PaymentInitiateResponseDTO createMockPayment(String applicantId);
+    PaymentInitiateResponseDTO createMockPayment(String applicantId, String email);
 
     SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId);
 }

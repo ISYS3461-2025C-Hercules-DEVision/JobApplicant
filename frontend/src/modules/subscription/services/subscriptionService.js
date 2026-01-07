@@ -11,8 +11,9 @@ export const subscriptionService = {
   },
 
   // Create mock payment
-  createCheckoutSession(applicantId) {
-    return request(`/api/v1/subscriptions/${applicantId}/checkout`, {
+  createCheckoutSession(applicantId, email) {
+    const qp = email ? `?email=${encodeURIComponent(email)}` : "";
+    return request(`/api/v1/subscriptions/${applicantId}/checkout${qp}`, {
       method: "POST",
     });
   },

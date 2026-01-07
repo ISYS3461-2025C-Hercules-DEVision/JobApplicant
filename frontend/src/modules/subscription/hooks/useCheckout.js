@@ -9,12 +9,8 @@ export function useCheckout() {
   const navigate = useNavigate();
 
   const startCheckout = async () => {
-    if (!applicantId) return;
-
-    const res = await subscriptionService.createCheckoutSession(applicantId);
-
-    // mock payment page
-    navigate(`/payment/mock?paymentId=${res.paymentId}`);
+    // Navigate to mock payment page; payment happens on click there
+    navigate(`/payment/mock`);
   };
 
   return { startCheckout };

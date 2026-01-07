@@ -25,8 +25,9 @@ public class SubscriptionController {
     // SAME STYLE AS: POST /api/v1/applicants/{id}/avatar
     @PostMapping("/{applicantId}/checkout")
     public PaymentInitiateResponseDTO checkout(
-            @PathVariable String applicantId) {
-        return subscriptionService.createMockPayment(applicantId);
+            @PathVariable String applicantId,
+            @RequestParam(name = "email", required = false) String email) {
+        return subscriptionService.createMockPayment(applicantId, email);
     }
 
     @PostMapping("/{applicantId}/default")
