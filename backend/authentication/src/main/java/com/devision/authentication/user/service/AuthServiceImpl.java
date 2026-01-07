@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl {
-
         private final UserService userService;
         private final UserRepository userRepository;
         private final JwtService jwtService;
@@ -44,6 +43,7 @@ public class AuthServiceImpl {
         private final KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer;
         private final KafkaGenericProducer<AuthToSubscriptionEvent> subscriptionKafkaProducer;
 
+        // REGISTER USER (sets refresh cookie)
         public AuthCookieResponse register(RegisterRequest request, HttpServletResponse response) {
 
                 User user = userService.registerLocalUser(request);
@@ -210,21 +210,61 @@ public class AuthServiceImpl {
                                 user.getStatus());
         }
 
-    //  LOGOUT (clear cookie + revoke refresh)
-    public void logout(String refreshToken, HttpServletResponse response) {
+        // LOGOUT USER (clears refresh cookie + revokes tokens)
+        public void logout(String accessToken, String refreshToken, HttpServletResponse response) {
 
-        cookieService.clearRefreshTokenCookie(response);
+                // ✅ clear refresh cookie
+                cookieService.clearRefreshTokenCookie(response);
 
-        if (refreshToken == null || refreshToken.isBlank()) {
-            return;
+                // ✅ revoke ACCESS token in Redis (LOCAL only)
+                revokeIfLocal(accessToken);
+
+                // ✅ existing refresh token revoke in DB
+                if (refreshToken == null || refreshToken.isBlank()) {
+                        return;
+                }
+
+                try {
+                        RefreshToken stored = refreshTokenService.validate(refreshToken);
+                        refreshTokenService.revokeRefreshToken(stored);
+
+                        // ✅ OPTIONAL (extra safety): revoke refresh token JTI too
+                        revokeIfLocal(refreshToken);
+
+                } catch (Exception ignored) {
+                }
         }
 
-        try {
-            RefreshToken stored = refreshTokenService.validate(refreshToken);
-            refreshTokenService.revokeRefreshToken(stored);
-        } catch (Exception ignored) {
+        // Revoke token if it is a LOCAL token
+        private void revokeIfLocal(String token) {
+                if (token == null || token.isBlank())
+                        return;
+
+                try {
+                        Claims claims = jwtService.parseClaims(token);
+
+                        String provider = claims.get("provider", String.class);
+                        if (provider == null)
+                                provider = "LOCAL";
+
+                        // ✅ only revoke non-SSO tokens
+                        if (!"LOCAL".equalsIgnoreCase(provider))
+                                return;
+
+                        String jti = claims.getId();
+                        if (jti == null || jti.isBlank())
+                                return;
+
+                        long expMs = claims.getExpiration().getTime();
+                        long ttlMs = expMs - System.currentTimeMillis();
+                        if (ttlMs <= 0)
+                                return;
+
+                        tokenRevocationService.revoke(jti, ttlMs);
+
+                } catch (Exception ignored) {
+                }
         }
-    }
 
         // =========================
         // Helpers
