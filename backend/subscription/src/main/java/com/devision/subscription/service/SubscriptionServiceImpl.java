@@ -1,5 +1,7 @@
 package com.devision.subscription.service;
 
+import com.devision.subscription.client.PaymentInitiationClient;
+import com.devision.subscription.dto.JmPaymentInitiateRequest;
 import com.devision.subscription.dto.PaymentInitiateResponseDTO;
 import com.devision.subscription.dto.SubscriptionStatusResponse;
 import com.devision.subscription.enums.PlanType;
@@ -7,6 +9,7 @@ import com.devision.subscription.model.PaymentTransaction;
 import com.devision.subscription.model.Subscription;
 import com.devision.subscription.repository.PaymentTransactionRepository;
 import com.devision.subscription.repository.SubscriptionRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -18,12 +21,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final PaymentInitiationClient paymentInitiationClient;
+    @Value("${payment.forward.enabled:false}")
+    private boolean forwardEnabled;
 
     public SubscriptionServiceImpl(
             SubscriptionRepository subscriptionRepository,
-            PaymentTransactionRepository paymentTransactionRepository) {
+            PaymentTransactionRepository paymentTransactionRepository,
+            PaymentInitiationClient paymentInitiationClient) {
         this.subscriptionRepository = subscriptionRepository;
         this.paymentTransactionRepository = paymentTransactionRepository;
+        this.paymentInitiationClient = paymentInitiationClient;
     }
 
     @Override
@@ -43,6 +51,39 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public PaymentInitiateResponseDTO createMockPayment(String applicantId, String email) {
+
+        if (forwardEnabled) {
+            // Forward to JM Payment API and record CREATED transaction locally
+            JmPaymentInitiateRequest req = new JmPaymentInitiateRequest();
+            req.setSubsystem("JOB_APPLICANT");
+            req.setPaymentType("SUBSCRIPTION");
+            req.setCustomerId(applicantId);
+            req.setEmail(email);
+            req.setReferenceId("sub-" + applicantId);
+            req.setAmount(java.math.BigDecimal.valueOf(10.00));
+            req.setCurrency("USD");
+            req.setGateway("STRIPE");
+            req.setDescription("Premium Subscription");
+
+            java.util.Map<String, Object> resp = paymentInitiationClient.initiate(req).block();
+            String transactionId = resp != null && resp.get("transactionId") != null
+                    ? resp.get("transactionId").toString()
+                    : java.util.UUID.randomUUID().toString();
+            String status = resp != null && resp.get("status") != null ? resp.get("status").toString() : "CREATED";
+
+            com.devision.subscription.model.PaymentTransaction tx = new com.devision.subscription.model.PaymentTransaction();
+            tx.setId(transactionId);
+            tx.setApplicantId(applicantId);
+            tx.setEmail(email);
+            tx.setPaymentStatus(com.devision.subscription.enums.PaymentStatus.CREATED);
+            tx.setTransactionTime(java.time.Instant.now());
+            paymentTransactionRepository.save(tx);
+
+            return new PaymentInitiateResponseDTO(
+                    transactionId,
+                    status,
+                    "Initiated via JM Payment API");
+        }
 
         // 1. Create payment transaction
         String paymentId = UUID.randomUUID().toString();

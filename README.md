@@ -1,6 +1,6 @@
 # Job Applicant
-A subsystem of DEVision focused on empowering Computer Science job seekers. The Job Applicant module enables registration, secure login, job search, and applications, with premium real-time alerts for new jobs matching users’ skills, salary range, and career goals.
 
+A subsystem of DEVision focused on empowering Computer Science job seekers. The Job Applicant module enables registration, secure login, job search, and applications, with premium real-time alerts for new jobs matching users’ skills, salary range, and career goals.
 
 ### **MongoDB Import Instructions**
 
@@ -8,16 +8,19 @@ Create a **README.md** with instructions on how to load this seed data into Mong
 
 ---
 
-```markdown
+````markdown
 # How to Load Sample Seed Data into MongoDB
 
 ## Prerequisites:
+
 1. MongoDB installed locally. [Download MongoDB](https://www.mongodb.com/try/download/community)
 2. A MongoDB database running locally (`mongodb://localhost:27017`).
 
 ## Steps to Import Seed Data:
+
 1. Clone this repository (if not done already).
 2. Ensure MongoDB is running on your machine:
+
    - Open a terminal and run:
      ```bash
      mongod
@@ -28,8 +31,8 @@ Create a **README.md** with instructions on how to load this seed data into Mong
 4. Import the JSON data into MongoDB using the following command:
    ```bash
    mongoimport --db devvision --collection applicants --file ./sample-seed.json --jsonArray
-
-```
+   ```
+````
 
 - **`devvision`** is the database name.
 - **`applicants`** is the collection you are inserting data into.
@@ -54,24 +57,27 @@ This will display all the records from the `applicants` collection.
 - It is disabled by default and can be toggled via environment variables.
 
 ### Topics (dev)
+
 - Success: `payment-success`
 - Failed: `payment-failed`
 - Initiated: `payment-initiated` (not consumed by default)
 
 ### Bootstrap servers (dev)
+
 - Outside Docker: `localhost:29092`
 - Inside Docker: `kafka:9092`
 
 ### Enable the consumer in Docker Compose
+
 Add the following environment variables to the `subscription` service (for example in an `.env.local` or directly under the service):
 
 ```yaml
 services:
-   subscription:
-      environment:
-         - PAYMENT_CONSUMER_ENABLED=true
-         - KAFKA_PAYMENT_SUCCESS_TOPIC=payment-success
-         - KAFKA_PAYMENT_FAILED_TOPIC=payment-failed
+  subscription:
+    environment:
+      - PAYMENT_CONSUMER_ENABLED=true
+      - KAFKA_PAYMENT_SUCCESS_TOPIC=payment-success
+      - KAFKA_PAYMENT_FAILED_TOPIC=payment-failed
 ```
 
 Then rebuild only the subscription service:
@@ -81,11 +87,61 @@ docker compose up -d --build subscription
 ```
 
 ### Behavior
+
 - On `payment-success` for `subsystem=JOB_APPLICANT` and `paymentType=SUBSCRIPTION`:
-   - Records the payment transaction with `status=SUCCESS` and UTC timestamp
-   - Activates a 30-day PREMIUM subscription (deactivates any previous active one)
+  - Records the payment transaction with `status=SUCCESS` and UTC timestamp
+  - Activates a 30-day PREMIUM subscription (deactivates any previous active one)
 - On `payment-failed` for `subsystem=JOB_APPLICANT` and `paymentType=SUBSCRIPTION`:
-   - Records the payment transaction with `status=FAILED` and UTC timestamp
-   - Does not modify subscriptions
+  - Records the payment transaction with `status=FAILED` and UTC timestamp
+  - Does not modify subscriptions
 
 Note: We create the transaction with email at initiation via the REST `POST /payments/initiate`, so email is captured even though the event does not include it.
+
+## Notification Consumer (Kafka)
+
+- The subscription service can consume job post updates from JM to evaluate and notify active PREMIUM subscribers.
+- It is disabled by default and can be toggled via environment variables.
+
+### Topic (dev)
+
+- Job updates: `job-post-updates`
+
+### Enable the notification consumer in Docker Compose
+
+Add the following environment variables to the `subscription` service:
+
+```yaml
+services:
+  subscription:
+    environment:
+      - NOTIFICATION_CONSUMER_ENABLED=true
+      - KAFKA_JOB_POST_UPDATES_TOPIC=job-post-updates
+```
+
+Rebuild only the subscription service:
+
+```bash
+docker compose up -d --build subscription
+```
+
+### Mock testing (HTTP)
+
+- Trigger a mock job post evaluation:
+
+```bash
+curl -X POST http://localhost:10789/api/v1/subscriptions/mock/job-post \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jobId":"job-001",
+    "title":"Backend Engineer",
+    "company":"Acme Corp",
+    "skills":["java","kafka","spring"],
+    "country":"US"
+  }'
+```
+
+- List notifications for an applicant:
+
+```bash
+curl http://localhost:10789/api/v1/subscriptions/notifications/<applicantId>
+```
