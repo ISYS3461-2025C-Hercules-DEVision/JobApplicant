@@ -192,10 +192,20 @@ jobs:
       # -----------------------------
       - name: Setup SSH key
         run: |
-          set -e
+          set -euxo pipefail
+
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+
+          echo "=== Showing first line of key (should be BEGIN...) ==="
+          head -n 1 ~/.ssh/id_rsa
+
+          echo "=== Testing that key can be read by SSH ==="
+          ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null
+
+          echo "=== Adding gateway host to known_hosts ==="
+          echo "Gateway: ${{ secrets.EC2_GATEWAY_PUBLIC_IP }}"
           ssh-keyscan -H "${{ secrets.EC2_GATEWAY_PUBLIC_IP }}" >> ~/.ssh/known_hosts
 
       # -----------------------------
