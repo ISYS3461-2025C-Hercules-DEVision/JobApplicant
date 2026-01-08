@@ -2,6 +2,11 @@ package com.devision.subscription.dto;
 
 import java.math.BigDecimal;
 
+/**
+ * Request payload sent to JM Payment API to initiate a subscription payment.
+ * Designed to be forward-compatible with JM: subsystem, paymentType, and
+ * customerId are used for routing and reconciliation.
+ */
 public class JmPaymentInitiateRequest {
     private String subsystem; // JOB_APPLICANT
     private String paymentType; // SUBSCRIPTION

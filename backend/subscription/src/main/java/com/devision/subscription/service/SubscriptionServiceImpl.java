@@ -16,6 +16,14 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+/**
+ * Default implementation of {@link SubscriptionService}.
+ *
+ * Handles subscription lookups, mock payment flow, and optional forwarding to
+ * the external JM Payment API. On successful mock payment, a PREMIUM
+ * subscription is created for 30 days and any existing active subscription is
+ * deactivated.
+ */
 @Service
 public class SubscriptionServiceImpl implements SubscriptionService {
 
@@ -34,6 +42,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         this.paymentInitiationClient = paymentInitiationClient;
     }
 
+    /**
+     * Finds the active subscription for an applicant, returning FREE/inactive
+     * when none exists.
+     */
     @Override
     public SubscriptionStatusResponse getMySubscription(String applicantId) {
 
@@ -49,6 +61,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                         null));
     }
 
+    /**
+     * Either forwards a payment initiation to JM (recording CREATED
+     * locally), or simulates a successful payment and provisions a PREMIUM
+     * subscription for 30 days.
+     */
     @Override
     public PaymentInitiateResponseDTO createMockPayment(String applicantId, String email) {
 
@@ -121,6 +138,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 "Mock payment successful");
     }
 
+    /**
+     * Creates a FREE active subscription if the applicant does not already
+     * have an active plan, and returns the resulting status.
+     */
     @Override
     public SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId) {
         // If an active subscription already exists, return it

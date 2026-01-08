@@ -5,6 +5,9 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
 
+/**
+ * Repository for accessing applicant subscriptions.
+ */
 public interface SubscriptionRepository
         extends MongoRepository<Subscription, String> {
 

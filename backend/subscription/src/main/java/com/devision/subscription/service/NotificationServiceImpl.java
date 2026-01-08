@@ -14,6 +14,11 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Evaluates incoming job-post events against stored Search Profiles and
+ * persists notifications for applicants with active PREMIUM plans when a
+ * basic match (skills intersection and country equality) is found.
+ */
 @Service
 public class NotificationServiceImpl implements NotificationService {
 

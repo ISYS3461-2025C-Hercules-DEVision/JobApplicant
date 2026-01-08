@@ -15,6 +15,16 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
+/**
+ * Kafka consumer for payment lifecycle events emitted by JM Payment.
+ *
+ * Listens to three topics:
+ * - payment-success: marks transaction SUCCESS and provisions PREMIUM
+ * - payment-initiated: records CREATED to link REST initiation with events
+ * - payment-failed: marks transaction FAILED without changing subscriptions
+ *
+ * Enabled when `payment.consumer.enabled=true`.
+ */
 @Service
 @ConditionalOnProperty(name = "payment.consumer.enabled", havingValue = "true", matchIfMissing = false)
 public class PaymentEventConsumer {
@@ -32,7 +42,7 @@ public class PaymentEventConsumer {
         this.objectMapper = objectMapper;
     }
 
-    // Consume payment success events from JM Payment API
+    /** Handles SUCCESS events for Job Applicant subscription payments. */
     @KafkaListener(topics = "${kafka.topics.payment-success}", groupId = "subscription-service", containerFactory = "defaultKafkaListenerContainerFactory")
     public void onPaymentSuccess(String message) throws Exception {
         PaymentEventDTO event = objectMapper.readValue(message, PaymentEventDTO.class);
@@ -78,8 +88,7 @@ public class PaymentEventConsumer {
         subscriptionRepository.save(sub);
     }
 
-    // Consume payment initiated events: record CREATED status to link with email
-    // captured via REST initiate
+    /** Records CREATED status for initiated payments to aid reconciliation. */
     @KafkaListener(topics = "${kafka.topics.payment-initiated}", groupId = "subscription-service", containerFactory = "defaultKafkaListenerContainerFactory")
     public void onPaymentInitiated(String message) throws Exception {
         PaymentEventDTO event = objectMapper.readValue(message, PaymentEventDTO.class);
@@ -108,7 +117,7 @@ public class PaymentEventConsumer {
         paymentTransactionRepository.save(tx);
     }
 
-    // Consume payment failed events from JM Payment API
+    /** Handles FAILED events; stores status but does not alter subscriptions. */
     @KafkaListener(topics = "${kafka.topics.payment-failed}", groupId = "subscription-service", containerFactory = "defaultKafkaListenerContainerFactory")
     public void onPaymentFailed(String message) throws Exception {
         PaymentEventDTO event = objectMapper.readValue(message, PaymentEventDTO.class);

@@ -11,6 +11,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
+/**
+ * Minimal WebClient wrapper for forwarding subscription payment initiation
+ * requests to the JM Payment API. Activated when forwarding is enabled.
+ */
 @Component
 public class PaymentInitiationClient {
 
@@ -30,6 +34,10 @@ public class PaymentInitiationClient {
         this.bearer = bearer;
     }
 
+    /**
+     * Calls JM's payment initiation endpoint and returns the raw response map
+     * (containing at least transactionId and status when successful).
+     */
     public Mono<Map<String, Object>> initiate(JmPaymentInitiateRequest request) {
         WebClient.RequestHeadersSpec<?> spec = webClient.post()
                 .uri(initiatePath)

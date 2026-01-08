@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Mock endpoints to simulate job-post updates and inspect generated
+ * notifications for an applicant. Useful for local/dev verification and
+ * frontend integration prior to enabling Kafka consumers.
+ */
 @RestController
 @RequestMapping("/api/v1/subscriptions")
 public class MockNotificationController {
@@ -18,15 +23,19 @@ public class MockNotificationController {
         this.notificationService = notificationService;
     }
 
-    // Mock endpoint to simulate a job post event and trigger notifications
+    /**
+     * Simulates a Job Manager job-post event, triggering evaluation against
+     * stored Search Profiles and persisting notifications for matched users.
+     */
     @PostMapping("/mock/job-post")
     public ResponseEntity<Void> mockJobPost(@RequestBody JobPostEventDTO event) {
         notificationService.evaluateAndNotify(event);
         return ResponseEntity.ok().build();
     }
 
-    // Fetch notifications for an applicant (for verification / frontend
-    // integration)
+    /**
+     * Returns notifications for a given applicant, most-recent first.
+     */
     @GetMapping("/notifications/{applicantId}")
     public ResponseEntity<List<Notification>> list(@PathVariable String applicantId) {
         return ResponseEntity.ok(notificationService.listForApplicant(applicantId));
