@@ -14,6 +14,10 @@ env:
   ECR_NAMESPACE: ja-devision-platform
 
 jobs:
+  # -----------------------------
+  # CI: Build (and optional test)
+  # Runs on PRs and pushes
+  # -----------------------------
   ci:
     runs-on: ubuntu-latest
     strategy:
@@ -43,6 +47,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ---- Java setup ----
       - name: Setup Java 21
         if: matrix.type == 'java'
         uses: actions/setup-java@v4
@@ -62,6 +67,7 @@ jobs:
         working-directory: ./${{ matrix.folder }}
         run: mvn -B -DskipTests clean package
 
+      # ---- Node setup ----
       - name: Setup Node.js
         if: matrix.type == 'node'
         uses: actions/setup-node@v4
@@ -77,6 +83,11 @@ jobs:
           npm ci
           npm run build
 
+  # -----------------------------
+  # CD: Build Docker images + push to ECR
+  # + Deploy backend to EC2
+  # Runs ONLY on push to main
+  # -----------------------------
   cd:
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -85,6 +96,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # ✅ BACKEND ONLY (no frontend deploy)
           - folder: backend/api-gateway
             repo: api-gateway
             container_name: api-gateway
@@ -134,28 +146,36 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
+      # ✅ Push Redis image to ECR (ONLY ONCE PER WORKFLOW RUN)
       - name: Push Redis image to ECR
         if: matrix.repo == 'api-gateway'
         run: |
-          set -e
+          set -euo pipefail
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/redis"
 
+          echo "Pulling redis:7-alpine..."
           docker pull redis:7-alpine
 
+          echo "Tagging..."
           docker tag redis:7-alpine ${IMAGE_URI}:latest
           docker tag redis:7-alpine ${IMAGE_URI}:${SHA_TAG}
 
+          echo "Pushing to ECR..."
           docker push ${IMAGE_URI}:latest
           docker push ${IMAGE_URI}:${SHA_TAG}
 
           echo "✅ Redis pushed: ${IMAGE_URI}"
 
+      # ✅ Build & Push backend Docker image
       - name: Build & Push Docker image
         run: |
-          set -e
+          set -euo pipefail
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/${{ matrix.repo }}"
+
+          echo "Building from folder: ${{ matrix.folder }}"
+          echo "Pushing to: ${IMAGE_URI}"
 
           docker build \
             -t ${IMAGE_URI}:latest \
@@ -168,7 +188,7 @@ jobs:
           echo "✅ Done: ${IMAGE_URI} pushed"
 
       # -----------------------------
-      # SSH Setup (UPDATED)
+      # SSH Setup (3 different keys)
       # -----------------------------
       - name: Setup SSH keys (gateway + service01 + service02)
         env:
@@ -177,21 +197,19 @@ jobs:
           SERVICE01_IP: ${{ secrets.EC2_SERVICE01_PRIVATE_IP }}
           SERVICE02_IP: ${{ secrets.EC2_SERVICE02_PRIVATE_IP }}
 
-          # ✅ 3 different keys (base64 in secrets)
           KEY_GATEWAY_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_GATEWAY_B64 }}
           KEY_SERVICE01_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_SERVICE01_B64 }}
           KEY_SERVICE02_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_SERVICE02_B64 }}
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           mkdir -p ~/.ssh
 
-          echo "$KEY_GATEWAY_B64"  | base64 -d > ~/.ssh/key_gateway
-          echo "$KEY_SERVICE01_B64" | base64 -d > ~/.ssh/key_service01
-          echo "$KEY_SERVICE02_B64" | base64 -d > ~/.ssh/key_service02
+          echo "$KEY_GATEWAY_B64"  | base64 -d | tr -d '\r' > ~/.ssh/key_gateway
+          echo "$KEY_SERVICE01_B64" | base64 -d | tr -d '\r' > ~/.ssh/key_service01
+          echo "$KEY_SERVICE02_B64" | base64 -d | tr -d '\r' > ~/.ssh/key_service02
 
           chmod 600 ~/.ssh/key_gateway ~/.ssh/key_service01 ~/.ssh/key_service02
 
-          # SSH config to map correct key per host
           cat > ~/.ssh/config <<CFG
           Host gateway
             HostName ${GATEWAY_IP}
@@ -220,25 +238,22 @@ jobs:
           chmod 600 ~/.ssh/config
 
       - name: Test SSH to Gateway
-        env:
-          SSH_USER: ${{ secrets.EC2_SSH_USER }}
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           ssh gateway "echo SSH_OK && hostname"
 
-      # Optional: test private instances too (recommended)
       - name: Test SSH to service01
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           ssh service01 "echo SERVICE01_OK && hostname"
 
       - name: Test SSH to service02
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           ssh service02 "echo SERVICE02_OK && hostname"
 
       # -----------------------------
-      # Deploy backend to EC2 (UPDATED)
+      # Deploy backend to EC2
       # -----------------------------
       - name: Deploy to EC2
         env:
@@ -267,36 +282,37 @@ jobs:
           echo "Deploying ${CONTAINER_NAME} to ${SSH_HOST}"
           echo "Image: ${IMAGE_URI}"
 
-          # Sanity check SSH
           ssh "${SSH_HOST}" "echo ok" >/dev/null
 
-          # ✅ Pass variables safely to remote, avoid runner-side interpolation issues
           ssh "${SSH_HOST}" \
             "IMAGE_URI='${IMAGE_URI}' CONTAINER_NAME='${CONTAINER_NAME}' HOST_PORT='${HOST_PORT}' ENV_CONTENT_B64='${ENV_CONTENT_B64}' AWS_REGION='${AWS_REGION}' ECR_REGISTRY='${ECR_REGISTRY}' bash -s" << 'EOF'
-            set -euo pipefail
+          set -euo pipefail
 
-            sudo mkdir -p /opt/ja/env
+          sudo mkdir -p /opt/ja/env
 
-            echo "${ENV_CONTENT_B64}" | base64 -d | sudo tee /opt/ja/env/${CONTAINER_NAME}.env > /dev/null
-            sudo chmod 600 /opt/ja/env/${CONTAINER_NAME}.env
+          echo "${ENV_CONTENT_B64}" | base64 -d | sudo tee /opt/ja/env/${CONTAINER_NAME}.env > /dev/null
+          sudo chmod 600 /opt/ja/env/${CONTAINER_NAME}.env
 
-            echo "Login to ECR..."
-            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+          echo "Login to ECR..."
+          aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
-            echo "Pulling image..."
-            docker pull ${IMAGE_URI}
+          echo "Pulling image..."
+          sudo docker pull ${IMAGE_URI}
 
-            echo "Stopping old container..."
-            docker rm -f ${CONTAINER_NAME} || true
+          echo "Stopping old container..."
+          sudo docker rm -f ${CONTAINER_NAME} || true
 
-            echo "Starting new container..."
-            docker run -d \
-              --restart unless-stopped \
-              --name ${CONTAINER_NAME} \
-              --env-file /opt/ja/env/${CONTAINER_NAME}.env \
-              -p ${HOST_PORT} \
-              ${IMAGE_URI}
+          echo "Starting new container..."
+          sudo docker run -d \
+            --restart unless-stopped \
+            --name ${CONTAINER_NAME} \
+            --env-file /opt/ja/env/${CONTAINER_NAME}.env \
+            -p ${HOST_PORT} \
+            ${IMAGE_URI}
 
-            echo "✅ Container running:"
-            docker ps --filter "name=${CONTAINER_NAME}"
-          EOF
+          echo "✅ Container running:"
+          sudo docker ps --filter "name=${CONTAINER_NAME}"
+
+          echo "✅ Last 50 logs:"
+          sudo docker logs --tail 50 ${CONTAINER_NAME} || true
+EOF
