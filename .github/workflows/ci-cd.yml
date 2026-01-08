@@ -270,8 +270,10 @@ jobs:
           # Sanity check SSH
           ssh "${SSH_HOST}" "echo ok" >/dev/null
 
-          ssh "${SSH_HOST}" bash -s << EOF
-            set -e
+          # ✅ Pass variables safely to remote, avoid runner-side interpolation issues
+          ssh "${SSH_HOST}" \
+            "IMAGE_URI='${IMAGE_URI}' CONTAINER_NAME='${CONTAINER_NAME}' HOST_PORT='${HOST_PORT}' ENV_CONTENT_B64='${ENV_CONTENT_B64}' AWS_REGION='${AWS_REGION}' ECR_REGISTRY='${ECR_REGISTRY}' bash -s" << 'EOF'
+            set -euo pipefail
 
             sudo mkdir -p /opt/ja/env
 
