@@ -214,7 +214,8 @@ jobs:
           CONTAINER_NAME: ${{ matrix.container_name }}
           HOST_PORT: ${{ matrix.host_port }}
 
-          ENV_CONTENT: ${{ secrets[matrix.env_secret] }}
+          # ✅ BASE64 STRING FROM SECRET
+          ENV_CONTENT_B64: ${{ secrets[matrix.env_secret] }}
           TARGET_HOST: ${{ matrix.target_host }}
 
           AWS_REGION: ${{ env.AWS_REGION }}
@@ -247,10 +248,8 @@ jobs:
 
             sudo mkdir -p /opt/ja/env
 
-            # Write env file for this container
-            sudo tee /opt/ja/env/${CONTAINER_NAME}.env > /dev/null << 'ENVEOF'
-${ENV_CONTENT}
-ENVEOF
+            # ✅ Decode base64 env content safely into env file
+            echo "${ENV_CONTENT_B64}" | base64 -d | sudo tee /opt/ja/env/${CONTAINER_NAME}.env > /dev/null
 
             sudo chmod 600 /opt/ja/env/${CONTAINER_NAME}.env
 
