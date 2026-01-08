@@ -1,4 +1,4 @@
-name: CI + CD (Build/Test + Push to ECR)
+name: CI + CD (Build/Test + Push to ECR + Deploy to EC2)
 
 on:
   pull_request:
@@ -85,6 +85,7 @@ jobs:
 
   # -----------------------------
   # CD: Build Docker images + push to ECR
+  # + Deploy backend to EC2
   # Runs ONLY on push to main
   # -----------------------------
   cd:
@@ -95,18 +96,41 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # ✅ BACKEND ONLY (no frontend deploy)
           - folder: backend/api-gateway
             repo: api-gateway
-          - folder: backend/applicant
-            repo: applicant-service
-          - folder: backend/authentication
-            repo: authentication-service
+            container_name: api-gateway
+            host_port: "10789:10789"
+            env_secret: ENV_GATEWAY
+            target_host: gateway
+
           - folder: backend/discovery-server
             repo: discovery-server
+            container_name: discovery-server
+            host_port: "8761:8761"
+            env_secret: ENV_DISCOVERY
+            target_host: gateway
+
+          - folder: backend/authentication
+            repo: authentication-service
+            container_name: authentication-service
+            host_port: "8087:8087"
+            env_secret: ENV_AUTH
+            target_host: service01
+
           - folder: backend/admin
             repo: admin
-          - folder: frontend
-            repo: front-end
+            container_name: admin-service
+            host_port: "8088:8088"
+            env_secret: ENV_ADMIN
+            target_host: service01
+
+          - folder: backend/applicant
+            repo: applicant-service
+            container_name: applicant-service
+            host_port: "8083:8083"
+            env_secret: ENV_APPLICANT
+            target_host: service02
 
     steps:
       - name: Checkout
@@ -122,7 +146,7 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # ✅ Push Redis official image to ECR (ONLY ONCE PER WORKFLOW RUN)
+      # ✅ Push Redis image to ECR (ONLY ONCE PER WORKFLOW RUN)
       - name: Push Redis image to ECR
         if: matrix.repo == 'api-gateway'
         run: |
@@ -130,10 +154,10 @@ jobs:
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/redis"
 
-          echo "Pulling official redis:7-alpine"
+          echo "Pulling redis:7-alpine..."
           docker pull redis:7-alpine
 
-          echo "Tagging for ECR: ${IMAGE_URI}"
+          echo "Tagging..."
           docker tag redis:7-alpine ${IMAGE_URI}:latest
           docker tag redis:7-alpine ${IMAGE_URI}:${SHA_TAG}
 
@@ -141,9 +165,9 @@ jobs:
           docker push ${IMAGE_URI}:latest
           docker push ${IMAGE_URI}:${SHA_TAG}
 
-          echo " Done: ${IMAGE_URI} pushed as latest and ${SHA_TAG}"
+          echo "✅ Redis pushed: ${IMAGE_URI}"
 
-      #  Build & Push project Docker images (backend + frontend)
+      # ✅ Build & Push backend Docker image
       - name: Build & Push Docker image
         run: |
           set -e
@@ -161,4 +185,92 @@ jobs:
           docker push ${IMAGE_URI}:latest
           docker push ${IMAGE_URI}:${SHA_TAG}
 
-          echo "✅ Done: ${IMAGE_URI} pushed as latest and ${SHA_TAG}"
+          echo "✅ Done: ${IMAGE_URI} pushed"
+
+      # -----------------------------
+      # SSH Setup
+      # -----------------------------
+      - name: Setup SSH key
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${{ secrets.EC2_GATEWAY_PUBLIC_IP }}" >> ~/.ssh/known_hosts
+
+      # -----------------------------
+      # Deploy backend to EC2
+      # Uses gateway as bastion for private instances
+      # -----------------------------
+      - name: Deploy to EC2
+        env:
+          SSH_USER: ${{ secrets.EC2_SSH_USER }}
+          GATEWAY_IP: ${{ secrets.EC2_GATEWAY_PUBLIC_IP }}
+
+          SERVICE01_IP: ${{ secrets.EC2_SERVICE01_PRIVATE_IP }}
+          SERVICE02_IP: ${{ secrets.EC2_SERVICE02_PRIVATE_IP }}
+
+          IMAGE_URI: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAMESPACE }}/${{ matrix.repo }}:latest
+          CONTAINER_NAME: ${{ matrix.container_name }}
+          HOST_PORT: ${{ matrix.host_port }}
+
+          ENV_CONTENT: ${{ secrets[matrix.env_secret] }}
+          TARGET_HOST: ${{ matrix.target_host }}
+
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
+        run: |
+          set -e
+
+          if [ "$TARGET_HOST" = "gateway" ]; then
+            TARGET_IP="$GATEWAY_IP"
+            JUMP=""
+          elif [ "$TARGET_HOST" = "service01" ]; then
+            TARGET_IP="$SERVICE01_IP"
+            JUMP="-J ${SSH_USER}@${GATEWAY_IP}"
+          elif [ "$TARGET_HOST" = "service02" ]; then
+            TARGET_IP="$SERVICE02_IP"
+            JUMP="-J ${SSH_USER}@${GATEWAY_IP}"
+          else
+            echo "Unknown TARGET_HOST=$TARGET_HOST"
+            exit 1
+          fi
+
+          echo "Deploying ${CONTAINER_NAME} to ${TARGET_HOST} (${TARGET_IP})"
+          echo "Image: ${IMAGE_URI}"
+
+          # Sanity check SSH
+          ssh -i ~/.ssh/id_rsa $JUMP "${SSH_USER}@${TARGET_IP}" "echo ok" >/dev/null
+
+          ssh -i ~/.ssh/id_rsa $JUMP "${SSH_USER}@${TARGET_IP}" bash -s << EOF
+            set -e
+
+            sudo mkdir -p /opt/ja/env
+
+            # Write env file for this container
+            sudo tee /opt/ja/env/${CONTAINER_NAME}.env > /dev/null << 'ENVEOF'
+${ENV_CONTENT}
+ENVEOF
+
+            sudo chmod 600 /opt/ja/env/${CONTAINER_NAME}.env
+
+            echo "Login to ECR..."
+            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+
+            echo "Pulling image..."
+            docker pull ${IMAGE_URI}
+
+            echo "Stopping old container..."
+            docker rm -f ${CONTAINER_NAME} || true
+
+            echo "Starting new container..."
+            docker run -d \
+              --restart unless-stopped \
+              --name ${CONTAINER_NAME} \
+              --env-file /opt/ja/env/${CONTAINER_NAME}.env \
+              -p ${HOST_PORT} \
+              ${IMAGE_URI}
+
+            echo "✅ Container running:"
+            docker ps --filter "name=${CONTAINER_NAME}"
+          EOF
