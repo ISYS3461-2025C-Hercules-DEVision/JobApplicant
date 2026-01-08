@@ -14,10 +14,6 @@ env:
   ECR_NAMESPACE: ja-devision-platform
 
 jobs:
-  # -----------------------------
-  # CI: Build (and optional test)
-  # Runs on PRs and pushes
-  # -----------------------------
   ci:
     runs-on: ubuntu-latest
     strategy:
@@ -47,7 +43,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---- Java setup ----
       - name: Setup Java 21
         if: matrix.type == 'java'
         uses: actions/setup-java@v4
@@ -67,7 +62,6 @@ jobs:
         working-directory: ./${{ matrix.folder }}
         run: mvn -B -DskipTests clean package
 
-      # ---- Node setup ----
       - name: Setup Node.js
         if: matrix.type == 'node'
         uses: actions/setup-node@v4
@@ -83,11 +77,6 @@ jobs:
           npm ci
           npm run build
 
-  # -----------------------------
-  # CD: Build Docker images + push to ECR
-  # + Deploy backend to EC2
-  # Runs ONLY on push to main
-  # -----------------------------
   cd:
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -96,7 +85,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ✅ BACKEND ONLY (no frontend deploy)
           - folder: backend/api-gateway
             repo: api-gateway
             container_name: api-gateway
@@ -146,7 +134,6 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # ✅ Push Redis image to ECR (ONLY ONCE PER WORKFLOW RUN)
       - name: Push Redis image to ECR
         if: matrix.repo == 'api-gateway'
         run: |
@@ -154,28 +141,21 @@ jobs:
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/redis"
 
-          echo "Pulling redis:7-alpine..."
           docker pull redis:7-alpine
 
-          echo "Tagging..."
           docker tag redis:7-alpine ${IMAGE_URI}:latest
           docker tag redis:7-alpine ${IMAGE_URI}:${SHA_TAG}
 
-          echo "Pushing to ECR..."
           docker push ${IMAGE_URI}:latest
           docker push ${IMAGE_URI}:${SHA_TAG}
 
           echo "✅ Redis pushed: ${IMAGE_URI}"
 
-      # ✅ Build & Push backend Docker image
       - name: Build & Push Docker image
         run: |
           set -e
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/${{ matrix.repo }}"
-
-          echo "Building from folder: ${{ matrix.folder }}"
-          echo "Pushing to: ${IMAGE_URI}"
 
           docker build \
             -t ${IMAGE_URI}:latest \
@@ -188,84 +168,114 @@ jobs:
           echo "✅ Done: ${IMAGE_URI} pushed"
 
       # -----------------------------
-      # SSH Setup
+      # SSH Setup (UPDATED)
       # -----------------------------
-      - name: Setup SSH key
+      - name: Setup SSH keys (gateway + service01 + service02)
+        env:
+          SSH_USER: ${{ secrets.EC2_SSH_USER }}
+          GATEWAY_IP: ${{ secrets.EC2_GATEWAY_PUBLIC_IP }}
+          SERVICE01_IP: ${{ secrets.EC2_SERVICE01_PRIVATE_IP }}
+          SERVICE02_IP: ${{ secrets.EC2_SERVICE02_PRIVATE_IP }}
+
+          # ✅ 3 different keys (base64 in secrets)
+          KEY_GATEWAY_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_GATEWAY_B64 }}
+          KEY_SERVICE01_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_SERVICE01_B64 }}
+          KEY_SERVICE02_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_SERVICE02_B64 }}
         run: |
           set -euxo pipefail
           mkdir -p ~/.ssh
 
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "$KEY_GATEWAY_B64"  | base64 -d > ~/.ssh/key_gateway
+          echo "$KEY_SERVICE01_B64" | base64 -d > ~/.ssh/key_service01
+          echo "$KEY_SERVICE02_B64" | base64 -d > ~/.ssh/key_service02
 
-          # Add gateway host key
-          ssh-keyscan -H "${{ secrets.EC2_GATEWAY_PUBLIC_IP }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/key_gateway ~/.ssh/key_service01 ~/.ssh/key_service02
 
-          # Add service01 + service02 host keys via gateway (ProxyJump)
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
-            "${{ secrets.EC2_SSH_USER }}@${{ secrets.EC2_GATEWAY_PUBLIC_IP }}" \
-            "ssh-keyscan -H ${{ secrets.EC2_SERVICE01_PRIVATE_IP }} ${{ secrets.EC2_SERVICE02_PRIVATE_IP }}" \
-            >> ~/.ssh/known_hosts
+          # SSH config to map correct key per host
+          cat > ~/.ssh/config <<CFG
+          Host gateway
+            HostName ${GATEWAY_IP}
+            User ${SSH_USER}
+            IdentityFile ~/.ssh/key_gateway
+            IdentitiesOnly yes
+            StrictHostKeyChecking no
+
+          Host service01
+            HostName ${SERVICE01_IP}
+            User ${SSH_USER}
+            IdentityFile ~/.ssh/key_service01
+            IdentitiesOnly yes
+            ProxyJump gateway
+            StrictHostKeyChecking no
+
+          Host service02
+            HostName ${SERVICE02_IP}
+            User ${SSH_USER}
+            IdentityFile ~/.ssh/key_service02
+            IdentitiesOnly yes
+            ProxyJump gateway
+            StrictHostKeyChecking no
+          CFG
+
+          chmod 600 ~/.ssh/config
+
       - name: Test SSH to Gateway
+        env:
+          SSH_USER: ${{ secrets.EC2_SSH_USER }}
         run: |
           set -euxo pipefail
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=yes \
-            "${{ secrets.EC2_SSH_USER }}@${{ secrets.EC2_GATEWAY_PUBLIC_IP }}" \
-            "echo SSH_OK && hostname"
+          ssh gateway "echo SSH_OK && hostname"
+
+      # Optional: test private instances too (recommended)
+      - name: Test SSH to service01
+        run: |
+          set -euxo pipefail
+          ssh service01 "echo SERVICE01_OK && hostname"
+
+      - name: Test SSH to service02
+        run: |
+          set -euxo pipefail
+          ssh service02 "echo SERVICE02_OK && hostname"
 
       # -----------------------------
-      # Deploy backend to EC2
-      # Uses gateway as bastion for private instances
+      # Deploy backend to EC2 (UPDATED)
       # -----------------------------
       - name: Deploy to EC2
         env:
-          SSH_USER: ${{ secrets.EC2_SSH_USER }}
-          GATEWAY_IP: ${{ secrets.EC2_GATEWAY_PUBLIC_IP }}
-
-          SERVICE01_IP: ${{ secrets.EC2_SERVICE01_PRIVATE_IP }}
-          SERVICE02_IP: ${{ secrets.EC2_SERVICE02_PRIVATE_IP }}
-
           IMAGE_URI: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAMESPACE }}/${{ matrix.repo }}:latest
           CONTAINER_NAME: ${{ matrix.container_name }}
           HOST_PORT: ${{ matrix.host_port }}
-
-          # ✅ BASE64 STRING FROM SECRET
           ENV_CONTENT_B64: ${{ secrets[matrix.env_secret] }}
           TARGET_HOST: ${{ matrix.target_host }}
 
           AWS_REGION: ${{ env.AWS_REGION }}
           ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
         run: |
-          set -e
+          set -euo pipefail
 
           if [ "$TARGET_HOST" = "gateway" ]; then
-            TARGET_IP="$GATEWAY_IP"
-            JUMP=""
+            SSH_HOST="gateway"
           elif [ "$TARGET_HOST" = "service01" ]; then
-            TARGET_IP="$SERVICE01_IP"
-            JUMP="-J ${SSH_USER}@${GATEWAY_IP}"
+            SSH_HOST="service01"
           elif [ "$TARGET_HOST" = "service02" ]; then
-            TARGET_IP="$SERVICE02_IP"
-            JUMP="-J ${SSH_USER}@${GATEWAY_IP}"
+            SSH_HOST="service02"
           else
             echo "Unknown TARGET_HOST=$TARGET_HOST"
             exit 1
           fi
 
-          echo "Deploying ${CONTAINER_NAME} to ${TARGET_HOST} (${TARGET_IP})"
+          echo "Deploying ${CONTAINER_NAME} to ${SSH_HOST}"
           echo "Image: ${IMAGE_URI}"
 
           # Sanity check SSH
-          ssh -i ~/.ssh/id_rsa $JUMP "${SSH_USER}@${TARGET_IP}" "echo ok" >/dev/null
+          ssh "${SSH_HOST}" "echo ok" >/dev/null
 
-          ssh -i ~/.ssh/id_rsa $JUMP "${SSH_USER}@${TARGET_IP}" bash -s << EOF
+          ssh "${SSH_HOST}" bash -s << EOF
             set -e
 
             sudo mkdir -p /opt/ja/env
 
-            # ✅ Decode base64 env content safely into env file
             echo "${ENV_CONTENT_B64}" | base64 -d | sudo tee /opt/ja/env/${CONTAINER_NAME}.env > /dev/null
-
             sudo chmod 600 /opt/ja/env/${CONTAINER_NAME}.env
 
             echo "Login to ECR..."
