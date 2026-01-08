@@ -150,7 +150,7 @@ jobs:
       - name: Push Redis image to ECR
         if: matrix.repo == 'api-gateway'
         run: |
-          set -e
+          set -euo pipefail
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/redis"
 
@@ -170,7 +170,7 @@ jobs:
       # ✅ Build & Push backend Docker image
       - name: Build & Push Docker image
         run: |
-          set -e
+          set -euo pipefail
           SHA_TAG="${GITHUB_SHA::7}"
           IMAGE_URI="${ECR_REGISTRY}/${ECR_NAMESPACE}/${{ matrix.repo }}"
 
@@ -188,89 +188,131 @@ jobs:
           echo "✅ Done: ${IMAGE_URI} pushed"
 
       # -----------------------------
-      # SSH Setup
+      # SSH Setup (3 different keys)
       # -----------------------------
-      - name: Setup SSH key
-        run: |
-          set -e
-          mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "${{ secrets.EC2_GATEWAY_PUBLIC_IP }}" >> ~/.ssh/known_hosts
-
-      # -----------------------------
-      # Deploy backend to EC2
-      # Uses gateway as bastion for private instances
-      # -----------------------------
-      - name: Deploy to EC2
+      - name: Setup SSH keys (gateway + service01 + service02)
         env:
           SSH_USER: ${{ secrets.EC2_SSH_USER }}
           GATEWAY_IP: ${{ secrets.EC2_GATEWAY_PUBLIC_IP }}
-
           SERVICE01_IP: ${{ secrets.EC2_SERVICE01_PRIVATE_IP }}
           SERVICE02_IP: ${{ secrets.EC2_SERVICE02_PRIVATE_IP }}
 
+          KEY_GATEWAY_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_GATEWAY_B64 }}
+          KEY_SERVICE01_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_SERVICE01_B64 }}
+          KEY_SERVICE02_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_SERVICE02_B64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+
+          echo "$KEY_GATEWAY_B64"  | base64 -d | tr -d '\r' > ~/.ssh/key_gateway
+          echo "$KEY_SERVICE01_B64" | base64 -d | tr -d '\r' > ~/.ssh/key_service01
+          echo "$KEY_SERVICE02_B64" | base64 -d | tr -d '\r' > ~/.ssh/key_service02
+
+          chmod 600 ~/.ssh/key_gateway ~/.ssh/key_service01 ~/.ssh/key_service02
+
+          cat > ~/.ssh/config <<CFG
+          Host gateway
+            HostName ${GATEWAY_IP}
+            User ${SSH_USER}
+            IdentityFile ~/.ssh/key_gateway
+            IdentitiesOnly yes
+            StrictHostKeyChecking no
+
+          Host service01
+            HostName ${SERVICE01_IP}
+            User ${SSH_USER}
+            IdentityFile ~/.ssh/key_service01
+            IdentitiesOnly yes
+            ProxyJump gateway
+            StrictHostKeyChecking no
+
+          Host service02
+            HostName ${SERVICE02_IP}
+            User ${SSH_USER}
+            IdentityFile ~/.ssh/key_service02
+            IdentitiesOnly yes
+            ProxyJump gateway
+            StrictHostKeyChecking no
+          CFG
+
+          chmod 600 ~/.ssh/config
+
+      - name: Test SSH to Gateway
+        run: |
+          set -euo pipefail
+          ssh gateway "echo SSH_OK && hostname"
+
+      - name: Test SSH to service01
+        run: |
+          set -euo pipefail
+          ssh service01 "echo SERVICE01_OK && hostname"
+
+      - name: Test SSH to service02
+        run: |
+          set -euo pipefail
+          ssh service02 "echo SERVICE02_OK && hostname"
+
+      # -----------------------------
+      # Deploy backend to EC2
+      # -----------------------------
+      - name: Deploy to EC2
+        env:
           IMAGE_URI: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAMESPACE }}/${{ matrix.repo }}:latest
           CONTAINER_NAME: ${{ matrix.container_name }}
           HOST_PORT: ${{ matrix.host_port }}
-
-          ENV_CONTENT: ${{ secrets[matrix.env_secret] }}
+          ENV_CONTENT_B64: ${{ secrets[matrix.env_secret] }}
           TARGET_HOST: ${{ matrix.target_host }}
 
           AWS_REGION: ${{ env.AWS_REGION }}
           ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
         run: |
-          set -e
+          set -euo pipefail
 
           if [ "$TARGET_HOST" = "gateway" ]; then
-            TARGET_IP="$GATEWAY_IP"
-            JUMP=""
+            SSH_HOST="gateway"
           elif [ "$TARGET_HOST" = "service01" ]; then
-            TARGET_IP="$SERVICE01_IP"
-            JUMP="-J ${SSH_USER}@${GATEWAY_IP}"
+            SSH_HOST="service01"
           elif [ "$TARGET_HOST" = "service02" ]; then
-            TARGET_IP="$SERVICE02_IP"
-            JUMP="-J ${SSH_USER}@${GATEWAY_IP}"
+            SSH_HOST="service02"
           else
             echo "Unknown TARGET_HOST=$TARGET_HOST"
             exit 1
           fi
 
-          echo "Deploying ${CONTAINER_NAME} to ${TARGET_HOST} (${TARGET_IP})"
+          echo "Deploying ${CONTAINER_NAME} to ${SSH_HOST}"
           echo "Image: ${IMAGE_URI}"
 
-          # Sanity check SSH
-          ssh -i ~/.ssh/id_rsa $JUMP "${SSH_USER}@${TARGET_IP}" "echo ok" >/dev/null
+          ssh "${SSH_HOST}" "echo ok" >/dev/null
 
-          ssh -i ~/.ssh/id_rsa $JUMP "${SSH_USER}@${TARGET_IP}" bash -s << EOF
-            set -e
+          ssh "${SSH_HOST}" \
+            "IMAGE_URI='${IMAGE_URI}' CONTAINER_NAME='${CONTAINER_NAME}' HOST_PORT='${HOST_PORT}' ENV_CONTENT_B64='${ENV_CONTENT_B64}' AWS_REGION='${AWS_REGION}' ECR_REGISTRY='${ECR_REGISTRY}' bash -s" << 'EOF'
+          set -euo pipefail
 
-            sudo mkdir -p /opt/ja/env
+          sudo mkdir -p /opt/ja/env
 
-            # Write env file for this container
-            sudo tee /opt/ja/env/${CONTAINER_NAME}.env > /dev/null << 'ENVEOF'
-${ENV_CONTENT}
-ENVEOF
+          echo "${ENV_CONTENT_B64}" | base64 -d | sudo tee /opt/ja/env/${CONTAINER_NAME}.env > /dev/null
+          sudo chmod 600 /opt/ja/env/${CONTAINER_NAME}.env
 
-            sudo chmod 600 /opt/ja/env/${CONTAINER_NAME}.env
+          echo "Login to ECR..."
+          aws ecr get-login-password --region ${AWS_REGION} | sudo docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
-            echo "Login to ECR..."
-            aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+          echo "Pulling image..."
+          sudo docker pull ${IMAGE_URI}
 
-            echo "Pulling image..."
-            docker pull ${IMAGE_URI}
+          echo "Stopping old container..."
+          sudo docker rm -f ${CONTAINER_NAME} || true
 
-            echo "Stopping old container..."
-            docker rm -f ${CONTAINER_NAME} || true
+          echo "Starting new container..."
+          sudo docker run -d \
+            --restart unless-stopped \
+            --name ${CONTAINER_NAME} \
+            --env-file /opt/ja/env/${CONTAINER_NAME}.env \
+            -p ${HOST_PORT} \
+            ${IMAGE_URI}
 
-            echo "Starting new container..."
-            docker run -d \
-              --restart unless-stopped \
-              --name ${CONTAINER_NAME} \
-              --env-file /opt/ja/env/${CONTAINER_NAME}.env \
-              -p ${HOST_PORT} \
-              ${IMAGE_URI}
+          echo "✅ Container running:"
+          sudo docker ps --filter "name=${CONTAINER_NAME}"
 
-            echo "✅ Container running:"
-            docker ps --filter "name=${CONTAINER_NAME}"
+          echo "✅ Last 50 logs:"
+          sudo docker logs --tail 50 ${CONTAINER_NAME} || true
           EOF
