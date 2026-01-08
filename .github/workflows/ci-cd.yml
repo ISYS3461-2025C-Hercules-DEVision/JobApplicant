@@ -315,4 +315,4 @@ jobs:
 
           echo "✅ Last 50 logs:"
           sudo docker logs --tail 50 ${CONTAINER_NAME} || true
-EOF
+          EOF
