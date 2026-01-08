@@ -1,10 +1,13 @@
 package com.devision.subscription.service;
 
-import com.devision.subscription.model.Subscription;
+import com.devision.subscription.dto.PaymentInitiateResponseDTO;
+import com.devision.subscription.dto.SubscriptionStatusResponse;
 
 public interface SubscriptionService {
 
-    Subscription activatePremium(String applicantId);
+    SubscriptionStatusResponse getMySubscription(String applicantId);
 
-    Subscription getActiveSubscription(String applicantId);
+    PaymentInitiateResponseDTO createMockPayment(String applicantId, String email);
+
+    SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId);
 }

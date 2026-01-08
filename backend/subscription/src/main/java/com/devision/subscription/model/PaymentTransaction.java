@@ -18,11 +18,14 @@ public class PaymentTransaction {
     private Instant transactionTime;
     private String stripeSessionId;
 
-    public PaymentTransaction() {}
+    // ===== getters & setters =====
 
-    // getters & setters
     public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getApplicantId() {

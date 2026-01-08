@@ -4,10 +4,15 @@ function SkillTagInput({ skills, setSkills }) {
   const [input, setInput] = useState("");
 
   const addSkill = () => {
-    if (input && !skills.includes(input)) {
-      setSkills([...skills, input]);
+    const trimmed = input.trim();
+    if (trimmed && !skills.includes(trimmed)) {
+      setSkills([...skills, trimmed]);
       setInput("");
     }
+  };
+
+  const removeSkill = (skillToRemove) => {
+    setSkills(skills.filter((s) => s !== skillToRemove));
   };
 
   return (
@@ -31,14 +36,23 @@ function SkillTagInput({ skills, setSkills }) {
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-4">
         {skills.map((skill) => (
-          <span
-            key={skill}
-            className="px-4 py-1 border-2 border-black font-bold hover:bg-primary hover:text-white"
-          >
-            {skill}
-          </span>
+          <div key={skill} className="flex items-center gap-2">
+            {/* Tag */}
+            <span className="px-4 py-1 border-2 border-black font-bold">
+              {skill}
+            </span>
+
+            {/* X button (outside tag) */}
+            <button
+              onClick={() => removeSkill(skill)}
+              className="text-black font-black hover:text-red-600 leading-none"
+              aria-label={`Remove ${skill}`}
+            >
+              x
+            </button>
+          </div>
         ))}
       </div>
     </div>

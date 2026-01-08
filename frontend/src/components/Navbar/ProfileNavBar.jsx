@@ -6,7 +6,7 @@ function ProfileNavBar() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const {user} = useSelector(state => state.auth);
-    const fullName = user?.email || 'User';
+    const fullName = user?.fullName || 'User';
 
     const handleLogOut = () => {
         dispatch(logout());
@@ -25,22 +25,20 @@ function ProfileNavBar() {
                         <Link to="/profile"
                               className="text-black font-bold uppercase text-sm hover:bg-black hover:text-white px-3 py-2 transition-none">
                             Home
-                            </Link>
-                        <a
-                            href="#pricing"
+                        </Link>
+                        <Link
+                            to="/searchProfile"
                             className="text-black font-bold uppercase text-sm hover:bg-black hover:text-white px-3 py-2 transition-none">
-                            Top Content
-                        </a>
+                            Search Profile
+                        </Link>
                         <Link to ="/jobs"
                               className="text-black font-bold uppercase text-sm hover:bg-black hover:text-white px-3 py-2 transition-none">
                             Jobs
                         </Link>
-
                         <Link to="/applications"
                               className="text-black font-bold uppercase text-sm hover:bg-black hover:text-white px-3 py-2 transition-none">
                             Application
                             </Link>
-
                         <span className="text-sm font-bold uppercase">VN/EN</span>
                     </nav>
 

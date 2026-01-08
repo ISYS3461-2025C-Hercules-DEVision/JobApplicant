@@ -3,6 +3,7 @@ package com.devision.authentication.user.service;
 import com.devision.authentication.config.KafkaConstant;
 import com.devision.authentication.connection.AuthToApplicantEvent;
 import com.devision.authentication.connection.AutheticationApplicantCodeWithUuid;
+import com.devision.authentication.connection.AuthToSubscriptionEvent;
 import com.devision.authentication.dto.*;
 import com.devision.authentication.jwt.JwtService;
 
@@ -27,269 +28,272 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl {
+        private final UserService userService;
+        private final UserRepository userRepository;
+        private final JwtService jwtService;
+        private final TokenRevocationService tokenRevocationService;
+        private final RefreshTokenService refreshTokenService;
+        private final CookieService cookieService;
+        private final PendingApplicantRequests pendingApplicantRequests;
+        private final KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer;
+        private final KafkaGenericProducer<AuthToSubscriptionEvent> subscriptionKafkaProducer;
 
-    private final UserService userService;
-    private final UserRepository userRepository;
-    private final JwtService jwtService;
-    private final TokenRevocationService tokenRevocationService;
-    private final RefreshTokenService refreshTokenService;
-    private final CookieService cookieService;
-    private final PendingApplicantRequests pendingApplicantRequests;
-    private final KafkaGenericProducer<AuthToApplicantEvent> kafkaProducer;
+        // REGISTER USER (sets refresh cookie)
+        public AuthCookieResponse register(RegisterRequest request, HttpServletResponse response) {
 
+                User user = userService.registerLocalUser(request);
 
-    public AuthCookieResponse register(RegisterRequest request, HttpServletResponse response) {
+                String correlationId = UUID.randomUUID().toString();
+                CompletableFuture<AutheticationApplicantCodeWithUuid> future = pendingApplicantRequests
+                                .create(correlationId);
 
-        User user = userService.registerLocalUser(request);
+                AuthToApplicantEvent event = new AuthToApplicantEvent(
+                                correlationId,
+                                user.getEmail(),
+                                user.getFullName(),
+                                request.phoneNumber(),
+                                request.country(),
+                                request.city(),
+                                request.streetAddress());
 
-        String correlationId = UUID.randomUUID().toString();
-        CompletableFuture<AutheticationApplicantCodeWithUuid> future =
-                pendingApplicantRequests.create(correlationId);
+                try {
+                        log.info("[REGISTER] Sending event to applicant-service. correlationId={}, email={}",
+                                        correlationId, user.getEmail());
 
-        AuthToApplicantEvent event = new AuthToApplicantEvent(
-                correlationId,
-                user.getEmail(),
-                user.getFullName(),
-                request.phoneNumber(),
-                request.country(),
-                request.city(),
-                request.streetAddress()
-        );
+                        kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC, event);
 
-        try {
-            log.info("[REGISTER] Sending event to applicant-service. correlationId={}, email={}",
-                    correlationId, user.getEmail());
+                        log.info("[REGISTER] Waiting for applicant reply... correlationId={}", correlationId);
 
-            kafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_TOPIC, event);
+                        AutheticationApplicantCodeWithUuid reply = future.get(5, TimeUnit.SECONDS);
 
-            log.info("[REGISTER] Waiting for applicant reply... correlationId={}", correlationId);
+                        log.info("[REGISTER] Applicant reply received. correlationId={}, applicantId={}",
+                                        correlationId, reply.getApplicantId());
 
-            AutheticationApplicantCodeWithUuid reply = future.get(5, TimeUnit.SECONDS);
+                        // attach by userId, not email
+                        userService.attachApplicantToUser(user.getId(), reply.getApplicantId());
 
-            log.info("[REGISTER] Applicant reply received. correlationId={}, applicantId={}",
-                    correlationId, reply.getApplicantId());
+                        // Publish Kafka event to provision default FREE subscription
+                        AuthToSubscriptionEvent subEvent = new AuthToSubscriptionEvent(reply.getApplicantId());
+                        subscriptionKafkaProducer.sendMessage(KafkaConstant.AUTHENTICATION_SUBSCRIPTION_TOPIC,
+                                        subEvent);
 
-            //  attach by userId, not email
-            userService.attachApplicantToUser(user.getId(), reply.getApplicantId());
+                        User updated = userService.findById(user.getId());
+                        if (updated == null) {
+                                throw new IllegalStateException("User not found after attach: userId=" + user.getId());
+                        }
 
-            User updated = userService.findById(user.getId());
-            if (updated == null) {
-                throw new IllegalStateException("User not found after attach: userId=" + user.getId());
-            }
+                        log.info("[REGISTER] Applicant attached successfully. userId={}, email={}, applicantId={}",
+                                        updated.getId(), updated.getEmail(), updated.getApplicantId());
 
-            log.info("[REGISTER] Applicant attached successfully. userId={}, email={}, applicantId={}",
-                    updated.getId(), updated.getEmail(), updated.getApplicantId());
+                        // Issue refresh cookie + access token
+                        return issueUserTokens(updated, response);
 
-            //  Issue refresh cookie + access token
-            return issueUserTokens(updated, response);
+                } catch (TimeoutException e) {
+                        log.error("[REGISTER] TIMEOUT waiting for applicant reply. correlationId={}, email={}",
+                                        correlationId, user.getEmail(), e);
 
-        } catch (TimeoutException e) {
-            log.error("[REGISTER] TIMEOUT waiting for applicant reply. correlationId={}, email={}",
-                    correlationId, user.getEmail(), e);
+                        throw new ResponseStatusException(
+                                        HttpStatus.GATEWAY_TIMEOUT,
+                                        "Applicant service did not respond in time");
 
-            throw new ResponseStatusException(
-                    HttpStatus.GATEWAY_TIMEOUT,
-                    "Applicant service did not respond in time"
-            );
+                } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        log.error("[REGISTER] INTERRUPTED while waiting for applicant reply. correlationId={}, email={}",
+                                        correlationId, user.getEmail(), e);
 
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("[REGISTER] INTERRUPTED while waiting for applicant reply. correlationId={}, email={}",
-                    correlationId, user.getEmail(), e);
+                        throw new ResponseStatusException(
+                                        HttpStatus.INTERNAL_SERVER_ERROR,
+                                        "Interrupted while waiting for applicant response");
 
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Interrupted while waiting for applicant response"
-            );
+                } catch (ExecutionException e) {
+                        log.error("[REGISTER] Reply future failed. correlationId={}, email={}, cause={}",
+                                        correlationId, user.getEmail(),
+                                        e.getCause() != null ? e.getCause().getMessage() : "null",
+                                        e);
 
-        } catch (ExecutionException e) {
-            log.error("[REGISTER] Reply future failed. correlationId={}, email={}, cause={}",
-                    correlationId, user.getEmail(),
-                    e.getCause() != null ? e.getCause().getMessage() : "null",
-                    e);
+                        throw new ResponseStatusException(
+                                        HttpStatus.BAD_GATEWAY,
+                                        "Applicant service failed");
 
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_GATEWAY,
-                    "Applicant service failed"
-            );
+                } catch (Exception e) {
+                        log.error("[REGISTER] Unexpected error. correlationId={}, email={}",
+                                        correlationId, user.getEmail(), e);
 
-        } catch (Exception e) {
-            log.error("[REGISTER] Unexpected error. correlationId={}, email={}",
-                    correlationId, user.getEmail(), e);
+                        throw new ResponseStatusException(
+                                        HttpStatus.INTERNAL_SERVER_ERROR,
+                                        "Unexpected error");
 
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Unexpected error"
-            );
-
-        } finally {
-            pendingApplicantRequests.remove(correlationId);
-            log.info("[REGISTER] Pending request removed. correlationId={}", correlationId);
-        }
-    }
-
-    //  LOGIN USER (sets refresh cookie)
-    public AuthCookieResponse login(LoginRequest request, HttpServletResponse response) {
-        User user = userService.loginLocalUser(request);
-        return issueUserTokens(user, response);
-    }
-
-    //  LOGIN ADMIN (sets refresh cookie)
-    public AuthAdminCookieResponse adminLogin(LoginRequest request, HttpServletResponse response) {
-        User user = userService.loginLocalAdmin(request);
-
-        issueRefreshCookie(user.getId(), response);
-
-        jwtUserDto jwtUser = new jwtUserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getApplicantId(),
-                user.getRole(),
-                user.getStatus()
-        );
-
-        String accessToken = jwtService.generateAccessToken(jwtUser);
-
-        return new AuthAdminCookieResponse(
-                accessToken,
-                user.getId(),
-                user.getAdminId(),
-                user.getEmail(),
-                user.getStatus()
-        );
-    }
-
-    //  REFRESH ACCESS TOKEN (rotation refresh cookie)
-    public AuthCookieResponse refreshAccessToken(String refreshToken, HttpServletResponse response) {
-
-        if (refreshToken == null || refreshToken.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing refresh token cookie");
+                } finally {
+                        pendingApplicantRequests.remove(correlationId);
+                        log.info("[REGISTER] Pending request removed. correlationId={}", correlationId);
+                }
         }
 
-        RefreshToken stored = refreshTokenService.validate(refreshToken);
-
-        Claims claims = jwtService.parseClaims(refreshToken);
-        String userId = claims.getSubject();
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
-
-        if (Boolean.FALSE.equals(user.getStatus())) {
-            refreshTokenService.revokeRefreshToken(stored);
-            cookieService.clearRefreshTokenCookie(response);
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
+        // LOGIN USER (sets refresh cookie)
+        public AuthCookieResponse login(LoginRequest request, HttpServletResponse response) {
+                User user = userService.loginLocalUser(request);
+                return issueUserTokens(user, response);
         }
 
-        //  rotation
-        refreshTokenService.revokeRefreshToken(stored);
+        // LOGIN ADMIN (sets refresh cookie)
+        public AuthAdminCookieResponse adminLogin(LoginRequest request, HttpServletResponse response) {
+                User user = userService.loginLocalAdmin(request);
 
-        String newRefreshToken = jwtService.generateRefreshToken(userId);
-        refreshTokenService.save(userId, newRefreshToken);
-        cookieService.setRefreshTokenCookie(response, newRefreshToken);
+                issueRefreshCookie(user.getId(), response);
 
-        jwtUserDto jwtUser = new jwtUserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getApplicantId(),
-                user.getRole(),
-                user.getStatus()
-        );
+                jwtUserDto jwtUser = new jwtUserDto(
+                                user.getId(),
+                                user.getEmail(),
+                                user.getApplicantId(),
+                                user.getRole(),
+                                user.getStatus());
 
-        String newAccessToken = jwtService.generateAccessToken(jwtUser);
+                String accessToken = jwtService.generateAccessToken(jwtUser);
 
-        return new AuthCookieResponse(
-                newAccessToken,
-                user.getId(),
-                user.getApplicantId(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getStatus()
-        );
-    }
-
-    public void logout(String accessToken, String refreshToken, HttpServletResponse response) {
-
-        // ✅ clear refresh cookie
-        cookieService.clearRefreshTokenCookie(response);
-
-        // ✅ revoke ACCESS token in Redis (LOCAL only)
-        revokeIfLocal(accessToken);
-
-        // ✅ existing refresh token revoke in DB
-        if (refreshToken == null || refreshToken.isBlank()) {
-            return;
+                return new AuthAdminCookieResponse(
+                                accessToken,
+                                user.getId(),
+                                user.getAdminId(),
+                                user.getEmail(),
+                                user.getStatus());
         }
 
-        try {
-            RefreshToken stored = refreshTokenService.validate(refreshToken);
-            refreshTokenService.revokeRefreshToken(stored);
+        // REFRESH ACCESS TOKEN (rotation refresh cookie)
+        public AuthCookieResponse refreshAccessToken(String refreshToken, HttpServletResponse response) {
 
-            // ✅ OPTIONAL (extra safety): revoke refresh token JTI too
-            revokeIfLocal(refreshToken);
+                if (refreshToken == null || refreshToken.isBlank()) {
+                        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing refresh token cookie");
+                }
 
-        } catch (Exception ignored) {
+                RefreshToken stored = refreshTokenService.validate(refreshToken);
+
+                Claims claims = jwtService.parseClaims(refreshToken);
+                String userId = claims.getSubject();
+
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                                                "User not found"));
+
+                if (Boolean.FALSE.equals(user.getStatus())) {
+                        refreshTokenService.revokeRefreshToken(stored);
+                        cookieService.clearRefreshTokenCookie(response);
+                        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
+                }
+
+                // rotation
+                refreshTokenService.revokeRefreshToken(stored);
+
+                String newRefreshToken = jwtService.generateRefreshToken(userId);
+                refreshTokenService.save(userId, newRefreshToken);
+                cookieService.setRefreshTokenCookie(response, newRefreshToken);
+
+                jwtUserDto jwtUser = new jwtUserDto(
+                                user.getId(),
+                                user.getEmail(),
+                                user.getApplicantId(),
+                                user.getRole(),
+                                user.getStatus());
+
+                String newAccessToken = jwtService.generateAccessToken(jwtUser);
+
+                return new AuthCookieResponse(
+                                newAccessToken,
+                                user.getId(),
+                                user.getApplicantId(),
+                                user.getEmail(),
+                                user.getFullName(),
+                                user.getStatus());
         }
-    }
 
-    private void revokeIfLocal(String token) {
-        if (token == null || token.isBlank()) return;
+        // LOGOUT USER (clears refresh cookie + revokes tokens)
+        public void logout(String accessToken, String refreshToken, HttpServletResponse response) {
 
-        try {
-            Claims claims = jwtService.parseClaims(token);
+                // ✅ clear refresh cookie
+                cookieService.clearRefreshTokenCookie(response);
 
-            String provider = claims.get("provider", String.class);
-            if (provider == null) provider = "LOCAL";
+                // ✅ revoke ACCESS token in Redis (LOCAL only)
+                revokeIfLocal(accessToken);
 
-            // ✅ only revoke non-SSO tokens
-            if (!"LOCAL".equalsIgnoreCase(provider)) return;
+                // ✅ existing refresh token revoke in DB
+                if (refreshToken == null || refreshToken.isBlank()) {
+                        return;
+                }
 
-            String jti = claims.getId();
-            if (jti == null || jti.isBlank()) return;
+                try {
+                        RefreshToken stored = refreshTokenService.validate(refreshToken);
+                        refreshTokenService.revokeRefreshToken(stored);
 
-            long expMs = claims.getExpiration().getTime();
-            long ttlMs = expMs - System.currentTimeMillis();
-            if (ttlMs <= 0) return;
+                        // ✅ OPTIONAL (extra safety): revoke refresh token JTI too
+                        revokeIfLocal(refreshToken);
 
-            tokenRevocationService.revoke(jti, ttlMs);
-
-        } catch (Exception ignored) {
+                } catch (Exception ignored) {
+                }
         }
-    }
 
-    // =========================
-    // Helpers
-    // =========================
-    private AuthCookieResponse issueUserTokens(User user, HttpServletResponse response) {
+        // Revoke token if it is a LOCAL token
+        private void revokeIfLocal(String token) {
+                if (token == null || token.isBlank())
+                        return;
 
-        issueRefreshCookie(user.getId(), response);
+                try {
+                        Claims claims = jwtService.parseClaims(token);
 
-        jwtUserDto jwtUser = new jwtUserDto(
-                user.getId(),
-                user.getEmail(),
-                user.getApplicantId(),
-                user.getRole(),
-                user.getStatus()
-        );
+                        String provider = claims.get("provider", String.class);
+                        if (provider == null)
+                                provider = "LOCAL";
 
-        String accessToken = jwtService.generateAccessToken(jwtUser);
+                        // ✅ only revoke non-SSO tokens
+                        if (!"LOCAL".equalsIgnoreCase(provider))
+                                return;
 
-        return new AuthCookieResponse(
-                accessToken,
-                user.getId(),
-                user.getApplicantId(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getStatus()
-        );
-    }
+                        String jti = claims.getId();
+                        if (jti == null || jti.isBlank())
+                                return;
 
-    private void issueRefreshCookie(String userId, HttpServletResponse response) {
-        String refreshToken = jwtService.generateRefreshToken(userId);
-        refreshTokenService.save(userId, refreshToken);
-        cookieService.setRefreshTokenCookie(response, refreshToken);
-    }
+                        long expMs = claims.getExpiration().getTime();
+                        long ttlMs = expMs - System.currentTimeMillis();
+                        if (ttlMs <= 0)
+                                return;
+
+                        tokenRevocationService.revoke(jti, ttlMs);
+
+                } catch (Exception ignored) {
+                }
+        }
+
+        // =========================
+        // Helpers
+        // =========================
+        private AuthCookieResponse issueUserTokens(User user, HttpServletResponse response) {
+
+                issueRefreshCookie(user.getId(), response);
+
+                jwtUserDto jwtUser = new jwtUserDto(
+                                user.getId(),
+                                user.getEmail(),
+                                user.getApplicantId(),
+                                user.getRole(),
+                                user.getStatus());
+
+                String accessToken = jwtService.generateAccessToken(jwtUser);
+
+                return new AuthCookieResponse(
+                                accessToken,
+                                user.getId(),
+                                user.getApplicantId(),
+                                user.getEmail(),
+                                user.getFullName(),
+                                user.getStatus());
+        }
+
+        private void issueRefreshCookie(String userId, HttpServletResponse response) {
+                String refreshToken = jwtService.generateRefreshToken(userId);
+                refreshTokenService.save(userId, refreshToken);
+                cookieService.setRefreshTokenCookie(response, refreshToken);
+        }
 }

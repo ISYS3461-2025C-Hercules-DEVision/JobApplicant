@@ -1,0 +1,30 @@
+server:
+  port: ${SERVER_PORT:8086}
+
+spring:
+  application:
+    name: subscription-service
+
+  servlet:
+    multipart:
+      max-request-size: 25MB
+      max-file-size: 25MB
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  data:
+    mongodb:
+      database: ${MONGODB_DATABASE}
+      uri: ${MONGODB_URI}
+
+eureka:
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE}
