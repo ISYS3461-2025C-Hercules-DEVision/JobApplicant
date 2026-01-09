@@ -3,6 +3,10 @@ package com.devision.subscription.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * DTO representing payment events emitted by JM Payment system. Used by
+ * Kafka consumers to update local transactions and subscriptions.
+ */
 public class PaymentEventDTO {
 
     private String transactionId;

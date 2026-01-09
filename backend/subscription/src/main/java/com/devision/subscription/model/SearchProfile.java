@@ -7,6 +7,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
+/**
+ * Applicant-configured preferences for job matching and notifications.
+ * Upserted via REST and evaluated against incoming job-post events.
+ */
 @Document(collection = "search_profiles")
 public class SearchProfile {
 
