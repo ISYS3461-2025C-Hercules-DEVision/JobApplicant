@@ -15,6 +15,6 @@ public class ApplicationEventProducer {
 
     public void publish(String topic, ApplicationEvent event) {
         // key = applicationId để giữ ordering theo từng application
-        kafkaTemplate.send(topic, event.applicationId(), event);
+        kafkaTemplate.send(topic, event.getApplicationId(), event);
     }
 }

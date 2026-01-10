@@ -24,8 +24,10 @@ public class ApplicationResponse {
     public static class FileRefResponse {
         private String fileId;
         private String fileUrl;
+        private String publicId;
         private FileType fileType;
         private Instant createdAt;
+        private Instant updatedAt;
 
         public String getFileId() { return fileId; }
         public void setFileId(String fileId) { this.fileId = fileId; }
@@ -33,11 +35,17 @@ public class ApplicationResponse {
         public String getFileUrl() { return fileUrl; }
         public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
 
+        public String getPublicId() { return publicId; }
+        public void setPublicId(String publicId) { this.publicId = publicId; }
+
         public FileType getFileType() { return fileType; }
         public void setFileType(FileType fileType) { this.fileType = fileType; }
 
         public Instant getCreatedAt() { return createdAt; }
         public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+        public Instant getUpdatedAt() { return updatedAt; }
+        public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
     }
 
     public String getApplicationId() { return applicationId; }

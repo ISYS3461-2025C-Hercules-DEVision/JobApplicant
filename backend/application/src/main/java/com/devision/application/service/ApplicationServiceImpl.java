@@ -6,6 +6,7 @@ import com.devision.application.dto.internal.command.UploadCvCommand;
 import com.devision.application.dto.internal.view.ApplicationSummaryView;
 import com.devision.application.dto.internal.view.ApplicationView;
 import com.devision.application.enums.ApplicationStatus;
+import com.devision.application.enums.FileType;
 import com.devision.application.model.Application;
 import com.devision.application.model.FileReference;
 import com.devision.application.repository.ApplicationRepository;
@@ -158,37 +159,37 @@ public class ApplicationServiceImpl implements ApplicationService {
     // -------- mapping (internal view) --------
     private ApplicationView toView(Application a) {
         ApplicationView v = new ApplicationView();
-        v.applicationId = a.getApplicationId();
-        v.applicantId = a.getApplicantId();
-        v.jobPostId = a.getJobPostId();
-        v.companyId = a.getCompanyId();
-        v.status = a.getStatus();
-        v.createdAt = a.getCreatedAt();
-        v.updatedAt = a.getUpdatedAt();
+        v.setApplicationId(a.getApplicationId());
+        v.setApplicantId(a.getApplicantId());
+        v.setJobPostId(a.getJobPostId());
+        v.setCompanyId(a.getCompanyId());
+        v.setStatus(a.getStatus());
+        v.setCreatedAt(a.getCreatedAt());
+        v.setUpdatedAt(a.getUpdatedAt());
 
-        if (a.getApplicantCV() != null) v.applicantCV = toFileView(a.getApplicantCV());
-        if (a.getCoverLetter() != null) v.coverLetter = toFileView(a.getCoverLetter());
+        if (a.getApplicantCV() != null) v.setApplicantCV(toFileView(a.getApplicantCV()));
+        if (a.getCoverLetter() != null) v.setCoverLetter(toFileView(a.getCoverLetter()));
         return v;
     }
 
     private ApplicationSummaryView toSummaryView(Application a) {
         ApplicationSummaryView v = new ApplicationSummaryView();
-        v.applicationId = a.getApplicationId();
-        v.jobPostId = a.getJobPostId();
-        v.companyId = a.getCompanyId();
-        v.status = a.getStatus();
-        v.createdAt = a.getCreatedAt();
+        v.setApplicationId(a.getApplicationId());
+        v.setJobPostId(a.getJobPostId());
+        v.setCompanyId(a.getCompanyId());
+        v.setStatus(a.getStatus());
+        v.setCreatedAt(a.getCreatedAt());
         return v;
     }
 
     private ApplicationView.FileView toFileView(FileReference f) {
         ApplicationView.FileView fv = new ApplicationView.FileView();
-        fv.fileId = f.getFileId();
-        fv.fileUrl = f.getFileUrl();
-        fv.publicId = f.getPublicId();     
-        fv.fileType = f.getFileType();
-        fv.createdAt = f.getCreatedAt();
-        fv.updatedAt = f.getUpdatedAt();
+        fv.setFileId(f.getFileId());
+        fv.setFileUrl(f.getFileUrl());
+        fv.setPublicId(f.getPublicId());     
+        fv.setFileType(f.getFileType());
+        fv.setCreatedAt(f.getCreatedAt());
+        fv.setUpdatedAt(f.getUpdatedAt());
         return fv;
     }
 
@@ -223,18 +224,16 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (f == null || f.isEmpty()) throw new IllegalArgumentException(field + " is required");
     }
 
-    private String detectFileType(MultipartFile file) {
-        String contentType = file.getContentType();
-        if (contentType != null && !contentType.isBlank()) return contentType;
+    private FileType detectFileType(String contentType, String originalFilename) {
+        String ct = (contentType == null) ? "" : contentType.toLowerCase();
+        String fn = (originalFilename == null) ? "" : originalFilename.toLowerCase();
 
-        String name = file.getOriginalFilename();
-        if (name == null) return "application/octet-stream";
-
-        String lower = name.toLowerCase();
-        if (lower.endsWith(".pdf")) return "application/pdf";
-        if (lower.endsWith(".doc")) return "application/msword";
-        if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        return "application/octet-stream";
+        if (ct.contains("pdf") || fn.endsWith(".pdf")) return FileType.PDF;
+        if (ct.contains("msword") || ct.contains("wordprocessingml")
+                || fn.endsWith(".doc") || fn.endsWith(".docx")) {
+            return FileType.DOCX;
+        }
+        return FileType.UNKNOWN;
     }
 }
 

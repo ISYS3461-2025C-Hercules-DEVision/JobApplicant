@@ -1,9 +1,9 @@
 package com.devision.application;
 
-import com.devision.application.model.Application;
-import com.devision.application.model.FileReference;
 import com.devision.application.enums.ApplicationStatus;
 import com.devision.application.enums.FileType;
+import com.devision.application.model.Application;
+import com.devision.application.model.FileReference;
 import com.devision.application.repository.ApplicationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Component
-@Profile("dev") // IMPORTANT: only run in dev environment
+@Profile("dev")
 @RequiredArgsConstructor
 public class ApplicationDataSeeder implements CommandLineRunner {
 
@@ -34,7 +34,9 @@ public class ApplicationDataSeeder implements CommandLineRunner {
 
         FileReference cv = FileReference.builder()
                 .fileId(UUID.randomUUID().toString())
+                .applicationId(applicationId)               // nếu FileReference có field này
                 .fileUrl("https://res.cloudinary.com/demo/cv.pdf")
+                .publicId("demo/cv")                        // optional
                 .fileType(FileType.PDF)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
@@ -42,7 +44,9 @@ public class ApplicationDataSeeder implements CommandLineRunner {
 
         FileReference coverLetter = FileReference.builder()
                 .fileId(UUID.randomUUID().toString())
+                .applicationId(applicationId)               // nếu FileReference có field này
                 .fileUrl("https://res.cloudinary.com/demo/cover_letter.pdf")
+                .publicId("demo/cover_letter")              // optional
                 .fileType(FileType.PDF)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
@@ -54,17 +58,17 @@ public class ApplicationDataSeeder implements CommandLineRunner {
                 .jobPostId(jobPostId)
                 .companyId(companyId)
                 .status(ApplicationStatus.PENDING)
+                .submissionDate(Instant.now())
+                .feedback(null)
+                .applicantCV(cv)            // ✅ add
+                .coverLetter(coverLetter)   // ✅ add
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
-                .feedback(null)
-                .documents(null)
-                .createdAt(Instant.now())
                 .isArchived(false)
                 .deletedAt(null)
                 .build();
 
         applicationRepository.save(application);
-
         System.out.println("Seeded Application data successfully");
     }
 }

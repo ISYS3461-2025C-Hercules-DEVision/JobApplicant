@@ -12,19 +12,19 @@ public interface ApplicationRepository extends MongoRepository<Application, Stri
      * Applicant: xem danh sách application của chính mình
      * Used by: GET /api/v1/applications/me
      */
-    List<Application> findByApplicantIdOrderByCreatedAtDesc(String applicantId);
+    List<Application> findByApplicantId(String applicantId);
 
     /**
      * Partner / Job Manager: xem application theo job post
      * Used by: GET /api/v1/partner/applications/by-job/{jobPostId}
      */
-    List<Application> findByJobPostIdOrderByCreatedAtDesc(String jobPostId);
+    List<Application> findByJobPostId(String jobPostId);
 
     /**
      * Partner / Job Manager: xem tất cả application của company
      * Used by: GET /api/v1/partner/applications/by-company/{companyId}
      */
-    List<Application> findByCompanyIdOrderByCreatedAtDesc(String companyId);
+    List<Application> findByCompanyId(String companyId);
 
     /**
      * Optional: chặn applicant apply cùng 1 job nhiều lần

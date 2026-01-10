@@ -26,5 +26,5 @@ public interface ApplicationService {
 
     ApplicationView getById(String applicationId);
 
-    List<ApplicationView> listAll();
+    List<ApplicationSummaryView> listAll();
 }

@@ -5,9 +5,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import com.devision.application.enums.ApplicationStatus;  
 
-
-
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +31,8 @@ public class Application {
     private String feedback;         // nullable
 
     // File references
-    private List<FileReference> documents = new ArrayList<>();
-
+    private FileReference applicantCV;     // CVFileReference | nullable
+    private FileReference coverLetter;     // CoverLetterReference | nullable
 
     private Instant createdAt;
     private Boolean isArchived = false;

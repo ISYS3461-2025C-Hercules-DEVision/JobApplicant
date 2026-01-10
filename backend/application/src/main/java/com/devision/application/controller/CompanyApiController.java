@@ -50,16 +50,16 @@ public class CompanyApiController implements CompanyApplicationApi {
 
     private ApplicationResponse toExternal(ApplicationView v) {
         ApplicationResponse r = new ApplicationResponse();
-        r.setApplicationId(v.applicationId);
-        r.setApplicantId(v.applicantId);
-        r.setJobPostId(v.jobPostId);
-        r.setCompanyId(v.companyId);
-        r.setStatus(v.status);
-        r.setCreatedAt(v.createdAt);
-        r.setUpdatedAt(v.updatedAt);
+        r.setApplicationId(v.getApplicationId());
+        r.setApplicantId(v.getApplicantId());
+        r.setJobPostId(v.getJobPostId());
+        r.setCompanyId(v.getCompanyId());
+        r.setStatus(v.getStatus());
+        r.setCreatedAt(v.getCreatedAt());
+        r.setUpdatedAt(v.getUpdatedAt());
 
-        if (v.applicantCV != null) r.setApplicantCV(toExternalFile(v.applicantCV));
-        if (v.coverLetter != null) r.setCoverLetter(toExternalFile(v.coverLetter));
+        if (v.getApplicantCV() != null) r.setApplicantCV(toExternalFile(v.getApplicantCV()));
+        if (v.getCoverLetter() != null) r.setCoverLetter(toExternalFile(v.getCoverLetter()));
         return r;
     }
 
@@ -76,11 +76,11 @@ public class CompanyApiController implements CompanyApplicationApi {
 
     private ApplicationSummaryResponse toExternal(ApplicationSummaryView v) {
         ApplicationSummaryResponse r = new ApplicationSummaryResponse();
-        r.setApplicationId(v.applicationId);
-        r.setJobPostId(v.jobPostId);
-        r.setCompanyId(v.companyId);
-        r.setStatus(v.status);
-        r.setCreatedAt(v.createdAt);
+        r.setApplicationId(v.getApplicationId());
+        r.setJobPostId(v.getJobPostId());
+        r.setCompanyId(v.getCompanyId());
+        r.setStatus(v.getStatus());
+        r.setCreatedAt(v.getCreatedAt());
         return r;
     }
 }
