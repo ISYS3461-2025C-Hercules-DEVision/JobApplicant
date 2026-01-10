@@ -6,13 +6,14 @@ import com.devision.application.dto.UpdateStatusRequest;
 import com.devision.application.service.ApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
+@Slf4j
 @RestController
-@RequestMapping("api/v1/applications")
+@RequestMapping("/api/v1/applications")
 @RequiredArgsConstructor
 public class ApplicationController {
     private final ApplicationService applicationService;
@@ -32,6 +33,7 @@ public class ApplicationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApplicationDTO createApplication(@Valid @RequestBody ApplicationCreateRequest request){
+        log.info("✅ [ApplicationController] HIT createApplication() with request = {}", request);
         return applicationService.createApplication(request);
     }
 

@@ -26,5 +26,11 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_DEFAULT_ZONE}
 logging:
-    level:
-      org.springframework.boot.context.config: DEBUG
+  level:
+    root: INFO
+    com.devision: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
