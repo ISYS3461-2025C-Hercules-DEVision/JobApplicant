@@ -22,8 +22,6 @@ spring:
     database: ${MONGODB_DATABASE}
     uri: ${MONGODB_URI}
 
-#Additional MongoDB URIs for other countries
-
 eureka:
   instance:
 
