@@ -35,6 +35,7 @@ function App() {
             <AuthInitializer/>
 
             <Routes>
+                <Route path="/applications" element={<ApplicationPage />} />
                 <Route path="/updateResume" element={<UpdateResumePage />} />
                 {/* Public routes */}
                 <Route path="/" element={<HomePage />} />
