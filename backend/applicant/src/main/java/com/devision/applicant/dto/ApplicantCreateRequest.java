@@ -18,15 +18,10 @@ public record ApplicantCreateRequest(
         @Email
         String email,
 
-
         String country,
         String city,
         String streetAddress,
         String phoneNumber,
-        String objectiveSummary,
         String profileImageUrl,
-        List<Education> educations,
-        List<WorkExperience> experiences,
-        List<String> skills,
-        List<MediaPortfolio> mediaPortfolios
+        Boolean employmentStatus
 ) {}
