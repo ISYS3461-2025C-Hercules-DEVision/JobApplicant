@@ -1,0 +1,25 @@
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  mongodb:
+    uri: ${MONGODB_URI}
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
+eureka:
+  instance:
+    hostname: ${EUREKA_INSTANCE_HOSTNAME}
+    ip-address: ${EUREKA_INSTANCE_IP_ADDRESS:${EUREKA_INSTANCE_HOSTNAME}}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:true}
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE}
+logging:
+    level:
+      org.springframework.boot.context.config: DEBUG
