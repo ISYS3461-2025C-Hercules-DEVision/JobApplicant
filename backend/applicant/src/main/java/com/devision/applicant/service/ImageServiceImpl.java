@@ -7,8 +7,10 @@ import com.devision.applicant.enums.MediaType;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.model.Applicant;
 import com.devision.applicant.model.MediaPortfolio;
+import com.devision.applicant.model.Resume;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
+import com.devision.applicant.repository.ResumeRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,11 +26,13 @@ public class ImageServiceImpl implements ImageService{
     private final Cloudinary cloudinary;
     private final MediaPortfolioRepository mediaRepo;
     private final ApplicantRepository applicantRepo;
+    private final ResumeRepository resumeRepo;
 
-    public ImageServiceImpl(Cloudinary cloudinary, MediaPortfolioRepository mediaRepo, ApplicantRepository applicantRepo){
+    public ImageServiceImpl(Cloudinary cloudinary, MediaPortfolioRepository mediaRepo, ApplicantRepository applicantRepo, ResumeRepository resumeRepo){
         this.cloudinary = cloudinary;
         this.mediaRepo = mediaRepo;
         this.applicantRepo = applicantRepo;
+        this.resumeRepo = resumeRepo;
     }
 
     @Override
@@ -68,17 +72,17 @@ public class ImageServiceImpl implements ImageService{
 
         MediaPortfolio savedMedia = mediaRepo.save(media);
 
-        Applicant a = applicantRepo.findById(applicantId)
+        Resume r = resumeRepo.findById(applicantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
-        if(a.getMediaPortfolios() == null){
-            a.setMediaPortfolios(new ArrayList<>());
+        if(r.getMediaPortfolios() == null){
+            r.setMediaPortfolios(new ArrayList<>());
         }
 
         //Add the new media
-        a.getMediaPortfolios().add(savedMedia);
+        r.getMediaPortfolios().add(savedMedia);
 
-        applicantRepo.save(a);
+        resumeRepo.save(r);
         return savedMedia;
     }
 
@@ -98,12 +102,12 @@ public class ImageServiceImpl implements ImageService{
         cloudinary.uploader().destroy(media.getPublicId(), ObjectUtils.emptyMap());
 
         // Delete from DB
-        Applicant a = applicantRepo.findById(applicantId)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't find applicant"));
+        Resume r = resumeRepo.findById(applicantId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't find resume"));
 
-        if(a.getMediaPortfolios() != null){
-            a.getMediaPortfolios().remove(media);
-            applicantRepo.save(a);
+        if(r.getMediaPortfolios() != null){
+            r.getMediaPortfolios().remove(media);
+            resumeRepo.save(r);
         }
         mediaRepo.delete(media);
 

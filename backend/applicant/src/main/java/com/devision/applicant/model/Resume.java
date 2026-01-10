@@ -20,7 +20,7 @@ import java.util.List;
 public class Resume {
     @Id
     private String resumeId;
-    private String applicantId;
+    private String applicantId; //FK
 
     private String headline;
     private String objective;

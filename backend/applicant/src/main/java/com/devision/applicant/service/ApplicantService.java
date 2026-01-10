@@ -30,4 +30,10 @@ public interface ApplicantService {
     ApplicantDTO activateApplicantAccount(String applicantId);
 
     ResumeDTO updateResume(String applicantId, ResumeUpdateRequest request);
+
+    ResumeDTO getResume(String applicantId);
+
+    void deleteResume(String applicantId);
+
+    List<ResumeDTO> getAllResumes();
 }

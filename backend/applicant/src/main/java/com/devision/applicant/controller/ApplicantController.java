@@ -109,11 +109,24 @@ public class ApplicantController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/{applicantId}/resumes")
-    public ResponseEntity<ResumeDTO> updateResume(@PathVariable String applicantId, @RequestBody ResumeUpdateRequest request){
-        ResumeDTO resumeDTO = service.updateResume(applicantId, request);
+    @PutMapping("/{applicantId}/resumes")
+    public ResumeDTO updateResume(@PathVariable String applicantId, @RequestBody ResumeUpdateRequest request){
 
-        return ResponseEntity.ok(resumeDTO);
+        return service.updateResume(applicantId, request);
     }
 
+    @GetMapping("/{applicantId}/resumes")
+    public ResumeDTO getResume(@PathVariable String applicantId){
+        return service.getResume(applicantId);
+    }
+
+    @DeleteMapping("/{applicantId}/resumes")
+    public void deleteResume(@PathVariable String applicantId){
+        service.deleteResume(applicantId);
+    }
+
+    @GetMapping("/resumes")
+    public List<ResumeDTO> getAllResumes(){
+        return service.getAllResumes();
+    }
 }

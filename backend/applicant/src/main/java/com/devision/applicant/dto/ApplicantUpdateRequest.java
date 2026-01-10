@@ -32,19 +32,7 @@ public record ApplicantUpdateRequest(
         String profileImageUrl,
 
         @Nullable
-        String objectiveSummary,
-
-        @Nullable
-        List<Education> educations,
-
-        @Nullable
-        List<WorkExperience> experiences,
-
-        @Nullable
         Boolean employmentStatus,
-
-        @Nullable
-        List<String> skills,
 
         @Nullable
         Boolean activated,
