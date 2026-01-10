@@ -61,12 +61,6 @@ public class ApplicantController {
         service.delete(id);
     }
 
-    @DeleteMapping("/{id}/field/{fieldName}")
-    @ResponseStatus(HttpStatus.OK)
-    public ApplicantDTO deleteProfileByField(@PathVariable String id, @PathVariable String fieldName){
-        return service.deleteProfileByField(id, fieldName);
-    }
-
     //WORKED
     //Profile Image
     @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -113,6 +107,13 @@ public class ApplicantController {
     public ResponseEntity<ApplicantDTO> activateApplicant(@PathVariable("id") String id) {
         ApplicantDTO result = service.activateApplicantAccount(id);
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/{applicantId}/resumes")
+    public ResponseEntity<ResumeDTO> updateResume(@PathVariable String applicantId, @RequestBody ResumeUpdateRequest request){
+        ResumeDTO resumeDTO = service.updateResume(applicantId, request);
+
+        return ResponseEntity.ok(resumeDTO);
     }
 
 }

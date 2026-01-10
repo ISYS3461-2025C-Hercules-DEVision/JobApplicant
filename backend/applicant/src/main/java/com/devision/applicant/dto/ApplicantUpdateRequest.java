@@ -41,6 +41,9 @@ public record ApplicantUpdateRequest(
         List<WorkExperience> experiences,
 
         @Nullable
+        Boolean employmentStatus,
+
+        @Nullable
         List<String> skills,
 
         @Nullable

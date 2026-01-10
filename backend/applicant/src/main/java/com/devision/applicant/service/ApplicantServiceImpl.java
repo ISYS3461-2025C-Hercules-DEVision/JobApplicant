@@ -1,15 +1,18 @@
 package com.devision.applicant.service;
 
 import com.devision.applicant.api.ApplicantMapper;
+import com.devision.applicant.api.ResumeMapper;
 import com.devision.applicant.config.KafkaConstant;
 import com.devision.applicant.connection.ApplicantToJmEvent;
 import com.devision.applicant.dto.*;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.model.Applicant;
+import com.devision.applicant.model.Resume;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
+import com.devision.applicant.repository.ResumeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -31,15 +34,17 @@ import java.util.UUID;
 public class ApplicantServiceImpl implements ApplicantService {
     private final ApplicantRepository repository;
     private final MediaPortfolioRepository mediaPortfolioRepository;
+    private final ResumeRepository resumeRepository;
     private final ImageService imageService;
 
     private final KafkaGenericProducer<Object> kafkaGenericProducer;
     private final ShardMigrationService shardMigrationService;
 
-    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, KafkaGenericProducer<Object> kafkaGenericProducer, ShardMigrationService shardMigrationService) {
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, ResumeRepository resumeRepository, KafkaGenericProducer<Object> kafkaGenericProducer, ShardMigrationService shardMigrationService) {
         this.repository = repository;
         this.mediaPortfolioRepository = mediaPortfolioRepository;
         this.imageService = mediaService;
+        this.resumeRepository = resumeRepository;
         this.kafkaGenericProducer = kafkaGenericProducer;
         this.shardMigrationService = shardMigrationService;
     }
@@ -76,6 +81,7 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .filter(x -> x.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
+        Resume r = resumeRepository.findById()
         //Check if new updated email is different and already used by another applicant
         if (req.email() != null && !req.email().equals(a.getEmail())) {
             if (repository.existsByEmail(req.email())) {
@@ -121,57 +127,6 @@ public class ApplicantServiceImpl implements ApplicantService {
         repository.save(a);
     }
 
-    @Override
-    public ApplicantDTO deleteProfileByField(String id, String fieldName){
-        Applicant a = repository.findById(id)
-                .filter(x -> x.getDeletedAt() == null)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
-
-        switch (fieldName){
-            case "fullName":
-                a.setFullName(null);
-                break;
-            case "email":
-                a.setEmail(null);
-                break;
-            case "country":
-                a.setCountry(null);
-                break;
-            case "city":
-                a.setCity(null);
-                break;
-            case "streetAddress":
-                a.setStreetAddress(null);
-                break;
-            case "phoneNumber":
-                a.setPhoneNumber(null);
-                break;
-            case "objectiveSummary":
-                a.setObjectiveSummary(null);
-                break;
-            case "profileImageUrl":
-                a.setProfileImageUrl(null);
-                break;
-            case "skills":
-                a.setSkills(null);
-                break;
-            case "educations":
-                a.setEducations(null);
-                break;
-            case "experiences":
-                a.setExperiences(null);
-                break;
-            case "mediaPortfolios":
-                a.setMediaPortfolios(null);
-                break;
-            default:
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid field name: " + fieldName);
-        }
-
-        //Save the updated
-        Applicant saved = repository.save(a);
-        return ApplicantMapper.toDto(saved);
-    }
 
     @Override
     public ApplicantDTO uploadProfileImage(String id, UploadAvatarRequest request){
@@ -271,5 +226,33 @@ public class ApplicantServiceImpl implements ApplicantService {
         System.out.println(change.status());
         kafkaGenericProducer.sendMessage(KafkaConstant.AUTHENTICATION_APPLICANT_CHANGE_STATUS_TOPIC,change);
         return ApplicantMapper.toDto(saved);
+    }
+
+    @Override
+    public ResumeDTO updateResume(String applicantId, ResumeUpdateRequest request){
+        Applicant a = repository.findById(applicantId)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+        String resumeId = UUID.randomUUID().toString();
+        ResumeDTO updatedResume =  new ResumeDTO(
+                resumeId,
+                a.getApplicantId(),
+                request.headline(),
+                request.objective(),
+                request.education(),
+                request.experience(),
+                request.skills(),
+                request.certifications(),
+                request.mediaPortfolios(),
+                Instant.now(),
+                request.minSalary(),
+                request.maxSalary()
+        );
+
+        resumeRepository.save(ResumeMapper.toEntity(updatedResume));
+        return updatedResume;
+
+
+
     }
 }

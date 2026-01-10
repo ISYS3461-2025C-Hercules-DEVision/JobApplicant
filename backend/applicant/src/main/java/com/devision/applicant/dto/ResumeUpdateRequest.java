@@ -1,0 +1,23 @@
+package com.devision.applicant.dto;
+
+import com.devision.applicant.model.Education;
+import com.devision.applicant.model.MediaPortfolio;
+import com.devision.applicant.model.WorkExperience;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+
+public record ResumeUpdateRequest(String headline,
+                                  String objective,
+
+                                  List<Education> education,       // embedded
+                                  List<WorkExperience> experience, // embedded
+
+                                  List<String> skills,
+                                  List<String> certifications,
+                                  List<MediaPortfolio> mediaPortfolios,
+
+                                  BigDecimal minSalary,
+                                  BigDecimal maxSalary) {
+}

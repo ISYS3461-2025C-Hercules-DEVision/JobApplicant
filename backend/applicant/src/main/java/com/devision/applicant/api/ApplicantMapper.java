@@ -22,16 +22,12 @@ public class ApplicantMapper {
         a.setCity(req.city());
         a.setStreetAddress(req.streetAddress());
         a.setPhoneNumber(req.phoneNumber());
-        a.setObjectiveSummary(req.objectiveSummary());
         a.setProfileImageUrl(req.profileImageUrl());
         a.setIsActivated(true);
         a.setIsArchived(true);
-        a.setEducations(req.educations());
-        a.setExperiences(req.experiences());
-        a.setSkills(req.skills());
-        a.setMediaPortfolios(req.mediaPortfolios());
         a.setCreatedAt(LocalDateTime.now());
         a.setUpdatedAt(LocalDateTime.now());
+        a.setEmploymentStatus(false);
         return a;
     }
 
@@ -43,14 +39,12 @@ public class ApplicantMapper {
         if (req.streetAddress() != null) a.setStreetAddress(req.streetAddress());
         if (req.phoneNumber() != null) a.setPhoneNumber(req.phoneNumber());
         if (req.profileImageUrl() != null) a.setProfileImageUrl(req.profileImageUrl());
-        if (req.objectiveSummary() != null) a.setObjectiveSummary(req.objectiveSummary());
-        if (req.educations() != null) a.setEducations(req.educations());
-        if (req.experiences() != null) a.setExperiences(req.experiences());
-        if (req.skills() != null) a.setSkills(req.skills());
         if (req.activated() != null) a.setIsActivated(req.activated());
         if (req.archived() != null) a.setIsArchived(req.archived());
+        if (req.employmentStatus() != null) a.setEmploymentStatus(req.employmentStatus());
         a.setUpdatedAt(LocalDateTime.now());
     }
+
     public static ApplicantDTO toDto(Applicant a) {
         return new ApplicantDTO(
                 a.getApplicantId(),
@@ -60,15 +54,11 @@ public class ApplicantMapper {
                 a.getCity(),
                 a.getStreetAddress(),
                 a.getPhoneNumber(),
-                a.getObjectiveSummary(),
                 a.getProfileImageUrl(),
                 Boolean.TRUE.equals(a.getIsActivated()),
                 Boolean.TRUE.equals(a.getIsArchived()),
-                a.getCreatedAt(),
-                a.getEducations(),
-                a.getExperiences(),
-                a.getSkills(),
-                a.getMediaPortfolios()
+                a.getEmploymentStatus(),
+                a.getCreatedAt()
         );
     }
     public static List<ApplicantForAdmin> toApplicantForAdmin(List<ApplicantDTO> a) {

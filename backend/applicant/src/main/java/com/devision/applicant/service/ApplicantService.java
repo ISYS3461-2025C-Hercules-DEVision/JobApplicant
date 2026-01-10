@@ -17,8 +17,6 @@ public interface ApplicantService {
 
     void delete(String id);
 
-    ApplicantDTO deleteProfileByField(String id, String fieldName);
-
     ApplicantDTO uploadProfileImage(String id, UploadAvatarRequest request);
 
     MediaPortfolio uploadMediaPortfolio(String applicantId, UploadMediaPortfolioRequest request);
@@ -31,4 +29,5 @@ public interface ApplicantService {
 
     ApplicantDTO activateApplicantAccount(String applicantId);
 
+    ResumeDTO updateResume(String applicantId, ResumeUpdateRequest request);
 }

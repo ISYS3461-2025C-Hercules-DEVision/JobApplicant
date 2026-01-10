@@ -15,14 +15,11 @@ public record ApplicantDTO(
         String city,
         String streetAddress,
         String phoneNumber,
-        String objectiveSummary,
         String profileImageUrl,
         boolean activated,
         boolean archived,
-        LocalDateTime createdAt,
-        List<Education> educations,
-        List<WorkExperience> experiences,
-        List<String> skills,
-        List<MediaPortfolio> mediaPortfolios
+        Boolean employmentStatus,
+        LocalDateTime createdAt
+
 ) {}
 
