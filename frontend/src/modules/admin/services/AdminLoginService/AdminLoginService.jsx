@@ -3,10 +3,18 @@ import { request } from "../../../../utils/HttpUtil.js";
 const TOKEN_KEY = "admin_access_token";
 
 export async function adminLoginService(email, password, remember = true) {
+    console.log("ADMIN LOGIN SERVICE PAYLOAD:", {
+        email,
+        password,
+        emailType: typeof email,
+        passwordType: typeof password,
+        emailLen: email?.length,
+        passwordLen: password?.length,
+    });
     const data = await request("/auth/admin/login", {
         method: "POST",
         body: { email, password },
-        auth: "admin", // tell HttpUtil to use admin token slot
+        credentials: "omit",
     });
 
     const token = data?.accessToken || data?.token;

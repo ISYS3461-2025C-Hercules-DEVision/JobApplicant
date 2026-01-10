@@ -1,136 +1,180 @@
+// JobListPanel.jsx
+import React from "react";
+import { useJobs } from "../hooks/useJobs";
+
+// Small helper: safe field fallback
+function pick(obj, keys, fallback = "") {
+    for (const k of keys) {
+        const v = obj?.[k];
+        if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+    }
+    return fallback;
+}
+
 function JobListPanel({ onSelectJob, selectedJob }) {
+    const {
+        jobs,
+        loading,
+        error,
+        page,
+        totalPages,
+        setPage,
+        filters,
+        setFilters,
+    } = useJobs({ page: 1, size: 10 });
 
-  const jobs = [
-    {
-      id: 1,
-      title: "Software Engineer (Backend)",
-      company: "TechNova Solutions",
-      location: "Ho Chi Minh City, Vietnam (On-site)",
-      skills: "Node.js, MongoDB, Docker",
-      posted: "3 days ago",
-      expires: "20 days",
-    },
-    {
-      id: 2,
-      title: "Frontend Developer (React)",
-      company: "BrightWave Digital",
-      location: "Da Nang, Vietnam (Hybrid)",
-      skills: "React, Redux, TypeScript",
-      posted: "1 day ago",
-      expires: "10 days",
-    },
-    {
-      id: 3,
-      title: "Data Engineer",
-      company: "SkyTech Analytics",
-      location: "Hanoi, Vietnam (Remote)",
-      skills: "Python, Airflow, AWS",
-      posted: "5 days ago",
-      expires: "14 days",
-    },
-    {
-      id: 4,
-      title: "Mobile Developer (Flutter)",
-      company: "DreamLab Studio",
-      location: "Ho Chi Minh City (On-site)",
-      skills: "Flutter, Firebase",
-      posted: "Today",
-      expires: "30 days",
-    },
-    {
-      id: 5,
-      title: "Full Stack Developer",
-      company: "CodeSphere",
-      location: "Remote",
-      skills: "React, Node.js, PostgreSQL",
-      posted: "2 days ago",
-      expires: "21 days",
-    },
-    {
-      id: 6,
-      title: "Frontend Engineer (Next.js)",
-      company: "Innovex Labs",
-      location: "Remote",
-      skills: "Next.js, Tailwind, TypeScript",
-      posted: "3 days ago",
-      expires: "7 days",
-    },
-    {
-      id: 7,
-      title: "Backend Engineer (Java)",
-      company: "FinTechX",
-      location: "Singapore (Hybrid)",
-      skills: "Java, Spring Boot, Kafka",
-      posted: "4 days ago",
-      expires: "18 days",
-    },
-    {
-      id: 8,
-      title: "Cloud Engineer",
-      company: "Nimbus Cloud",
-      location: "Remote",
-      skills: "AWS, Terraform, Kubernetes",
-      posted: "1 day ago",
-      expires: "12 days",
-    },
-    {
-      id: 9,
-      title: "Data Scientist",
-      company: "InsightAI",
-      location: "Hanoi, Vietnam",
-      skills: "Python, Pandas, ML",
-      posted: "2 days ago",
-      expires: "9 days",
-    },
-    {
-      id: 10,
-      title: "DevOps Engineer",
-      company: "FlowOps",
-      location: "Melbourne, Australia",
-      skills: "Docker, Jenkins, Kubernetes",
-      posted: "6 days ago",
-      expires: "25 days",
-    },
-  ];
+    return (
+        <div className="space-y-4">
+            {/* Filters (optional but useful) */}
+            <div className="border-4 border-black p-4 bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <p className="font-black uppercase mb-3">Search Jobs</p>
 
-  return (
-    <div className="space-y-4">
-      {jobs.map(job => {
-        const isSelected = selectedJob?.id === job.id;
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                        value={filters.title}
+                        onChange={(e) =>
+                            setFilters((prev) => ({ ...prev, title: e.target.value }))
+                        }
+                        placeholder="TITLE"
+                        className="w-full px-3 py-2 border-4 border-black font-bold uppercase focus:outline-none focus:ring-4 focus:ring-primary"
+                    />
 
-        return (
-          <div
-            key={job.id}
-            onClick={() => onSelectJob(job)}
-            className={`
-              cursor-pointer border-4 border-black p-4 
-              shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]
-              hover:translate-x-1 hover:translate-y-1 hover:shadow-none
-              transition-none
+                    <input
+                        value={filters.location}
+                        onChange={(e) =>
+                            setFilters((prev) => ({ ...prev, location: e.target.value }))
+                        }
+                        placeholder="LOCATION"
+                        className="w-full px-3 py-2 border-4 border-black font-bold uppercase focus:outline-none focus:ring-4 focus:ring-primary"
+                    />
 
-              ${isSelected ? "bg-primary text-white" : "bg-white text-black"}
-            `}
-          >
-            <h3 className="text-lg font-black">{job.title}</h3>
-            <p className="font-bold">{job.company}</p>
-            <p className="text-sm">{job.location}</p>
-            <p className="text-sm">Skills: {job.skills}</p>
+                    <select
+                        value={filters.employmentType}
+                        onChange={(e) =>
+                            setFilters((prev) => ({ ...prev, employmentType: e.target.value }))
+                        }
+                        className="w-full px-3 py-2 border-4 border-black font-bold uppercase focus:outline-none focus:ring-4 focus:ring-primary"
+                    >
+                        <option value="">EMPLOYMENT TYPE</option>
+                        <option value="FULL_TIME">FULL_TIME</option>
+                        <option value="PART_TIME">PART_TIME</option>
+                        <option value="INTERN">INTERN</option>
+                        <option value="CONTRACT">CONTRACT</option>
+                    </select>
 
-            {/* Posted + Expires row */}
-            <div className="flex justify-between mt-2 text-sm font-bold">
-              <span>
-                Posted: {job.posted}
-              </span>
+                    <input
+                        value={filters.keyWord}
+                        onChange={(e) =>
+                            setFilters((prev) => ({ ...prev, keyWord: e.target.value }))
+                        }
+                        placeholder="KEYWORD"
+                        className="w-full px-3 py-2 border-4 border-black font-bold uppercase focus:outline-none focus:ring-4 focus:ring-primary"
+                    />
+                </div>
 
-              <span className={isSelected ? "text-black" : "text-primary"}>
-                Expires in {job.expires}
-              </span>
+                <p className="text-xs text-gray-600 font-semibold mt-3">
+                    Results auto-update when filters change.
+                </p>
             </div>
-          </div>
-        );
-      })}
-    </div>
-  );
+
+            {/* Loading / Error */}
+            {loading && (
+                <div className="border-4 border-black p-4 bg-white font-black uppercase">
+                    Loading jobs...
+                </div>
+            )}
+
+            {error && (
+                <div className="border-4 border-red-600 p-4 bg-red-50 text-red-800 font-black">
+                    {error}
+                </div>
+            )}
+
+            {/* Empty */}
+            {!loading && !error && jobs.length === 0 && (
+                <div className="border-4 border-black p-4 bg-white font-black uppercase">
+                    No jobs found.
+                </div>
+            )}
+
+            {/* List */}
+            {!loading &&
+                !error &&
+                jobs.map((job) => {
+                    // backend could use jobId or id
+                    const jobId = pick(job, ["id", "jobId", "jobPostId"], "");
+                    const isSelected = selectedJob?.id === jobId || selectedJob?.jobId === jobId;
+
+                    const title = pick(job, ["title", "jobTitle"], "Untitled Job");
+                    const company = pick(job, ["companyName", "company", "employerName"], "Unknown Company");
+                    const location = pick(job, ["location", "jobLocation"], "Unknown Location");
+
+                    // Your backend might have "skills" as array
+                    const skillsRaw = job?.skills;
+                    const skills =
+                        Array.isArray(skillsRaw) ? skillsRaw.join(", ") : (skillsRaw || "");
+
+                    const createdAt = pick(job, ["createdAt", "postedAt"], "");
+                    const expiresIn = pick(job, ["expiresIn", "expiredInDays", "expires"], "");
+
+                    return (
+                        <div
+                            key={jobId || JSON.stringify(job)}
+                            onClick={() => onSelectJob(job)}
+                            className={`
+                cursor-pointer border-4 border-black p-4 
+                shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]
+                hover:translate-x-1 hover:translate-y-1 hover:shadow-none
+                transition-none
+                ${isSelected ? "bg-primary text-white" : "bg-white text-black"}
+              `}
+                        >
+                            <h3 className="text-lg font-black">{title}</h3>
+                            <p className="font-bold">{company}</p>
+                            <p className="text-sm">{location}</p>
+
+                            {skills && <p className="text-sm">Skills: {skills}</p>}
+
+                            {/* Posted + Expires row */}
+                            <div className="flex justify-between mt-2 text-sm font-bold">
+                                <span>{createdAt ? `Posted: ${createdAt}` : "Posted: -"}</span>
+
+                                <span className={isSelected ? "text-black" : "text-primary"}>
+                  {expiresIn ? `Expires in ${expiresIn}` : "Expires: -"}
+                </span>
+                            </div>
+                        </div>
+                    );
+                })}
+
+            {/* Pagination */}
+            {!loading && !error && totalPages > 1 && (
+                <div className="flex items-center justify-between border-4 border-black p-4 bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                    <button
+                        type="button"
+                        disabled={page <= 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        className="bg-white text-black font-black py-2 px-4 border-4 border-black uppercase hover:bg-black hover:text-white disabled:opacity-50"
+                    >
+                        Prev
+                    </button>
+
+                    <p className="font-black uppercase">
+                        Page {page} / {totalPages}
+                    </p>
+
+                    <button
+                        type="button"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        className="bg-white text-black font-black py-2 px-4 border-4 border-black uppercase hover:bg-black hover:text-white disabled:opacity-50"
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
+        </div>
+    );
 }
 
 export default JobListPanel;

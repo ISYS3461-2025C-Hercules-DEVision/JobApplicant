@@ -1,54 +1,43 @@
+import React from "react";
 import ApplicationCard from "./ApplicationCard";
 
-function ApplicationListPanel({ selectedApp, onSelectApp }) {
+function ApplicationListPanel({ applications, selectedApp, onSelectApp, loading, error }) {
+    if (loading) {
+        return (
+            <div className="border-4 border-black p-6 bg-white font-black uppercase">
+                Loading applications...
+            </div>
+        );
+    }
 
-  const applications = [
-    {
-      id: 1,
-      jobTitle: "Backend Engineer",
-      company: "TechNova Solutions",
-      location: "Ho Chi Minh City (On-site)",
-      appliedDate: "3 days ago",
-      status: "In Review",
-    },
-    {
-      id: 2,
-      jobTitle: "Frontend Developer (React)",
-      company: "BrightWave Digital",
-      location: "Da Nang (Hybrid)",
-      appliedDate: "1 day ago",
-      status: "Submitted",
-    },
-    {
-      id: 3,
-      jobTitle: "Data Engineer",
-      company: "SkyTech Analytics",
-      location: "Remote",
-      appliedDate: "5 days ago",
-      status: "Rejected",
-    },
-    {
-      id: 4,
-      jobTitle: "Mobile Developer (Flutter)",
-      company: "DreamLab Studio",
-      location: "Ho Chi Minh City",
-      appliedDate: "7 days ago",
-      status: "Interview",
-    },
-  ];
+    if (error) {
+        return (
+            <div className="border-4 border-red-600 p-6 bg-red-50 text-red-800 font-black">
+                {error}
+            </div>
+        );
+    }
 
-  return (
-    <div className="space-y-4">
-      {applications.map(app => (
-        <ApplicationCard 
-          key={app.id}
-          app={app}
-          isSelected={selectedApp?.id === app.id}
-          onClick={() => onSelectApp(app)}
-        />
-      ))}
-    </div>
-  );
+    if (!applications || applications.length === 0) {
+        return (
+            <div className="border-4 border-black p-6 bg-white font-black uppercase text-center">
+                No applications found.
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {applications.map((app) => (
+                <ApplicationCard
+                    key={app.applicationId}
+                    app={app}
+                    isSelected={selectedApp?.applicationId === app.applicationId}
+                    onClick={() => onSelectApp(app)}
+                />
+            ))}
+        </div>
+    );
 }
 
 export default ApplicationListPanel;
