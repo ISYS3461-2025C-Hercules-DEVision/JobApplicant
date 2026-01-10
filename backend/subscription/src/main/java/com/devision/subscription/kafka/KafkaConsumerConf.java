@@ -13,6 +13,12 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Basic Kafka consumer configuration for string payloads.
+ *
+ * Provides a default consumer factory and listener container factory used by
+ * the payment and job-post consumers in this service.
+ */
 @Configuration
 @EnableKafka
 public class KafkaConsumerConf {
@@ -31,6 +37,8 @@ public class KafkaConsumerConf {
     public ConcurrentKafkaListenerContainerFactory<String, String> defaultKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(defaultConsumerFactory());
+        // Keep processing simple string payloads; individual consumers handle JSON
+        // mapping
         return factory;
     }
 }

@@ -1,0 +1,74 @@
+package com.example.application.application;
+
+
+
+
+
+import com.example.application.application.enums.ApplicationStatus;
+import com.example.application.application.enums.FileType;
+import com.example.application.application.model.Application;
+import com.example.application.application.model.FileReference;
+import com.example.application.application.repository.ApplicationRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.UUID;
+
+@Component
+@Profile("dev") // IMPORTANT: only run in dev environment
+@RequiredArgsConstructor
+public class ApplicationDataSeeder implements CommandLineRunner {
+
+    private final ApplicationRepository applicationRepository;
+
+    @Override
+    public void run(String... args) {
+        if (applicationRepository.count() > 0) {
+            System.out.println("Application collection already seeded");
+            return;
+        }
+
+        String applicationId = UUID.randomUUID().toString();
+        String applicantId = UUID.randomUUID().toString();
+        String jobPostId = UUID.randomUUID().toString();
+        String companyId = UUID.randomUUID().toString();
+
+        FileReference cv = FileReference.builder()
+                .fileId(UUID.randomUUID().toString())
+                .fileUrl("https://res.cloudinary.com/demo/cv.pdf")
+                .fileType(FileType.PDF)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        FileReference coverLetter = FileReference.builder()
+                .fileId(UUID.randomUUID().toString())
+                .fileUrl("https://res.cloudinary.com/demo/cover_letter.pdf")
+                .fileType(FileType.PDF)
+                .createdAt(Instant.now())
+                .updatedAt(Instant.now())
+                .build();
+
+        Application application = Application.builder()
+                .applicationId(applicationId)
+                .applicantId(applicantId)
+                .jobPostId(jobPostId)
+                .companyId(companyId)
+                .status(ApplicationStatus.PENDING)
+                .submissionDate(Instant.now())
+                .updatedAt(Instant.now())
+                .feedback(null)
+                .documents(null)
+                .createdAt(Instant.now())
+                .isArchived(false)
+                .deletedAt(null)
+                .build();
+
+        applicationRepository.save(application);
+
+        System.out.println("Seeded Application data successfully");
+    }
+}

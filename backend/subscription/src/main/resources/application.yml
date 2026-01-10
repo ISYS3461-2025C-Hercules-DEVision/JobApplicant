@@ -21,6 +21,27 @@ spring:
       database: ${MONGODB_DATABASE}
       uri: ${MONGODB_URI}
 
+kafka:
+  topics:
+    payment-initiated: ${KAFKA_PAYMENT_INITIATED_TOPIC:payment-initiated}
+    payment-success: ${KAFKA_PAYMENT_SUCCESS_TOPIC:payment-success}
+    payment-failed: ${KAFKA_PAYMENT_FAILED_TOPIC:payment-failed}
+    job-post-updates: ${KAFKA_JOB_POST_UPDATES_TOPIC:job-post-updates}
+
+payment:
+  consumer:
+    enabled: ${PAYMENT_CONSUMER_ENABLED:false}
+
+  forward:
+    enabled: ${PAYMENT_FORWARD_ENABLED:false}
+    base-url: ${PAYMENT_BASE_URL:http://localhost:8084}
+    initiate-path: /payments/initiate
+    bearer: ${PAYMENT_FORWARD_AUTH_TOKEN:}
+
+notification:
+  consumer:
+    enabled: ${NOTIFICATION_CONSUMER_ENABLED:false}
+
 eureka:
   instance:
     hostname: ${EUREKA_INSTANCE_HOSTNAME}

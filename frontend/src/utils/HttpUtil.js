@@ -18,7 +18,7 @@ function getAccessToken(auth = "user") {
             localStorage.getItem("admin_access_token") ||
             sessionStorage.getItem("admin_access_token") ||
             localStorage.getItem("admin_token") || // legacy fallback
-            sessionStorage.getItem("admin_token")  // legacy fallback
+            sessionStorage.getItem("admin_token") // legacy fallback
         );
     }
 
@@ -65,10 +65,22 @@ function clearAccessToken(auth = "user") {
 }
 
 /**
+ * Prevent attaching Authorization to auth endpoints.
+ */
+function isAuthRoute(path = "") {
+    return path.startsWith("/auth/");
+}
+
+function stripAuthHeader(headers = {}) {
+    const h = { ...(headers || {}) };
+    delete h.Authorization;
+    delete h.authorization;
+    return h;
+}
+
+/**
  * Refresh access token using HttpOnly refreshToken cookie.
  * This will be used for BOTH user and admin sessions (same cookie).
- *
- * If you want separate admin refresh response later, we can add /auth/admin/refresh.
  */
 async function refreshAccessToken(auth = "user") {
     const url = `${API_BASE}/auth/refresh`;
@@ -91,11 +103,10 @@ async function refreshAccessToken(auth = "user") {
         throw new Error("Refresh response missing accessToken");
     }
 
-    //  store token in the correct place (user/admin)
-    // For admin, default remember=true because refresh happens silently anyway
+    // store token in the correct place (user/admin)
     setAccessToken(data.accessToken, auth, true);
 
-    //  update user info (only if user auth)
+    // update user info (only if user auth)
     if (auth === "user" && data.userId) {
         const user = {
             userId: data.userId,
@@ -111,30 +122,69 @@ async function refreshAccessToken(auth = "user") {
 }
 
 /**
- * request(path, { auth: "user" | "admin", remember: boolean })
+ * request(path, { auth: "user" | "admin" })
  *
- * - auth: which token to attach
- * - remember: only used for admin token storage when setting token manually (login)
+ * OPTIONS:
+ * - credentials: "include" | "omit" | "same-origin"
+ *   default is "include"
  */
 export async function request(
     path,
-    { method = "GET", body, headers, retry = true, auth = "user" } = {}
+    {
+        method = "GET",
+        body,
+        headers,
+        retry = true,
+        auth = "user",
+        credentials = "include",
+    } = {}
 ) {
     const url = `${API_BASE}${path}`;
-    console.log(`Actual url being called: ${url}`);
 
     const isFormData = body instanceof FormData;
-    const token = getAccessToken(auth);
+    const authRoute = isAuthRoute(path);
+
+    // ✅ Only attach token for non-auth routes
+    const token = authRoute ? null : getAccessToken(auth);
+
+    // ✅ For auth routes, force-remove Authorization even if caller provided it
+    const safeHeaders = authRoute ? stripAuthHeader(headers) : headers;
+
+    // ✅ Build headers explicitly so we can log them
+    const finalHeaders = {
+        ...(body && !isFormData ? { "Content-Type": "application/json" } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(safeHeaders || {}),
+    };
+
+    // ✅ Show exactly what is being sent
+    console.log("✅ OUTGOING REQUEST", {
+        url,
+        path,
+        method,
+        credentials,
+        headers: finalHeaders,
+        body,
+        rawBody: body
+            ? isFormData
+                ? "[FormData]"
+                : JSON.stringify(body)
+            : null,
+    });
 
     const res = await fetch(url, {
         method,
-        headers: {
-            ...(body && !isFormData ? { "Content-Type": "application/json" } : {}),
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...(headers || {}),
-        },
+        headers: finalHeaders,
         body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-        credentials: "include",
+        credentials,
+    });
+
+    // ✅ Log raw response status + headers
+    console.log("✅ RESPONSE", {
+        url,
+        status: res.status,
+        statusText: res.statusText,
+        responseHeaders: Object.fromEntries(res.headers.entries()),
     });
 
     // Auto refresh when access token expired
@@ -142,15 +192,20 @@ export async function request(
         try {
             const newToken = await refreshAccessToken(auth);
 
+            const retryHeaders = isAuthRoute(path)
+                ? stripAuthHeader(headers)
+                : {
+                    ...(headers || {}),
+                    Authorization: `Bearer ${newToken}`,
+                };
+
             return request(path, {
                 method,
                 body,
-                headers: {
-                    ...(headers || {}),
-                    Authorization: `Bearer ${newToken}`,
-                },
+                headers: retryHeaders,
                 retry: false,
                 auth,
+                credentials,
             });
         } catch (refreshErr) {
             clearAccessToken(auth);
@@ -161,18 +216,11 @@ export async function request(
     const data = await parseBody(res);
 
     if (!res.ok) {
-        // banned check
-        if (res.status === 403) {
-            // if user banned
-            clearAccessToken(auth);
-
-            // You can redirect differently for admin if you want:
-            if (auth === "admin") {
-                window.location.href = "/adminLogin";
-            } else {
-                window.location.href = "/BannedAccount";
-            }
-        }
+        console.log("❌ API ERROR BODY", {
+            url,
+            status: res.status,
+            data,
+        });
 
         const message =
             (data && (data.message || data.error || data.detail)) ||
@@ -186,3 +234,4 @@ export async function request(
 
     return data;
 }
+

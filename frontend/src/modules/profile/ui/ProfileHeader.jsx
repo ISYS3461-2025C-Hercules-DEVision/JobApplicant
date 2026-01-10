@@ -158,14 +158,17 @@ function ProfileHeader() {
             {/* Subscription status button */}
             <button
               onClick={() => navigate("/subscription")}
-              className="
+              className={`
                 mt-4 px-4 py-2
                 border-2 border-black
                 font-bold rounded-md
-                bg-white text-black
-                hover:bg-primary hover:text-white
                 transition-all duration-200
-              "
+                ${
+                  planLabel === "PREMIUM"
+                    ? "bg-primary text-white hover:bg-white hover:text-black"
+                    : "bg-white text-black hover:bg-primary hover:text-white"
+                }
+              `}
             >
               {planLabel}
             </button>

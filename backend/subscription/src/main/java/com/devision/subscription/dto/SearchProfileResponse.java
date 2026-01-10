@@ -4,6 +4,10 @@ import com.devision.subscription.enums.EmploymentStatus;
 
 import java.util.List;
 
+/**
+ * Response shape returned by Search Profile endpoints. Values are normalized
+ * and safe for direct rendering by clients.
+ */
 public class SearchProfileResponse {
     public String applicantId;
     public List<String> technicalTags;

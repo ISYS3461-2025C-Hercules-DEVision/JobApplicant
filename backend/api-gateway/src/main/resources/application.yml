@@ -53,7 +53,8 @@ spring:
 eureka:
   instance:
     hostname: ${EUREKA_INSTANCE_HOSTNAME}
-    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
+    ip-address: ${EUREKA_INSTANCE_IP_ADDRESS:${EUREKA_INSTANCE_HOSTNAME}}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:true}
   client:
     register-with-eureka: true
     fetch-registry: true

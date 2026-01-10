@@ -70,7 +70,17 @@ services:
       REDIS_REVOCATION_HOST: redis-revocation
       REDIS_REVOCATION_PORT: 6379
       REDIS_REVOCATION_PASSWORD: ${REDIS_REVOCATION_PASSWORD}
-
+  application:
+    build:
+      context: backend/application
+    depends_on:
+      - kafka
+      - discovery-server
+    restart: unless-stopped
+    env_file:
+      - backend/application/.env
+    ports:
+      - "8084:8084"
   applicant:
     build:
       context: backend/applicant

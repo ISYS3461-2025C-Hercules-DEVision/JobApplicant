@@ -6,6 +6,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
+/**
+ * Persisted record of a payment attempt for a subscription. Used to track
+ * lifecycle transitions (CREATED, SUCCESS, FAILED) and correlate with JM
+ * events.
+ */
 @Document(collection = "payment_transactions")
 public class PaymentTransaction {
 
