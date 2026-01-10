@@ -27,6 +27,9 @@ public class Applicant {
     @Id
     private String applicantId = UUID.randomUUID().toString();   // PK, UUID
 
+    @Field(name = "resumeId")
+    private String resumeId; //FK to Resume
+
     @Field(name = "fullName")
     private String fullName;   // max 200 (enforce in DTO or validation)
 
@@ -46,8 +49,8 @@ public class Applicant {
     @Field(name = "phoneNumber")
     private String phoneNumber;
 
-    @Field(name = "objectiveSummary")
-    private String objectiveSummary;
+//    @Field(name = "objectiveSummary")
+//    private String objectiveSummary;
 
     @Field(name = "profileImageUrl")
     private String profileImageUrl;
@@ -60,12 +63,18 @@ public class Applicant {
     @Builder.Default
     private Boolean isArchived = false;
 
-    private List<Education> educations = new ArrayList<>();
-    private List<WorkExperience> experiences = new ArrayList<>();
+    @Field(name = "employmentStatus")
+    private Boolean employmentStatus = false;
 
-    private List<String> skills = new ArrayList<>();
-    private List<MediaPortfolio> mediaPortfolios = new ArrayList<>();
+//    private List<Education> educations = new ArrayList<>();
+//    private List<WorkExperience> experiences = new ArrayList<>();
 
+//    private List<String> skills = new ArrayList<>();
+//    private List<MediaPortfolio> mediaPortfolios = new ArrayList<>();
+
+    @Builder.Default
+    @Field(name = "isResumeUpdated")
+    private Boolean isResumeUpdated = false;
     @CreatedDate
     @Field(name = "createdAt")
     private LocalDateTime createdAt;

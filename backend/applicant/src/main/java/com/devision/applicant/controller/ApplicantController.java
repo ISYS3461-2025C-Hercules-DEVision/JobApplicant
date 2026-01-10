@@ -52,14 +52,6 @@ public class ApplicantController {
     public ApplicantDTO update(@PathVariable String id,
                                @Valid @RequestBody ApplicantUpdateRequest request) {
 
-        String correlationId = UUID.randomUUID().toString();
-        ApplicantToJmEvent event = new ApplicantToJmEvent(
-                correlationId,
-                request.country(),
-                request.skills()
-        );
-
-        genericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
         return service.update(id, request);
     }
 
@@ -67,12 +59,6 @@ public class ApplicantController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) {
         service.delete(id);
-    }
-
-    @DeleteMapping("/{id}/field/{fieldName}")
-    @ResponseStatus(HttpStatus.OK)
-    public ApplicantDTO deleteProfileByField(@PathVariable String id, @PathVariable String fieldName){
-        return service.deleteProfileByField(id, fieldName);
     }
 
     //WORKED
@@ -123,4 +109,24 @@ public class ApplicantController {
         return ResponseEntity.ok(result);
     }
 
+    @PutMapping("/{applicantId}/resumes")
+    public ResumeDTO updateResume(@PathVariable String applicantId, @RequestBody ResumeUpdateRequest request){
+
+        return service.updateResume(applicantId, request);
+    }
+
+    @GetMapping("/{applicantId}/resumes")
+    public ResumeDTO getResume(@PathVariable String applicantId){
+        return service.getResume(applicantId);
+    }
+
+    @DeleteMapping("/{applicantId}/resumes")
+    public void deleteResume(@PathVariable String applicantId){
+        service.deleteResume(applicantId);
+    }
+
+    @GetMapping("/resumes")
+    public List<ResumeDTO> getAllResumes(){
+        return service.getAllResumes();
+    }
 }

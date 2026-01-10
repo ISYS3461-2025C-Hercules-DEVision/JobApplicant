@@ -13,13 +13,20 @@ import java.util.List;
 @NoArgsConstructor
 public class ApplicantToJmEvent extends DtoWithProcessId {
 
+    private String applicantId;
+    private String fullName;
     private String country;
     private List<String> skills;
+    private Boolean employmentStatus;
 
-    public ApplicantToJmEvent(String correlationId, String country, List<String> skills){
+
+    public ApplicantToJmEvent(String correlationId,String applicantId, String fullName, String country, List<String> skills, Boolean employmentStatus){
         super(correlationId);
+        this.applicantId = applicantId;
+        this.fullName = fullName;
         this.country = country;
         this.skills = skills;
+        this.employmentStatus = employmentStatus;
     }
 
 }
