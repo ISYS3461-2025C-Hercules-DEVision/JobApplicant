@@ -20,7 +20,7 @@ public class MediaPortfolio {
     @Id
     private String mediaId;
 
-    private String applicantId;
+    private String resumeId;
 
     private String fileUrl;      // Cloudinary secure_url
     private String publicId;     // Cloudinary public_id (VERY IMPORTANT)

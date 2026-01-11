@@ -72,29 +72,29 @@ public class ApplicantController {
 
     //WORKED
     //Media Portfolio
-    @PostMapping(value = "/{id}/portfolio", consumes = "multipart/form-data")
-    public MediaPortfolio uploadPortfolio(@PathVariable String id,
+    @PostMapping(value = "/{resumeId}/portfolio", consumes = "multipart/form-data")
+    public MediaPortfolio uploadPortfolio(@PathVariable String resumeId,
                                                           @RequestParam("file") MultipartFile file,
                                                           @RequestParam(value = "title", required = false) String title,
                                                           @RequestParam(value = "description", required = false) String description,
                                                           @RequestParam(value = "visibility", defaultValue = "PRIVATE") Visibility visibility){
         var request = new UploadMediaPortfolioRequest(file, title, description, visibility);
 
-        return service.uploadMediaPortfolio(id, request);
+        return service.uploadMediaPortfolio(resumeId, request);
 
     }
 
 
-    @GetMapping("/{id}/portfolio")
-    public List<MediaPortfolio> getPortfolio(@PathVariable String id,
+    @GetMapping("/{resumeId}/portfolio")
+    public List<MediaPortfolio> getPortfolio(@PathVariable String resumeId,
                                              @RequestParam(value = "visibility", required = false) Visibility visibility){
 
-        return service.getMediaPortfolio(id, visibility);
+        return service.getMediaPortfolio(resumeId, visibility);
     }
 
-    @DeleteMapping("/{id}/portfolio/{mediaId}")
-    public void deleteMediaPortfolio(@PathVariable String id, @PathVariable String mediaId){
-        service.deleteMediaPortfolio(id, mediaId);
+    @DeleteMapping("/{resumeId}/portfolio/{mediaId}")
+    public void deleteMediaPortfolio(@PathVariable String resumeId, @PathVariable String mediaId){
+        service.deleteMediaPortfolio(resumeId, mediaId);
     }
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<ApplicantDTO> deactivateApplicant(@PathVariable("id") String id) {

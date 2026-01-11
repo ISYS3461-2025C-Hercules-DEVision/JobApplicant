@@ -1,7 +1,7 @@
 import {useState, useEffect} from "react";
 import {profileService} from "../services/profileService.js";
 
-export const useMediaPortfolio = (applicantId) => {
+export const useMediaPortfolio = (resumeId) => {
     const [mediaItems, setMediaItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -9,25 +9,36 @@ export const useMediaPortfolio = (applicantId) => {
 
     //Fetch portfolio
     useEffect(() => {
-        if (!applicantId) return;
-        (async () => {
+        // If no resumeId yet → keep loading, don't error yet
+        if (resumeId === undefined || resumeId === null) {
+            return; // wait for resumeId to arrive
+        }
+
+        const fetchMedia = async () => {
+            setLoading(true);
+            setError(null);
+
             try {
-                const data = await profileService.getMediaPortfolio(applicantId);
-                setMediaItems(data);
+                const data = await profileService.getMediaPortfolio(resumeId);
+                setMediaItems(Array.isArray(data) ? data : []);
             } catch (err) {
-                setError(err);
+                console.error("Media portfolio fetch error:", err);
+                setError(err.message || "Failed to load media portfolio");
+                setMediaItems([]);
             } finally {
                 setLoading(false);
             }
-        })();
-    }, [applicantId]);
+        };
+
+        fetchMedia();
+    }, [resumeId]);
 
     //Upload new media item
     const uploadMedia = async (file, title = "", description = "", visibility = "PRIVATE") => {
         setUploading(true);
         try {
             const newMedia = await profileService.uploadMediaPortfolio(
-                applicantId,
+                resumeId,
                 file,
                 title,
                 description,
@@ -45,7 +56,7 @@ export const useMediaPortfolio = (applicantId) => {
 
     const deleteMedia = async (mediaId) => {
         try{
-            await profileService.deleteMedia(applicantId, mediaId);
+            await profileService.deleteMedia(resumeId, mediaId);
             setMediaItems(mediaItems.filter(item => item.mediaId !== mediaId));
         } catch (err) {
             setError(err);

@@ -150,15 +150,15 @@ public class ApplicantServiceImpl implements ApplicantService {
     }
 
     @Override
-    public MediaPortfolio uploadMediaPortfolio(String applicantId, UploadMediaPortfolioRequest request){
-         repository.findById(applicantId)
+    public MediaPortfolio uploadMediaPortfolio(String resumeId, UploadMediaPortfolioRequest request){
+         resumeRepository.findById(resumeId)
                  .filter(x -> x.getDeletedAt() == null)
-                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
 
         try{
             return imageService.uploadMediaPortfolio(
                     request.file(),
-                    applicantId,
+                    resumeId,
                     request.title(),
                     request.description(),
                     request.visibility() != null ? request.visibility() : Visibility.PRIVATE
@@ -170,32 +170,31 @@ public class ApplicantServiceImpl implements ApplicantService {
     }
 
     @Override
-    public List<MediaPortfolio> getMediaPortfolio(String applicantId, Visibility visibility) {
-        repository.findById(applicantId)
-                .filter(x -> x.getDeletedAt() == null)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+    public List<MediaPortfolio> getMediaPortfolio(String resumeId, Visibility visibility) {
+        resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
 
             if (visibility == null) {
-                return mediaPortfolioRepository.findByApplicantId(applicantId);
+                return mediaPortfolioRepository.findByResumeId(resumeId);
             }
-            return mediaPortfolioRepository.findByApplicantIdAndVisibility(applicantId, visibility);
+            return mediaPortfolioRepository.findByResumeIdAndVisibility(resumeId, visibility);
     }
 
     @Override
-    public void deleteMediaPortfolio(String applicantId, String mediaId){
-        repository.findById(applicantId)
+    public void deleteMediaPortfolio(String resumeId, String mediaId){
+        resumeRepository.findById(resumeId)
                 .filter(x -> x.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
         MediaPortfolio mediaPortfolio = mediaPortfolioRepository.findById(mediaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media not found"));
 
-        if(!mediaPortfolio.getApplicantId().equals(applicantId)){
+        if(!mediaPortfolio.getResumeId().equals(resumeId)){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own portfolio");
         }
 
         try{
-            imageService.deleteMedia(mediaId, applicantId);
+            imageService.deleteMedia(mediaId, resumeId);
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete media from storage");
         }

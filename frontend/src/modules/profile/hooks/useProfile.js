@@ -8,6 +8,7 @@ export const useProfile = (applicantId) => {
 
     console.log('Fetching for ID: ', applicantId);
 
+
     useEffect(() => {
         // Reset state when applicantId changes
         setProfile(null);

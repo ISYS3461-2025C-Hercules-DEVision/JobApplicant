@@ -11,9 +11,9 @@ public interface ImageService {
 
     public String uploadProfileImage(MultipartFile file, String applicantId) throws Exception;
 
-    public MediaPortfolio uploadMediaPortfolio(MultipartFile file, String applicantId, String title, String description, Visibility visibility) throws Exception;
+    public MediaPortfolio uploadMediaPortfolio(MultipartFile file, String resumeId, String title, String description, Visibility visibility) throws Exception;
 
     public MediaType determineMediaType(String resourceType);
 
-    public void deleteMedia(String mediaId, String applicantId) throws IOException;
+    public void deleteMedia(String mediaId, String resumeId) throws IOException;
 }

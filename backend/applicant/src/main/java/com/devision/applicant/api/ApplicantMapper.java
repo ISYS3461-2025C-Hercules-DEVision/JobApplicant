@@ -48,6 +48,7 @@ public class ApplicantMapper {
     public static ApplicantDTO toDto(Applicant a) {
         return new ApplicantDTO(
                 a.getApplicantId(),
+                a.getResumeId(),
                 a.getFullName(),
                 a.getEmail(),
                 a.getCountry(),

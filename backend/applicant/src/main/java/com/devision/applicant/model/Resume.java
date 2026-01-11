@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,4 +38,5 @@ public class Resume {
     private BigDecimal minSalary;
     private BigDecimal maxSalary;
 
+    private LocalDateTime deletedAt;
 }

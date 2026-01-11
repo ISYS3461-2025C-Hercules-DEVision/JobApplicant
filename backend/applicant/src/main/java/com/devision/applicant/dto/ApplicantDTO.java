@@ -9,6 +9,7 @@ import java.util.List;
 
 public record ApplicantDTO(
         String applicantId,
+        String resumeId,
         String fullName,
         String email,
         String country,
