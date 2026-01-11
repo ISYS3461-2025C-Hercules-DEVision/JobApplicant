@@ -15,7 +15,7 @@ public class ApplicantProfileUpdateProducer {
 
     public ApplicantProfileUpdateProducer(
             KafkaTemplate<String, Object> kafkaTemplate,
-            @Value("${kafka.topics.applicant-profile-updates:applicant-profile-updates}") String topic) {
+            @Value("${kafka.topics.applicant-profile-updates:subscription-salary-update}") String topic) {
         this.kafkaTemplate = kafkaTemplate;
         this.topic = topic;
     }
