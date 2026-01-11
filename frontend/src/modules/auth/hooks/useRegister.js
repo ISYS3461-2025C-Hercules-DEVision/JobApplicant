@@ -12,8 +12,8 @@ const initial = {
   password: "",
   passwordConfirmation: "",
   phoneNumber: "",
-  countryIso: "",  // NEW
-  stateIso: "",    // NEW
+  countryIso: "",
+  stateIso: "",   
   streetAddress: "",
 };
 
