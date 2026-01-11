@@ -5,7 +5,7 @@ import {
   yearNumberOrNull,
   gpaNumberOrNull_0_100,
   visibilitySchema,
-} from "./common/primitives";
+} from "./common/index";
 
 // ---------- Embedded items ----------
 export const resumeEducationItemSchema = z

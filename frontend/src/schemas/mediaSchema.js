@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { trimmedString, visibilitySchema } from "./common/primitives";
+import { trimmedString, visibilitySchema } from "./common/index";
 
 const MAX_FILE_MB = 25;
 const MAX_FILE_SIZE = MAX_FILE_MB * 1024 * 1024;

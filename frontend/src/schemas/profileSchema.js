@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { emailSchema, phoneSchema, trimmedString, yearNumberOrNull, gpaNumberOrNull_0_100 } from "./common/primitives";
+import { emailSchema, phoneSchema, trimmedString, yearNumberOrNull, gpaNumberOrNull_0_100 } from "./common/index";
 
 // Skills
 export const updateSkillsSchema = z.object({
