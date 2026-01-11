@@ -42,6 +42,12 @@ jobs:
           - name: frontend
             folder: frontend
             type: node
+          - name: subscription
+            folder: backend/subscription
+            type: java
+          - name: application
+            folder: backend/application
+            type: java
 
     steps:
       - name: Checkout
@@ -132,6 +138,20 @@ jobs:
             env_secret: ENV_APPLICANT
             target_host: service02
 
+          - folder: backend/subscription
+            repo: subscription
+            container_name: subscription-service
+            host_port: "8086:8086"
+            env_secret: ENV_SUBSCRIPTION
+            target_host: service03
+
+          - folder: backend/application
+            repo: application
+            container_name: application-service
+            host_port: "8084:8084"
+            env_secret: ENV_APPLICATION
+            target_host: service03
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -188,14 +208,19 @@ jobs:
           echo "✅ Done: ${IMAGE_URI} pushed"
 
       # -----------------------------
-      # SSH Setup (3 different keys)
+      # SSH Setup
+      # - gateway uses key_gateway
+      # - service01 uses key_service01 (ProxyJump gateway)
+      # - service02 uses key_service02 (ProxyJump gateway)
+      # - service03 uses key_gateway (ProxyJump gateway)
       # -----------------------------
-      - name: Setup SSH keys (gateway + service01 + service02)
+      - name: Setup SSH keys (gateway + service01 + service02 + service03)
         env:
           SSH_USER: ${{ secrets.EC2_SSH_USER }}
           GATEWAY_IP: ${{ secrets.EC2_GATEWAY_PUBLIC_IP }}
           SERVICE01_IP: ${{ secrets.EC2_SERVICE01_PRIVATE_IP }}
           SERVICE02_IP: ${{ secrets.EC2_SERVICE02_PRIVATE_IP }}
+          SERVICE03_IP: ${{ secrets.EC2_SERVICE03_PRIVATE_IP }}
 
           KEY_GATEWAY_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_GATEWAY_B64 }}
           KEY_SERVICE01_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_SERVICE01_B64 }}
@@ -204,7 +229,7 @@ jobs:
           set -euo pipefail
           mkdir -p ~/.ssh
 
-          echo "$KEY_GATEWAY_B64"  | base64 -d | tr -d '\r' > ~/.ssh/key_gateway
+          echo "$KEY_GATEWAY_B64"   | base64 -d | tr -d '\r' > ~/.ssh/key_gateway
           echo "$KEY_SERVICE01_B64" | base64 -d | tr -d '\r' > ~/.ssh/key_service01
           echo "$KEY_SERVICE02_B64" | base64 -d | tr -d '\r' > ~/.ssh/key_service02
 
@@ -233,6 +258,14 @@ jobs:
             IdentitiesOnly yes
             ProxyJump gateway
             StrictHostKeyChecking no
+
+          Host service03
+            HostName ${SERVICE03_IP}
+            User ${SSH_USER}
+            IdentityFile ~/.ssh/key_gateway
+            IdentitiesOnly yes
+            ProxyJump gateway
+            StrictHostKeyChecking no
           CFG
 
           chmod 600 ~/.ssh/config
@@ -251,6 +284,11 @@ jobs:
         run: |
           set -euo pipefail
           ssh service02 "echo SERVICE02_OK && hostname"
+
+      - name: Test SSH to service03
+        run: |
+          set -euo pipefail
+          ssh service03 "echo SERVICE03_OK && hostname"
 
       # -----------------------------
       # Deploy backend to EC2
@@ -274,6 +312,8 @@ jobs:
             SSH_HOST="service01"
           elif [ "$TARGET_HOST" = "service02" ]; then
             SSH_HOST="service02"
+          elif [ "$TARGET_HOST" = "service03" ]; then
+            SSH_HOST="service03"
           else
             echo "Unknown TARGET_HOST=$TARGET_HOST"
             exit 1
