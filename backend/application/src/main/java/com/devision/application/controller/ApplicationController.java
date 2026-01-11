@@ -25,6 +25,12 @@ public class ApplicationController {
         return applicationService.getApplicationsByApplicantId(applicantId);
     }
 
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public List<ApplicationDTO> getAllApplications() {
+        return applicationService.getAllApplications();
+    }
+
     @GetMapping("/{applicationId}")
     @ResponseStatus(HttpStatus.OK)
     public ApplicationDTO getApplicationById(@PathVariable String applicationId){
