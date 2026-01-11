@@ -10,17 +10,92 @@ function formatDate(iso) {
 }
 
 function buildTimeline(status) {
-    // Timeline based on your enum
     if (!status) return ["Application Submitted"];
-
     if (status === "PENDING") return ["Application Submitted"];
     if (status === "VIEWED") return ["Application Submitted", "Viewed by Recruiter"];
     if (status === "ACCEPTED")
         return ["Application Submitted", "Viewed by Recruiter", "Accepted 🎉"];
     if (status === "REJECTED")
         return ["Application Submitted", "Viewed by Recruiter", "Rejected"];
-
     return ["Application Submitted", status];
+}
+
+// ✅ Cloudinary: force download mode (good for download, not for preview)
+function toDownloadUrl(url) {
+    if (!url) return url;
+    if (url.includes("/upload/fl_attachment/")) return url;
+    return url.replace("/upload/", "/upload/fl_attachment/");
+}
+
+/**
+ * ✅ Open PDF in a new tab (PREVIEW) even if URL has no .pdf extension
+ * - Fetch file as blob
+ * - Force blob MIME type to application/pdf
+ * - Open blob URL in a new tab
+ */
+async function openPdf(url) {
+    if (!url) return;
+
+    try {
+        const res = await fetch(url, { method: "GET" });
+
+        if (!res.ok) {
+            throw new Error(`Open failed (${res.status})`);
+        }
+
+        const blob = await res.blob();
+
+        // ✅ Force correct PDF MIME
+        const pdfBlob =
+            blob.type === "application/pdf"
+                ? blob
+                : new Blob([blob], { type: "application/pdf" });
+
+        const blobUrl = window.URL.createObjectURL(pdfBlob);
+
+        // ✅ open in new tab
+        window.open(blobUrl, "_blank", "noopener,noreferrer");
+
+        // ✅ give the tab time to load before revoking
+        setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000);
+    } catch (err) {
+        console.error("❌ openPdf failed:", err);
+        alert(err?.message || "Failed to open PDF");
+    }
+}
+
+/**
+ * ✅ Force download as a REAL .pdf filename in browser
+ * - Downloads the file via fetch
+ * - Creates a blob URL
+ * - Forces filename via <a download="">
+ */
+async function downloadPdf(url, filename = "cv.pdf") {
+    if (!url) return;
+
+    try {
+        const res = await fetch(url, { method: "GET" });
+
+        if (!res.ok) {
+            throw new Error(`Download failed (${res.status})`);
+        }
+
+        const blob = await res.blob();
+
+        const blobUrl = window.URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename; // ✅ force .pdf filename
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+        console.error("❌ downloadPdf failed:", err);
+        alert(err?.message || "Failed to download PDF");
+    }
 }
 
 function ApplicationDetailPanel({ application }) {
@@ -67,8 +142,7 @@ function ApplicationDetailPanel({ application }) {
 
                 {/* Status */}
                 <p className="mt-3 font-black uppercase">
-                    Status:{" "}
-                    <span className="underline">{statusLabel[status] || status}</span>
+                    Status: <span className="underline">{statusLabel[status] || status}</span>
                 </p>
 
                 {/* Action Buttons */}
@@ -101,34 +175,53 @@ function ApplicationDetailPanel({ application }) {
                         <p className="font-bold text-gray-600">No documents uploaded.</p>
                     ) : (
                         <div className="space-y-3">
-                            {docs.map((doc) => (
-                                <div
-                                    key={doc.fileId || doc.fileUrl}
-                                    className="border-4 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                                >
-                                    <p className="font-black uppercase">
-                                        {doc.fileType || "FILE"}{" "}
-                                        <span className="text-gray-600 font-semibold normal-case">
-                      ({doc.fileId?.slice?.(0, 8)})
-                    </span>
-                                    </p>
+                            {docs.map((doc) => {
+                                const displayId = doc.fileId?.slice?.(0, 8) || "file";
+                                const filename = `cv_${displayId}.pdf`;
 
-                                    <p className="text-sm font-bold mt-1">
-                                        Uploaded: {formatDate(doc.createdAt)}
-                                    </p>
+                                // ✅ Use "fl_attachment" version for downloading
+                                const downloadUrl = toDownloadUrl(doc.fileUrl);
 
-                                    {doc.fileUrl && (
-                                        <a
-                                            href={doc.fileUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-block mt-2 font-black uppercase underline"
-                                        >
-                                            Open / Download
-                                        </a>
-                                    )}
-                                </div>
-                            ))}
+                                return (
+                                    <div
+                                        key={doc.fileId || doc.fileUrl}
+                                        className="border-4 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                                    >
+                                        <p className="font-black uppercase">
+                                            {doc.fileType || "FILE"}{" "}
+                                            <span className="text-gray-600 font-semibold normal-case">
+                        ({displayId})
+                      </span>
+                                        </p>
+
+                                        <p className="text-sm font-bold mt-1">
+                                            Uploaded: {formatDate(doc.createdAt)}
+                                        </p>
+
+                                        {doc.fileUrl && (
+                                            <div className="flex gap-4 mt-3 flex-wrap">
+                                                {/* ✅ PDF Preview (opens a real PDF tab) */}
+                                                <button
+                                                    type="button"
+                                                    className="font-black uppercase underline"
+                                                    onClick={() => openPdf(doc.fileUrl)}
+                                                >
+                                                    Open
+                                                </button>
+
+                                                {/* ✅ Download as REAL .pdf filename */}
+                                                <button
+                                                    type="button"
+                                                    className="font-black uppercase underline"
+                                                    onClick={() => downloadPdf(downloadUrl, filename)}
+                                                >
+                                                    Download PDF
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </section>

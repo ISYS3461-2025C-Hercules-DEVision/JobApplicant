@@ -17,6 +17,7 @@ function JobListPanel({ onSelectJob, selectedJob }) {
         loading,
         error,
         page,
+        info,
         totalPages,
         setPage,
         filters,
@@ -87,6 +88,13 @@ function JobListPanel({ onSelectJob, selectedJob }) {
             {error && (
                 <div className="border-4 border-red-600 p-4 bg-red-50 text-red-800 font-black">
                     {error}
+                </div>
+            )}
+
+
+            {info && (
+                <div className="border-4 border-yellow-600 p-4 bg-yellow-50 text-yellow-900 font-black">
+                    {info}
                 </div>
             )}
 
