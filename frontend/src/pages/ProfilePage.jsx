@@ -3,15 +3,14 @@ import FooterSection from "../components/Footer/FooterSection";
 
 import ProfileHeader from "../modules/profile/ui/ProfileHeader";
 import AboutSection from "../modules/profile/ui/AboutSection";
-import ActivitySection from "../modules/profile/ui/MediaPortfolioSection.jsx";
 import ExperienceSection from "../modules/profile/ui/ExperienceSection";
 import EducationSection from "../modules/profile/ui/EducationSection";
 import ContactSection from "../modules/profile/ui/ContactSection";
 import SkillsSection from "../modules/profile/ui/SkillsSection";
 import ProfileNavBar from "../components/Navbar/ProfileNavBar.jsx";
 import {useSelector} from "react-redux";
-import MediaPortfolioSection from "../modules/profile/ui/MediaPortfolioSection.jsx";
 import {useResume} from "../modules/profile/hooks/useResume.js";
+import ActivitySection from "../modules/profile/ui/ActivitySection.jsx";
 
 function ProfilePage() {
     const {token, user} = useSelector((state) => state.auth);
@@ -34,7 +33,7 @@ function ProfilePage() {
         <div className="lg:col-span-2 space-y-8">
           <ProfileHeader/>
           <AboutSection/>
-          <MediaPortfolioSection />
+          <ActivitySection />
           <ExperienceSection />
           <EducationSection/>
         </div>

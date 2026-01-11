@@ -6,9 +6,9 @@ import {useSelector} from "react-redux";
 function ActivitySection() {
   // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
   const {user} = useSelector((state) => state.auth);
-  const applicantId = user?.applicantId;
+  const resumeId = user?.resumeId;
 
-  const {mediaItems, loading, error, uploading, uploadMedia, deleteMedia} = useMediaPortfolio(applicantId);
+  const {mediaItems, loading, error, uploading, uploadMedia, deleteMedia} = useMediaPortfolio(resumeId);
 
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
