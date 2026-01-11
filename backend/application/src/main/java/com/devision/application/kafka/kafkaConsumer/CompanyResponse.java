@@ -3,6 +3,8 @@ package com.devision.application.kafka.kafkaConsumer;
 import com.devision.application.config.KafkaConstant;
 import com.devision.application.dto.CompanyResponseDTO;
 import com.devision.application.kafka.kafkaProducer.KafkaGenericProducer;
+
+import com.devision.application.model.Application;
 import com.devision.application.service.ApplicationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,16 +26,17 @@ public class CompanyResponse {
 
 
     @KafkaListener(
-            topics = KafkaConstant.APPLICATION_COMPANY_TOPIC,
+            topics = KafkaConstant.APPLICATION_COMPANY_TOPIC_RESPONSE,
             groupId = KafkaConstant.APPLICATION_GROUP_ID,
             containerFactory = "defaultKafkaListenerContainerFactory"
     )
     public void consume(String message) throws JsonProcessingException {
         System.out.println("Received message from AUTH: " + message);
-
         CompanyResponseDTO companyResponseDTO = objectMapper.readValue(message, CompanyResponseDTO.class);
         String jobPostId= companyResponseDTO.jobPostId();
         String status= companyResponseDTO.status();
         String feedback= companyResponseDTO.feedback();
+        String applicationId = companyResponseDTO.applicationId();
+        applicationService.updateApplicationStatus(jobPostId,status,feedback,applicationId);
     }
 }

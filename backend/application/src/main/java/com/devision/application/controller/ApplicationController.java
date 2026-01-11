@@ -1,9 +1,6 @@
 package com.devision.application.controller;
 
-import com.devision.application.dto.ApplicationCreateRequest;
-import com.devision.application.dto.ApplicationDTO;
-import com.devision.application.dto.CompanyApplicationViewDTO;
-import com.devision.application.dto.UpdateStatusRequest;
+import com.devision.application.dto.*;
 import com.devision.application.service.ApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +46,30 @@ public class ApplicationController {
             @PathVariable String jobPostId
     ) {
         return applicationService.getApplicationsForJobPost(companyId, jobPostId);
+    }
+
+    @GetMapping("/job-posts/{jobPostId}/applied")
+    @ResponseStatus(HttpStatus.OK)
+    public List<AppliedApplicationDTO> getAppliedApplications(@PathVariable String jobPostId) {
+        return applicationService.appliedApplications(jobPostId);
+    }
+    @PatchMapping("/job-posts/{jobPostId}/applications/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateApplicationStatus(
+            @PathVariable String jobPostId,
+            @Valid @RequestBody UpdateApplicationStatusRequest req
+    ) {
+        applicationService.updateApplicationStatus(
+                jobPostId,
+                req.newStatus(),
+                req.feedback(),
+                req.applicationId()
+        );
+    }
+    @DeleteMapping("/{applicationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteApplication(@PathVariable String applicationId) {
+        applicationService.deleteApplication(applicationId);
     }
 
 }
