@@ -1,5 +1,5 @@
 import {useState, useEffect} from "react";
-import {profileService} from "../services/profileService.js";
+import {resumeService} from "../services/resumeService.js";
 
 export const useMediaPortfolio = (resumeId) => {
     const [mediaItems, setMediaItems] = useState([]);
@@ -19,7 +19,7 @@ export const useMediaPortfolio = (resumeId) => {
             setError(null);
 
             try {
-                const data = await profileService.getMediaPortfolio(resumeId);
+                const data = await resumeService.getMediaPortfolio(resumeId);
                 setMediaItems(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.error("Media portfolio fetch error:", err);
@@ -37,7 +37,7 @@ export const useMediaPortfolio = (resumeId) => {
     const uploadMedia = async (file, title = "", description = "", visibility = "PRIVATE") => {
         setUploading(true);
         try {
-            const newMedia = await profileService.uploadMediaPortfolio(
+            const newMedia = await resumeService.uploadMediaPortfolio(
                 resumeId,
                 file,
                 title,
@@ -56,7 +56,7 @@ export const useMediaPortfolio = (resumeId) => {
 
     const deleteMedia = async (mediaId) => {
         try{
-            await profileService.deleteMedia(resumeId, mediaId);
+            await resumeService.deleteMedia(resumeId, mediaId);
             setMediaItems(mediaItems.filter(item => item.mediaId !== mediaId));
         } catch (err) {
             setError(err);

@@ -2,7 +2,7 @@
 import { useResume } from "../hooks/useResume";
 import { useSelector } from "react-redux";
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 
 function ExperienceSection() {
   const { user } = useSelector((state) => state.auth);
@@ -15,17 +15,13 @@ function ExperienceSection() {
   const [saving, setSaving] = useState(false);
 
   // Sync local state when resume data loads
-  useState(() => {
+  useEffect(() => {
     if (resume?.experience) {
       setLocalExperiences(
-          resume.experience.map(exp => ({
-            workExpId: exp.workExpId || null,
+          resume.experience.map((exp, index) => ({
+            ...exp,
+            experienceId: exp.experienceId || `temp-${index}`, // fallback temp ID for React key
             applicantId: exp.applicantId || applicantId,
-            jobTitle: exp.jobTitle || "",
-            companyName: exp.companyName || "",
-            fromYear: exp.fromYear || "",
-            toYear: exp.toYear || "",
-            description: exp.description || "",
           }))
       );
     }

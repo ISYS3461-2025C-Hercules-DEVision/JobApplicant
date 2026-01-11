@@ -25,9 +25,11 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -62,6 +64,14 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .updatedAt(Instant.now())
                 .build();
 
+        MediaPortfolio emptyPortfolio = MediaPortfolio.builder()
+                .mediaId(UUID.randomUUID().toString())
+                .resumeId(resume.getResumeId())  // ← foreign key to Resume
+                .createdAt(Instant.now())
+                .visibility(Visibility.PRIVATE)     // default visibility
+                .build();
+
+        resume.setMediaPortfolios(List.of(emptyPortfolio));
         resumeRepository.save(resume);
 
         saved.setResumeId(resume.getResumeId());
@@ -171,13 +181,22 @@ public class ApplicantServiceImpl implements ApplicantService {
 
     @Override
     public List<MediaPortfolio> getMediaPortfolio(String resumeId, Visibility visibility) {
-        resumeRepository.findById(resumeId)
+        Resume resume = resumeRepository.findById(resumeId)
+                .filter(x -> x.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
 
-            if (visibility == null) {
-                return mediaPortfolioRepository.findByResumeId(resumeId);
-            }
-            return mediaPortfolioRepository.findByResumeIdAndVisibility(resumeId, visibility);
+        List<MediaPortfolio> portfolios = resume.getMediaPortfolios();
+        if (portfolios == null) {
+            return Collections.emptyList();
+        }
+
+        if (visibility == null) {
+            return portfolios;
+        }
+
+        return portfolios.stream()
+                .filter(p -> p.getVisibility() == visibility)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -301,5 +320,7 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .map(ResumeMapper::toDto)
                 .toList();
     }
+
+
 
 }

@@ -36,4 +36,6 @@ public interface ApplicantService {
     void deleteResume(String applicantId);
 
     List<ResumeDTO> getAllResumes();
+
+
 }

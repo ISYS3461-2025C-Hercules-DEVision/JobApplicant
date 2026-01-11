@@ -32,6 +32,7 @@ public class Resume {
     private List<String> skills;
     private List<String> certifications;
 
+    @Builder.Default
     private List<MediaPortfolio> mediaPortfolios = new ArrayList<>();
 
     private Instant updatedAt;
