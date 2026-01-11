@@ -1,9 +1,12 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useRegister } from "../hooks/useRegister";
+import {authSuccess} from "../auth/authSlice.js";
+import {useDispatch} from "react-redux";
 
 export default function RegisterForm() {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const {
         formData,
         step,
@@ -14,7 +17,10 @@ export default function RegisterForm() {
         handleSubmit,
         signupWithGoogle,
     } = useRegister({
-        onSuccess: () => navigate("/login"),
+        onSuccess: (data) => {
+            dispatch(authSuccess(data));
+            navigate("/updateResume", {replace: true});
+        },
     });
 
     return (
