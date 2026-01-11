@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { authService } from "../services/authService.js";
 import { authStart, authSuccess, authFail } from "../auth/authSlice.js";
 
-import { registerSchema, zodToFieldErrors } from "@/validators/registerValidator";
-import { getCountries, getStatesByCountry } from "@/utils/location";
+import { registerSchema, zodToFieldErrors } from "../../../schemas/registerSchema";
+import { getCountries, getStatesByCountry } from "../../../utils/location";
 
 const initial = {
   fullName: "",
