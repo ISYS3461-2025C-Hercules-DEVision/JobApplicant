@@ -1,4 +1,4 @@
-import { uploadPdf } from "./fileService";
+import { uploadPdf } from "./FileService.js";
 import { createApplication } from "./ApplyService.js";
 
 /**
