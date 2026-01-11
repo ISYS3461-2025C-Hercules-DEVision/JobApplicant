@@ -2,6 +2,7 @@ package com.devision.application.controller;
 
 import com.devision.application.dto.ApplicationCreateRequest;
 import com.devision.application.dto.ApplicationDTO;
+import com.devision.application.dto.CompanyApplicationViewDTO;
 import com.devision.application.dto.UpdateStatusRequest;
 import com.devision.application.service.ApplicationService;
 import jakarta.validation.Valid;
@@ -42,10 +43,12 @@ public class ApplicationController {
     public ApplicationDTO updateStatus(@PathVariable String applicationId, @Valid @RequestBody UpdateStatusRequest request){
         return applicationService.updateStatus(applicationId,request.status());
     }
-
-    @DeleteMapping("/{applicationId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void archiveApplication(@PathVariable String applicationId){
-        applicationService.archive(applicationId);
+    @GetMapping("/{companyId}/job-posts/{jobPostId}/applications")
+    public List<CompanyApplicationViewDTO> getApplicantsForJobPost(
+            @PathVariable String companyId,
+            @PathVariable String jobPostId
+    ) {
+        return applicationService.getApplicationsForJobPost(companyId, jobPostId);
     }
+
 }
