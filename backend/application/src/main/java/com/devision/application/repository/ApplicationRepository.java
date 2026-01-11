@@ -14,5 +14,7 @@ public interface ApplicationRepository extends MongoRepository<Application, Stri
 
     List<Application> findByCompanyIdAndStatus(String companyId, ApplicationStatus status);
 
+    Application findByJobPostId(String jobPostId);
+
     List<Application> findByCompanyIdAndJobPostIdOrderBySubmissionDateDesc(String companyId, String jobPostId);
 }
