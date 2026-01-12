@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,8 +71,8 @@ public class SearchProfileServiceImpl implements SearchProfileService {
                 }
 
                 // Salary defaults
-                Integer minSalary = request.minSalary == null ? 0 : Math.max(0, request.minSalary);
-                Integer maxSalary = request.maxSalary; // null means no upper limit
+                BigDecimal minSalary = request.minSalary == null ? BigDecimal.ZERO : request.minSalary.max(BigDecimal.ZERO);
+                BigDecimal maxSalary = request.maxSalary; // null means no upper limit
 
                 // Parse job titles from semicolon-separated string
                 List<String> titles = Optional.ofNullable(request.jobTitles)
@@ -94,8 +95,8 @@ public class SearchProfileServiceImpl implements SearchProfileService {
                 profile.setMaxSalary(maxSalary);
                 profile.setDesiredJobTitles(titles);
 
-                Integer previousMin = existingOpt.map(SearchProfile::getMinSalary).orElse(null);
-                Integer previousMax = existingOpt.map(SearchProfile::getMaxSalary).orElse(null);
+                BigDecimal previousMin = existingOpt.map(SearchProfile::getMinSalary).orElse(null);
+                BigDecimal previousMax = existingOpt.map(SearchProfile::getMaxSalary).orElse(null);
 
                 boolean salaryChanged = !Objects.equals(previousMin, profile.getMinSalary())
                                 || !Objects.equals(previousMax, profile.getMaxSalary());

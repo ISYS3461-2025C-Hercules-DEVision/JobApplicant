@@ -20,6 +20,7 @@ public class MediaPortfolio {
     @Id
     private String mediaId;
 
+
     private String applicantId;
 
     private String fileUrl;      // Cloudinary secure_url
