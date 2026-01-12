@@ -57,7 +57,6 @@ public class ApplicantServiceImpl implements ApplicantService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
         Applicant saved = repository.save(ApplicantMapper.toEntity(req));
-        log.info("Applicant saved: id={}", saved.getApplicantId());
 
         Resume resume = Resume.builder()
                 .resumeId(UUID.randomUUID().toString())
@@ -65,24 +64,11 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .updatedAt(Instant.now())
                 .build();
 
-        Resume savedResume = resumeRepository.save(resume);
-        log.info("Resume saved: resumeId={}", savedResume.getResumeId());
-
-        MediaPortfolio emptyPortfolio = MediaPortfolio.builder()
-                .mediaId(UUID.randomUUID().toString())
-                .resumeId(savedResume.getResumeId())  // ← foreign key to Resume
-                .createdAt(Instant.now())
-                .visibility(Visibility.PRIVATE)     // default visibility
-                .build();
-
-        MediaPortfolio savedPortfolio = mediaPortfolioRepository.save(emptyPortfolio);
-        log.info("Initial MediaPortfolio created: mediaId={}, resumeId={}",
-                emptyPortfolio.getMediaId(), savedPortfolio.getResumeId());
+        resumeRepository.save(resume);
 
         saved.setResumeId(resume.getResumeId());
 
         repository.save(saved);
-
         return ApplicantMapper.toDto(saved);
     }
 
@@ -187,22 +173,14 @@ public class ApplicantServiceImpl implements ApplicantService {
 
     @Override
     public List<MediaPortfolio> getMediaPortfolio(String resumeId, Visibility visibility) {
-        Resume resume = resumeRepository.findById(resumeId)
+        resumeRepository.findById(resumeId)
                 .filter(x -> x.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
 
-        List<MediaPortfolio> portfolios = mediaPortfolioRepository.findByResumeId(resumeId);
-        if (portfolios == null) {
-            return Collections.emptyList();
-        }
-
         if (visibility == null) {
-            return portfolios;
+            return mediaPortfolioRepository.findByResumeId(resumeId);
         }
-
-        return portfolios.stream()
-                .filter(p -> p.getVisibility() == visibility)
-                .collect(Collectors.toList());
+        return mediaPortfolioRepository.findByResumeIdAndVisibility(resumeId, visibility);
     }
 
     @Override
