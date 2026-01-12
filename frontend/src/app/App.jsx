@@ -16,7 +16,7 @@ import {
 } from "../pages";
 
 import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
-import AdminApplication from "../modules/admin/ui/AdminPages/AdminApplication.jsx";
+import ApplicationTable from "../modules/admin/ui/AdminPages/ApplicationTable.jsx";
 import CompanyTable from "../modules/admin/ui/AdminPages/CompanyTable.jsx";
 import ApplicantTable from "../modules/admin/ui/AdminPages/ApplicantTable.jsx";
 import JobPostTable from "../modules/admin/ui/AdminPages/JobPostTable.jsx";
@@ -26,7 +26,7 @@ import UserProtectedRoute from "../routes/UserProtectedRoute.jsx";
 import AdminProtectedRoute from "../routes/AdminProtectedRoute.jsx";
 import AccountBannedPage from "../modules/auth/ui/AccountBannedPage.jsx";
 import AuthInitializer from "../components/AuthInitializer.jsx";
-import UpdateResumePage from "../pages/updateResumePage.jsx";
+// import UpdateResumePage from "../pages/updateResumePage.jsx";
 
 function App() {
     return (
@@ -36,7 +36,7 @@ function App() {
 
             <Routes>
                 <Route path="/applications" element={<ApplicationPage />} />
-                <Route path="/updateResume" element={<UpdateResumePage />} />
+                {/*<Route path="/updateResume" element={<UpdateResumePage />} />*/}
                 {/* Public routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/BannedAccount" element={<AccountBannedPage/>}/>
@@ -91,7 +91,7 @@ function App() {
                     <Route index element={<ApplicantTable />} />
                     <Route path="adminApplicants" element={<ApplicantTable />} />
                     <Route path="adminCompanies" element={<CompanyTable />} />
-                    <Route path="adminApplications" element={<AdminApplication />} />
+                    <Route path="adminApplications" element={<ApplicationTable   />} />
                     <Route path="adminJobs" element={<JobPostTable />} />
                 </Route>
 

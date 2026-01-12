@@ -15,7 +15,8 @@ spring:
         add-to-simple-url-handler-mapping: true
         corsConfigurations:
           "[/**]":
-            allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
+            allowedOriginPatterns: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
+
             allowedMethods:
               - GET
               - POST

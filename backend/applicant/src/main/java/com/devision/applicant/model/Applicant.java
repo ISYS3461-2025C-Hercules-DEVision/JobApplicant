@@ -70,7 +70,7 @@ public class Applicant {
 //    private List<WorkExperience> experiences = new ArrayList<>();
 
 //    private List<String> skills = new ArrayList<>();
-//    private List<MediaPortfolio> mediaPortfolios = new ArrayList<>();
+    private List<MediaPortfolio> mediaPortfolios = new ArrayList<>();
 
     @Builder.Default
     @Field(name = "isResumeUpdated")

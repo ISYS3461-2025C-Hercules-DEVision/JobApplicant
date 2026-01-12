@@ -4,7 +4,6 @@ import {useMediaPortfolio} from "../hooks/useMediaPortfolio.js";
 import {useSelector} from "react-redux";
 
 function ActivitySection() {
-  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
   const {user} = useSelector((state) => state.auth);
   const applicantId = user?.applicantId;
 
@@ -64,47 +63,47 @@ function ActivitySection() {
         <div className="space-y-8">
           {/*Upload Form*/}
           {showUploadForm &&(
-          <div className="border-2 border-dashed border-gray-400 rounded-lg p-6 bg-gray-50 space-y-4">
-            <h3 className="font-bold text-lg">Add New Media</h3>
-            <input type="file"
-            accept="image/*,video/*"
-            onChange={handleChange}
-            className="block w-full text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            <input type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Title"
-            className="w-full p-3 border-2 border-gray-300 rounded-md focus:border-blue-500"/>
+              <div className="border-2 border-dashed border-gray-400 rounded-lg p-6 bg-gray-50 space-y-4">
+                <h3 className="font-bold text-lg">Add New Media</h3>
+                <input type="file"
+                       accept="image/*,video/*"
+                       onChange={handleChange}
+                       className="block w-full text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                <input type="text"
+                       value={title}
+                       onChange={(e) => setTitle(e.target.value)}
+                       placeholder="Title"
+                       className="w-full p-3 border-2 border-gray-300 rounded-md focus:border-blue-500"/>
 
-            <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Description"
-            className="w-full p-3 border-2 border-gray-300 rounded-md focus:border-blue-500 h-32"/>
+                <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Description"
+                    className="w-full p-3 border-2 border-gray-300 rounded-md focus:border-blue-500 h-32"/>
 
-            <select
-              value={visibility}
-              onChange={(e) => setVisibility(e.target.value)}
-              className="w-full p-3 border-2 border-gray-300 rounded-md focus:border-blue-500"
-              >
-              <option value="PUBLIC">Public</option>
-              <option value="PRIVATE">Private</option>
-            </select>
+                <select
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value)}
+                    className="w-full p-3 border-2 border-gray-300 rounded-md focus:border-blue-500"
+                >
+                  <option value="PUBLIC">Public</option>
+                  <option value="PRIVATE">Private</option>
+                </select>
 
-            <div className="flex-gap-4">
-              <button onClick={handleUpload}
-                      disabled={uploading || !selectedFile}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-semibold">
-                {uploading ? 'Uploading...' : 'Upload Media'}
-              </button>
+                <div className="flex-gap-4">
+                  <button onClick={handleUpload}
+                          disabled={uploading || !selectedFile}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-semibold">
+                    {uploading ? 'Uploading...' : 'Upload Media'}
+                  </button>
 
-              <button onClick={handleCancel}
-                      className="px-6 py-3 bg-gray-300 rounded-md hover:bg-gray-400 font-semibold">
-                Cancel
-              </button>
-          </div>
-          </div>
+                  <button onClick={handleCancel}
+                          className="px-6 py-3 bg-gray-300 rounded-md hover:bg-gray-400 font-semibold">
+                    Cancel
+                  </button>
+                </div>
+              </div>
           )}
 
           {/*Portfolio Grid */}
@@ -118,8 +117,8 @@ function ActivitySection() {
                                  className="w-full h-64 object-cover"/>
                       ) : (
                           <img src={item.fileUrl}
-                          alt={item.title}
-                          className="w-full h-64 object-cover"/>
+                               alt={item.title}
+                               className="w-full h-64 object-cover"/>
                       )}
 
                       <div className="p-4 space-y-2">
@@ -129,8 +128,8 @@ function ActivitySection() {
 
                         {/*Delete button */}
                         <button
-                          onClick={() => handleDelete(item.mediaId)}
-                          className="mt-3 text-red-600 font-bold hover:underline">
+                            onClick={() => handleDelete(item.mediaId)}
+                            className="mt-3 text-red-600 font-bold hover:underline">
                           Delete
                         </button>
                       </div>

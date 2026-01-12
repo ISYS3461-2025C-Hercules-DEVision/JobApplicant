@@ -2,6 +2,7 @@ package com.devision.subscription.dto;
 
 import com.devision.subscription.enums.EmploymentStatus;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -13,16 +14,16 @@ public class SearchProfileResponse {
     public List<String> technicalTags;
     public List<EmploymentStatus> employmentStatuses;
     public String country;
-    public Integer minSalary;
-    public Integer maxSalary;
+    public BigDecimal minSalary;
+    public BigDecimal maxSalary;
     public List<String> desiredJobTitles;
 
     public SearchProfileResponse(String applicantId,
             List<String> technicalTags,
             List<EmploymentStatus> employmentStatuses,
             String country,
-            Integer minSalary,
-            Integer maxSalary,
+            BigDecimal minSalary,
+            BigDecimal maxSalary,
             List<String> desiredJobTitles) {
         this.applicantId = applicantId;
         this.technicalTags = technicalTags;

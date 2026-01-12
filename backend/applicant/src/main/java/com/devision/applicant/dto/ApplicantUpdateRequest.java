@@ -1,6 +1,7 @@
 package com.devision.applicant.dto;
 
 import com.devision.applicant.model.Education;
+import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.model.WorkExperience;
 import org.jetbrains.annotations.Nullable;
 import jakarta.validation.constraints.Size;
@@ -33,6 +34,9 @@ public record ApplicantUpdateRequest(
 
         @Nullable
         Boolean employmentStatus,
+
+        @Nullable
+        List<MediaPortfolio> mediaPortfolios,
 
         @Nullable
         Boolean activated,

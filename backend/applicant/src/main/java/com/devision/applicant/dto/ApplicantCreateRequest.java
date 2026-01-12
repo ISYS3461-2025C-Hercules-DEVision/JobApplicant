@@ -23,5 +23,6 @@ public record ApplicantCreateRequest(
         String streetAddress,
         String phoneNumber,
         String profileImageUrl,
+        List<MediaPortfolio> mediaPortfolios,
         Boolean employmentStatus
 ) {}
