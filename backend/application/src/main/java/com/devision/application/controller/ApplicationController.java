@@ -80,10 +80,4 @@ public class ApplicationController {
                 req.applicationId()
         );
     }
-    @DeleteMapping("/{applicationId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteApplication(@PathVariable String applicationId) {
-        applicationService.deleteApplication(applicationId);
-    }
-
 }

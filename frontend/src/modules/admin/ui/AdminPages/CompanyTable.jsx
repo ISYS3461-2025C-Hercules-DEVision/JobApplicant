@@ -22,7 +22,6 @@ export default function CompanyTable() {
       setLoading(true);
       setError(null);
       try {
-        // ✅ JM is 1-based paging
         const res = await adminService.getAllCompaniesFromJM({
           page: 1,
           size: 200,
