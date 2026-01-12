@@ -144,21 +144,21 @@ export async function request(
     const isFormData = body instanceof FormData;
     const authRoute = isAuthRoute(path);
 
-    // ✅ Only attach token for non-auth routes
+    //  Only attach token for non-auth routes
     const token = authRoute ? null : getAccessToken(auth);
 
-    // ✅ For auth routes, force-remove Authorization even if caller provided it
+    //  For auth routes, force-remove Authorization even if caller provided it
     const safeHeaders = authRoute ? stripAuthHeader(headers) : headers;
 
-    // ✅ Build headers explicitly so we can log them
+    //  Build headers explicitly so we can log them
     const finalHeaders = {
         ...(body && !isFormData ? { "Content-Type": "application/json" } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(safeHeaders || {}),
     };
 
-    // ✅ Show exactly what is being sent
-    console.log("✅ OUTGOING REQUEST", {
+    //  Show exactly what is being sent
+    console.log(" OUTGOING REQUEST", {
         url,
         path,
         method,
@@ -180,7 +180,7 @@ export async function request(
     });
 
     // ✅ Log raw response status + headers
-    console.log("✅ RESPONSE", {
+    console.log(" RESPONSE", {
         url,
         status: res.status,
         statusText: res.statusText,
@@ -216,7 +216,7 @@ export async function request(
     const data = await parseBody(res);
 
     if (!res.ok) {
-        console.log("❌ API ERROR BODY", {
+        console.log(" API ERROR BODY", {
             url,
             status: res.status,
             data,
