@@ -16,7 +16,7 @@ import {
 } from "../pages";
 
 import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
-import AdminApplication from "../modules/admin/ui/AdminPages/AdminApplication.jsx";
+import ApplicationTable from "../modules/admin/ui/AdminPages/ApplicationTable.jsx";
 import CompanyTable from "../modules/admin/ui/AdminPages/CompanyTable.jsx";
 import ApplicantTable from "../modules/admin/ui/AdminPages/ApplicantTable.jsx";
 import JobPostTable from "../modules/admin/ui/AdminPages/JobPostTable.jsx";
@@ -91,7 +91,7 @@ function App() {
                     <Route index element={<ApplicantTable />} />
                     <Route path="adminApplicants" element={<ApplicantTable />} />
                     <Route path="adminCompanies" element={<CompanyTable />} />
-                    <Route path="adminApplications" element={<AdminApplication />} />
+                    <Route path="adminApplications" element={<ApplicationTable   />} />
                     <Route path="adminJobs" element={<JobPostTable />} />
                 </Route>
 

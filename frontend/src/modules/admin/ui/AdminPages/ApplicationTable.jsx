@@ -20,18 +20,16 @@ function normalizeList(data) {
   return [];
 }
 
-export default function AdminApplication() {
+export default function ApplicationTable() {
   const [q, setQ] = useState("");
 
   const [applications, setApplications] = useState([]);
   const [applicants, setApplicants] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [companies, setCompanies] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 1) fetch data
+  // 1) fetch ONLY application-service + applicant-service (via gateway)
   useEffect(() => {
     let mounted = true;
 
@@ -40,24 +38,20 @@ export default function AdminApplication() {
       setError(null);
 
       try {
-        const [appsRes, applicantsRes, jobsRes, companiesRes] = await Promise.all([
-        adminService.getAllApplications(),
-        adminService.getAllApplicants(),
-        adminService.getAllJobsFromJM({ page: 0, size: 200 }),
-        adminService.getAllCompaniesFromJM({ page: 0, size: 200 }),
+        const [appsRes, applicantsRes] = await Promise.all([
+          adminService.getAllApplications(),
+          adminService.getAllApplicants(),
         ]);
 
         if (!mounted) return;
 
         setApplications(normalizeList(appsRes));
         setApplicants(normalizeList(applicantsRes));
-        setJobs(normalizeList(jobsRes));
-        setCompanies(normalizeList(companiesRes));
       } catch (err) {
         if (!mounted) return;
         setError(err?.message || "Failed to load admin applications");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     })();
 
@@ -66,63 +60,42 @@ export default function AdminApplication() {
     };
   }, []);
 
-  // 2) build maps
+  // 2) build applicant map
   const applicantNameById = useMemo(() => {
     const m = new Map();
     for (const a of applicants) {
       const id = a.applicantId ?? a.id;
-      const name = a.fullName ?? a.name;
+      const name = a.fullName ?? a.name ?? a.email; // fallback
       if (id) m.set(String(id), name || String(id));
     }
     return m;
   }, [applicants]);
-
-  const jobById = useMemo(() => {
-    const m = new Map();
-    for (const j of jobs) {
-      const id = j.jobId ?? j.id ?? j.jobPostId;
-      if (id) m.set(String(id), j);
-    }
-    return m;
-  }, [jobs]);
-
-  const companyById = useMemo(() => {
-    const m = new Map();
-    for (const c of companies) {
-      const id = c.companyId ?? c.id;
-      if (id) m.set(String(id), c);
-    }
-    return m;
-  }, [companies]);
 
   // 3) enrich + search
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase();
 
     const enriched = applications.map((app) => {
-      const applicationId = app.applicationId ?? app.id;
-      const applicantId = app.applicantId;
-      const jobPostId = app.jobPostId;
-      const companyId = app.companyId;
+      const applicationId = app.applicationId ?? app.id ?? "-";
+      const applicantId = app.applicantId ?? app.applicant?.id;
+
+      // If your application object doesn't store job title yet,
+      // show jobPostId as fallback (avoid calling JM here)
+      const jobTitle =
+        app.jobTitle ||
+        app.job?.title ||
+        (app.jobPostId ? `Job #${app.jobPostId}` : "-");
 
       const applicantName =
         applicantNameById.get(String(applicantId)) || String(applicantId || "-");
 
-      const job = jobById.get(String(jobPostId));
-      const jobTitle = job?.title || String(jobPostId || "-");
-
-      // optional: company name (nếu bạn muốn hiển thị sau)
-      const company = companyById.get(String(companyId));
-      const companyName = company?.companyName || company?.name || company?.company || "";
-
-      const submittedAt = formatInstant(app.submissionDate);
+      const submittedAt = formatInstant(app.submissionDate || app.createdAt);
       const status = String(app.status || "");
 
       return {
         id: String(applicationId),
         applicantName,
         jobTitle,
-        companyName,
         submittedAt,
         status,
         _raw: app,
@@ -136,12 +109,27 @@ export default function AdminApplication() {
         x.applicantName.toLowerCase().includes(s) ||
         x.jobTitle.toLowerCase().includes(s) ||
         x.status.toLowerCase().includes(s) ||
-        x.submittedAt.toLowerCase().includes(s) ||
-        (x.companyName || "").toLowerCase().includes(s)
+        x.submittedAt.toLowerCase().includes(s)
       );
     });
-  }, [q, applications, applicantNameById, jobById, companyById]);
+  }, [q, applications, applicantNameById]);
 
+  async function handleDelete(id) {
+    if (!id) return;
+    const ok = window.confirm("Delete this application?");
+    if (!ok) return;
+
+    try {
+      await adminService.deleteApplication(id);
+      // remove row locally
+      setApplications((prev) =>
+        prev.filter((a) => String(a.applicationId ?? a.id) !== String(id))
+      );
+    } catch (e) {
+      alert(e?.message || "Delete failed");
+    }
+  }
+  
   return (
     <div className="card shadow-sm border-0">
       <div className="card-body">
@@ -174,7 +162,7 @@ export default function AdminApplication() {
                   <input className="form-check-input" type="checkbox" />
                 </th>
                 <th>Applicant</th>
-                <th>Job Title</th>
+                <th>Job</th>
                 <th>Submitted</th>
                 <th>Status</th>
                 <th style={{ width: 60 }}></th>
@@ -192,6 +180,14 @@ export default function AdminApplication() {
                   <td>{x.submittedAt}</td>
                   <td>
                     <span className="badge text-bg-info">{x.status}</span>
+                  </td>
+                  <td className="text-end">
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      onClick={() => handleDelete(x.id)}
+                    >
+                      Delete
+                    </button>
                   </td>
                   <td className="text-end">
                     <button className="btn btn-sm btn-outline-secondary">⋮</button>

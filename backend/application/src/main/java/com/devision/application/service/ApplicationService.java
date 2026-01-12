@@ -15,4 +15,5 @@ public interface ApplicationService {
     List<CompanyApplicationViewDTO>getApplicationsForJobPost(String companyId, String jobPostId);
     List<ApplicationDTO> getAllApplications();
     void updateApplicationStatus(String jobPostId, String newStatus, String feedback);
+    void deleteApplication(String applicationId);
 }

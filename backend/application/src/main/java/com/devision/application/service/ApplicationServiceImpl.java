@@ -47,6 +47,18 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .toList();
     }
 
+    @Override
+    public void deleteApplication(String applicationId) {
+        Application application = repository.findById(applicationId)
+                .filter(app -> app.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
+
+        application.setDeletedAt(Instant.now());
+        application.setUpdatedAt(Instant.now());
+
+        repository.save(application);
+    }
+
     public ApplicationDTO getById(String applicationId){
         Application application = repository.findById(applicationId)
                 .filter(app -> app.getDeletedAt() == null)

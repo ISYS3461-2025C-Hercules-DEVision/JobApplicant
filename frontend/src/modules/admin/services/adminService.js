@@ -27,6 +27,13 @@ export async function getAllApplications() {
   return request("/api/v1/applications", { method: "GET", auth: "admin" });
 }
 
+export async function deleteApplication(applicationId) {
+  return request(`/api/v1/applications/${applicationId}`, {
+    method: "DELETE",
+    auth: "admin",
+  });
+}
+
 
 // ---- Job Manager API integration ----
 
@@ -83,7 +90,7 @@ async function jmRequest(path, { method = "GET", body, headers } = {}) {
 
 export async function getAllJobsFromJM({ page = 0, size = 200 } = {}) {
   const params = new URLSearchParams();
-  params.set("page", String(page));
+  params.set("page", String(Math.max(0, page - 1)));
   params.set("size", String(size));
   
   return jmRequest(`/internal/jobs/jobs?${params.toString()}`, { method: "GET" });

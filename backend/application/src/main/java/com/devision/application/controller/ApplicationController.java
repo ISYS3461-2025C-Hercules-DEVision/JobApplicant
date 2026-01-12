@@ -31,6 +31,12 @@ public class ApplicationController {
         return applicationService.getAllApplications();
     }
 
+    @DeleteMapping("/{applicationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteApplication(@PathVariable String applicationId) {
+        applicationService.deleteApplication(applicationId);
+    }
+
     @GetMapping("/{applicationId}")
     @ResponseStatus(HttpStatus.OK)
     public ApplicationDTO getApplicationById(@PathVariable String applicationId){
