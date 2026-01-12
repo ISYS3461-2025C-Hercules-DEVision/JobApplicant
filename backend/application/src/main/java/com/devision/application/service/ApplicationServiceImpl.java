@@ -55,6 +55,15 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .toList();
     }
 
+    @Override
+    public List<ApplicationDTO> getAllApplications() {
+        return repository.findAll()
+                .stream()
+                .filter(app -> app.getDeletedAt() == null)
+                .map(ApplicationMapper::toDto)
+                .toList();
+    }
+
     public ApplicationDTO getById(String applicationId){
         Application application = repository.findById(applicationId)
                 .filter(app -> app.getDeletedAt() == null)
@@ -245,7 +254,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
 
     private Instant pickTimeApplied(Application app) {
-        if (app.getSubmissionDate() != null) return app.getSubmissionDate();
+        if (app.getSubmissionDate() != null) return app.getSubmissionDate();    
         if (app.getCreatedAt() != null) return app.getCreatedAt();
         return null;
     }

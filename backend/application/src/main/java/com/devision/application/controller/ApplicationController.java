@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +22,18 @@ public class ApplicationController {
     @ResponseStatus(HttpStatus.OK)
     public List<ApplicationDTO> getApplicationsByApplicantId(@PathVariable String applicantId){
         return applicationService.getApplicationsByApplicantId(applicantId);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public List<ApplicationDTO> getAllApplications() {
+        return applicationService.getAllApplications();
+    }
+
+    @DeleteMapping("/{applicationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteApplication(@PathVariable String applicationId) {
+        applicationService.deleteApplication(applicationId);
     }
 
     @GetMapping("/{applicationId}")
@@ -66,10 +80,4 @@ public class ApplicationController {
                 req.applicationId()
         );
     }
-    @DeleteMapping("/{applicationId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteApplication(@PathVariable String applicationId) {
-        applicationService.deleteApplication(applicationId);
-    }
-
 }
