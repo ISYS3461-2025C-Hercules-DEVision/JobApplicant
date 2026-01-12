@@ -108,7 +108,7 @@ public class ApplicantServiceImpl implements ApplicantService {
 
         boolean countryChanged = req.country() != null && !req.country().equals(oldCountry);
 
-        //Publish to Kafka
+        //Publish to Kafka when country changes (Send to JM Job Post)
         if(countryChanged){
             String correlationId = UUID.randomUUID().toString();
             ApplicantToJmEvent event = new ApplicantToJmEvent();
@@ -118,7 +118,8 @@ public class ApplicantServiceImpl implements ApplicantService {
             event.setEmploymentStatus(req.employmentStatus());
 
             kafkaGenericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
-            shardMigrationService.migrateApplicant(a, oldCountry, req.country());
+            log.info("Published to Kafka topic: {} with : {}", KafkaConstant.PROFILE_UPDATE_TOPIC, req.fullName() + " " + req.country());
+//            shardMigrationService.migrateApplicant(a, oldCountry, req.country());
         }else {
             repository.save(a);
         }
@@ -302,6 +303,26 @@ public class ApplicantServiceImpl implements ApplicantService {
             a.setIsResumeUpdated(true);
             repository.save(a);
         }
+
+        List<String> oldSkills = resume.getSkills();
+
+        boolean skillChanged = request.skills() != null && !request.skills().equals(oldSkills);
+
+        //Publish to Kafka when skill changes (send to JM Job Post)
+        if(skillChanged){
+            String correlationId = UUID.randomUUID().toString();
+            ApplicantToJmEvent event = new ApplicantToJmEvent();
+            event.setCorrelationId(correlationId);
+            event.setSkills(request.skills());
+            event.setFullName(a.getFullName());
+            event.setEmploymentStatus(a.getEmploymentStatus());
+            event.setMinSalary(request.minSalary());
+            event.setMaxSalary(request.maxSalary());
+
+            kafkaGenericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
+            log.info("Published to Kafka topic: {} with corresponding fields : {}", KafkaConstant.PROFILE_UPDATE_TOPIC, a.getFullName() + " " + request.skills());
+        }
+
         resume = resumeRepository.save(resume);
 
         return ResumeMapper.toDto(resume);
