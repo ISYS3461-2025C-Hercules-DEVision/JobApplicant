@@ -29,7 +29,7 @@ function getAccessToken(auth = "user") {
     );
 }
 
-async function jobRequest(path, { method = "GET", body, headers, auth = "user" } = {}) {
+export async function jobRequest(path, { method = "GET", body, headers, auth = "user" } = {}) {
     const base = API_BASE_JOB_MANAGER.replace(/\/$/, "");
     const url = `${base}${path}`;
     console.log("Job API URL:", url);
@@ -75,15 +75,14 @@ export async function getJobs({
                                   page = 1,
                                   size = 10,
                               } = {}) {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(); //a built-in helper that constructs URL query params like :/internal/jobs/jobs?page=1&size=10
 
     if (title) params.set("title", title);
     if (location) params.set("location", location);
     if (employmentType) params.set("employmentType", employmentType);
     if (keyWord) params.set("keyWord", keyWord);
 
-    // ✅ convert UI page (1-based) → backend page index (0-based)
-    params.set("page", String(Math.max(0, page - 1)));
+    params.set("page", String(Math.max(1, page)));
     params.set("size", String(size));
 
     return jobRequest(`/internal/jobs/jobs?${params.toString()}`, { method: "GET" });
