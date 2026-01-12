@@ -8,6 +8,8 @@ import com.devision.subscription.model.Subscription;
 import com.devision.subscription.repository.NotificationRepository;
 import com.devision.subscription.repository.SearchProfileRepository;
 import com.devision.subscription.repository.SubscriptionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -25,6 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final SearchProfileRepository searchProfileRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final NotificationRepository notificationRepository;
+    private static final Logger log = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
     public NotificationServiceImpl(SearchProfileRepository searchProfileRepository,
             SubscriptionRepository subscriptionRepository,
@@ -39,6 +42,7 @@ public class NotificationServiceImpl implements NotificationService {
         List<SearchProfile> profiles = searchProfileRepository.findAll();
         Set<String> eventSkills = normalize(event.getSkills());
         String eventCountry = safeLower(event.getCountry());
+        String eventTitle = safeLower(event.getTitle());
 
         for (SearchProfile profile : profiles) {
             String applicantId = profile.getApplicantId();
@@ -49,12 +53,26 @@ public class NotificationServiceImpl implements NotificationService {
 
             Set<String> profileTags = normalize(profile.getTechnicalTags());
             String profileCountry = safeLower(profile.getCountry());
+            Set<String> desiredTitles = normalize(profile.getDesiredJobTitles());
 
-            // Basic match: intersect skills and country match
+            // Matches
             Set<String> matchedSkills = new HashSet<>(profileTags);
             matchedSkills.retainAll(eventSkills);
 
-            if (!matchedSkills.isEmpty() && Objects.equals(eventCountry, profileCountry)) {
+            boolean titleMatch = false;
+            if (eventTitle != null && !desiredTitles.isEmpty()) {
+                for (String t : desiredTitles) {
+                    if (t != null && !t.isBlank() && eventTitle.contains(t)) { titleMatch = true; break; }
+                }
+            }
+
+            // Country: if profile sets a country, require equality; otherwise ignore
+            boolean countryMatch = (profileCountry == null) || Objects.equals(eventCountry, profileCountry);
+
+            // Relaxed rule: at least one of (skills intersect OR job-title contains desired) must match
+            boolean coreMatch = (!matchedSkills.isEmpty()) || titleMatch;
+
+            if (coreMatch && countryMatch) {
                 Notification n = new Notification();
                 n.setApplicantId(applicantId);
                 n.setJobId(event.getJobId());
@@ -64,6 +82,8 @@ public class NotificationServiceImpl implements NotificationService {
                 n.setCountry(event.getCountry());
                 n.setMatchedAt(Instant.now());
                 notificationRepository.save(n);
+                log.info("Notification saved: applicant={} jobId={} titleMatch={} skillsMatch={} countryMatch={}",
+                        applicantId, event.getJobId(), titleMatch, !matchedSkills.isEmpty(), countryMatch);
             }
         }
     }
