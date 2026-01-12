@@ -28,6 +28,7 @@ public class ApplicantMapper {
         a.setCreatedAt(LocalDateTime.now());
         a.setUpdatedAt(LocalDateTime.now());
         a.setEmploymentStatus(false);
+        a.setMediaPortfolios(req.mediaPortfolios());
         return a;
     }
 
@@ -39,6 +40,7 @@ public class ApplicantMapper {
         if (req.streetAddress() != null) a.setStreetAddress(req.streetAddress());
         if (req.phoneNumber() != null) a.setPhoneNumber(req.phoneNumber());
         if (req.profileImageUrl() != null) a.setProfileImageUrl(req.profileImageUrl());
+        if (req.mediaPortfolios() != null) a.setMediaPortfolios(req.mediaPortfolios());
         if (req.activated() != null) a.setIsActivated(req.activated());
         if (req.archived() != null) a.setIsArchived(req.archived());
         if (req.employmentStatus() != null) a.setEmploymentStatus(req.employmentStatus());
@@ -59,6 +61,7 @@ public class ApplicantMapper {
                 Boolean.TRUE.equals(a.getIsActivated()),
                 Boolean.TRUE.equals(a.getIsArchived()),
                 a.getEmploymentStatus(),
+                a.getMediaPortfolios(),
                 a.getCreatedAt()
         );
     }

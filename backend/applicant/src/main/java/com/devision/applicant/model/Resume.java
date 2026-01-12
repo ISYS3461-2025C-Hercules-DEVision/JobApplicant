@@ -45,9 +45,6 @@ public class Resume {
     @Field(name = "certifications")
     private List<String> certifications;
 
-    @Builder.Default
-    @Field(name = "mediaPortfolios")
-    private List<MediaPortfolio> mediaPortfolios = new ArrayList<>();
 
     @Field(name = "updatedAt")
     private Instant updatedAt;

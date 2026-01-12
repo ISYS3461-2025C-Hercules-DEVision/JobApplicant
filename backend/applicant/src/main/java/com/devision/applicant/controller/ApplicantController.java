@@ -72,29 +72,29 @@ public class ApplicantController {
 
     //WORKED
     //Media Portfolio
-    @PostMapping(value = "/{resumeId}/portfolio", consumes = "multipart/form-data")
-    public MediaPortfolio uploadPortfolio(@PathVariable String resumeId,
+    @PostMapping(value = "/{applicantId}/portfolio", consumes = "multipart/form-data")
+    public MediaPortfolio uploadPortfolio(@PathVariable String applicantId,
                                                           @RequestParam("file") MultipartFile file,
                                                           @RequestParam(value = "title", required = false) String title,
                                                           @RequestParam(value = "description", required = false) String description,
                                                           @RequestParam(value = "visibility", defaultValue = "PRIVATE") Visibility visibility){
         var request = new UploadMediaPortfolioRequest(file, title, description, visibility);
 
-        return service.uploadMediaPortfolio(resumeId, request);
+        return service.uploadMediaPortfolio(applicantId, request);
 
     }
 
 
-    @GetMapping("/{resumeId}/portfolio")
-    public List<MediaPortfolio> getPortfolio(@PathVariable String resumeId,
+    @GetMapping("/{applicantId}/portfolio")
+    public List<MediaPortfolio> getPortfolio(@PathVariable String applicantId,
                                              @RequestParam(value = "visibility", required = false) Visibility visibility){
 
-        return service.getMediaPortfolio(resumeId, visibility);
+        return service.getMediaPortfolio(applicantId, visibility);
     }
 
-    @DeleteMapping("/{resumeId}/portfolio/{mediaId}")
-    public void deleteMediaPortfolio(@PathVariable String resumeId, @PathVariable String mediaId){
-        service.deleteMediaPortfolio(resumeId, mediaId);
+    @DeleteMapping("/{applicantId}/portfolio/{mediaId}")
+    public void deleteMediaPortfolio(@PathVariable String applicantId, @PathVariable String mediaId){
+        service.deleteMediaPortfolio(applicantId, mediaId);
     }
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<ApplicantDTO> deactivateApplicant(@PathVariable("id") String id) {

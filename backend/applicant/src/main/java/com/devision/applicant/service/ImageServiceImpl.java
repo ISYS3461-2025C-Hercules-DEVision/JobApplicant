@@ -1,16 +1,13 @@
 package com.devision.applicant.service;
 
 import com.cloudinary.Cloudinary;
-import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import com.devision.applicant.enums.MediaType;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.model.Applicant;
 import com.devision.applicant.model.MediaPortfolio;
-import com.devision.applicant.model.Resume;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
-import com.devision.applicant.repository.ResumeRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,13 +23,11 @@ public class ImageServiceImpl implements ImageService{
     private final Cloudinary cloudinary;
     private final MediaPortfolioRepository mediaRepo;
     private final ApplicantRepository applicantRepo;
-    private final ResumeRepository resumeRepo;
 
-    public ImageServiceImpl(Cloudinary cloudinary, MediaPortfolioRepository mediaRepo, ApplicantRepository applicantRepo, ResumeRepository resumeRepo){
+    public ImageServiceImpl(Cloudinary cloudinary, MediaPortfolioRepository mediaRepo, ApplicantRepository applicantRepo){
         this.cloudinary = cloudinary;
         this.mediaRepo = mediaRepo;
         this.applicantRepo = applicantRepo;
-        this.resumeRepo = resumeRepo;
     }
 
     @Override
@@ -46,11 +41,11 @@ public class ImageServiceImpl implements ImageService{
     }
 
     public MediaPortfolio uploadMediaPortfolio(MultipartFile file,
-                                               String resumeId,
+                                               String applicantId,
                                                String title,
                                                String description,
                                                Visibility visibility) throws Exception{
-        String folder = "resumes/" + resumeId + "/portfolio";
+        String folder = "applicants/" + applicantId + "/portfolio";
 
         Map params = ObjectUtils.asMap(
                 "folder", folder,
@@ -59,15 +54,15 @@ public class ImageServiceImpl implements ImageService{
 
         Map result = cloudinary.uploader().upload(file.getBytes(), params);
 
-        Resume r = resumeRepo.findById(resumeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
+        Applicant a = applicantRepo.findById(applicantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
 
-        if(r.getMediaPortfolios() == null){
-            r.setMediaPortfolios(new ArrayList<>());
+        if(a.getMediaPortfolios() == null){
+            a.setMediaPortfolios(new ArrayList<>());
         }
 
         MediaPortfolio media = MediaPortfolio.builder()
-                .resumeId(r.getResumeId())
+                .applicantId(a.getApplicantId())
                 .fileUrl((String) result.get("secure_url"))
                 .publicId((String) result.get("public_id"))
                 .mediaType(determineMediaType((String) result.get("resource_type")))
@@ -81,9 +76,9 @@ public class ImageServiceImpl implements ImageService{
 
 
         //Add the new media
-        r.getMediaPortfolios().add(savedMedia);
+        a.getMediaPortfolios().add(savedMedia);
 
-        resumeRepo.save(r);
+        applicantRepo.save(a);
         return savedMedia;
     }
 
@@ -91,11 +86,11 @@ public class ImageServiceImpl implements ImageService{
         return "video".equals(resourceType) ? MediaType.VIDEO : MediaType.IMAGE;
     }
 
-    public void deleteMedia(String mediaId, String resumeId) throws IOException {
+    public void deleteMedia(String mediaId, String applicantId) throws IOException {
         MediaPortfolio media = mediaRepo.findById(mediaId)
                 .orElseThrow(() -> new RuntimeException("Media not found"));
 
-        if (!media.getResumeId().equals(resumeId)) {
+        if (!media.getApplicantId().equals(applicantId)) {
             throw new RuntimeException("Unauthorized");
         }
 
@@ -103,12 +98,12 @@ public class ImageServiceImpl implements ImageService{
         cloudinary.uploader().destroy(media.getPublicId(), ObjectUtils.emptyMap());
 
         // Delete from DB
-        Resume r = resumeRepo.findById(resumeId)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't find resume"));
+        Applicant a = applicantRepo.findById(applicantId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't find applicant"));
 
-        if(r.getMediaPortfolios() != null){
-            r.getMediaPortfolios().remove(media);
-            resumeRepo.save(r);
+        if(a.getMediaPortfolios() != null){
+            a.getMediaPortfolios().remove(media);
+            applicantRepo.save(a);
         }
         mediaRepo.delete(media);
 

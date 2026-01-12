@@ -19,11 +19,11 @@ public interface ApplicantService {
 
     ApplicantDTO uploadProfileImage(String id, UploadAvatarRequest request);
 
-    MediaPortfolio uploadMediaPortfolio(String resumeId, UploadMediaPortfolioRequest request);
+    MediaPortfolio uploadMediaPortfolio(String applicantId, UploadMediaPortfolioRequest request);
 
-    List<MediaPortfolio> getMediaPortfolio(String resumeId, Visibility visibility);
+    List<MediaPortfolio> getMediaPortfolio(String applicantId, Visibility visibility);
 
-    void deleteMediaPortfolio(String resumeId, String mediaId);
+    void deleteMediaPortfolio(String applicantId, String mediaId);
 
     ApplicantDTO deactivateApplicantAccount(String applicantId);
 

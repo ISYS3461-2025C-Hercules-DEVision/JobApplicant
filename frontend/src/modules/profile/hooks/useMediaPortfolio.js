@@ -1,7 +1,7 @@
 import {useState, useEffect} from "react";
-import {resumeService} from "../services/resumeService.js";
+import {profileService} from "../services/profileService.js";
 
-export const useMediaPortfolio = (resumeId) => {
+export const useMediaPortfolio = (applicantId) => {
     const [mediaItems, setMediaItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -9,39 +9,25 @@ export const useMediaPortfolio = (resumeId) => {
 
     //Fetch portfolio
     useEffect(() => {
-        // If no resumeId yet → keep loading, don't error yet
-        if (!resumeId) {
-            setLoading(true);
-            setError(null);
-            console.log("Fetching for ResumeId: ", resumeId);
-            return; // wait for resumeId to arrive
-        }
-
-        const fetchMedia = async () => {
-            setLoading(true);
-            setError(null);
-
+        if (!applicantId) return;
+        (async () => {
             try {
-                const data = await resumeService.getMediaPortfolio(resumeId);
-                setMediaItems(Array.isArray(data) ? data : []);
+                const data = await profileService.getMediaPortfolio(applicantId);
+                setMediaItems(data);
             } catch (err) {
-                console.error("Media portfolio fetch error:", err);
-                setError(err.message || "Failed to load media portfolio");
-                setMediaItems([]);
+                setError(err);
             } finally {
                 setLoading(false);
             }
-        };
-
-        fetchMedia();
-    }, [resumeId]);
+        })();
+    }, [applicantId]);
 
     //Upload new media item
     const uploadMedia = async (file, title = "", description = "", visibility = "PRIVATE") => {
         setUploading(true);
         try {
-            const newMedia = await resumeService.uploadMediaPortfolio(
-                resumeId,
+            const newMedia = await profileService.uploadMediaPortfolio(
+                applicantId,
                 file,
                 title,
                 description,
@@ -59,7 +45,7 @@ export const useMediaPortfolio = (resumeId) => {
 
     const deleteMedia = async (mediaId) => {
         try{
-            await resumeService.deleteMedia(resumeId, mediaId);
+            await profileService.deleteMedia(applicantId, mediaId);
             setMediaItems(mediaItems.filter(item => item.mediaId !== mediaId));
         } catch (err) {
             setError(err);

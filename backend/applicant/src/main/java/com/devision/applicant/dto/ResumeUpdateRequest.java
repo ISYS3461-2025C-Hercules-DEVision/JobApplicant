@@ -16,7 +16,6 @@ public record ResumeUpdateRequest(String headline,
 
                                   List<String> skills,
                                   List<String> certifications,
-                                  List<MediaPortfolio> mediaPortfolios,
 
                                   BigDecimal minSalary,
                                   BigDecimal maxSalary) {

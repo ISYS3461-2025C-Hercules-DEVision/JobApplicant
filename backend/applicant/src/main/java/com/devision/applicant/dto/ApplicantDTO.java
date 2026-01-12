@@ -20,6 +20,7 @@ public record ApplicantDTO(
         boolean activated,
         boolean archived,
         Boolean employmentStatus,
+        List<MediaPortfolio> mediaPortfolios,
         LocalDateTime createdAt
 
 ) {}

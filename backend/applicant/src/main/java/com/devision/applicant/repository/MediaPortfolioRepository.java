@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MediaPortfolioRepository extends MongoRepository<MediaPortfolio, String> {
-    List<MediaPortfolio> findByResumeId(String resumeId);
+    List<MediaPortfolio> findByApplicantId(String applicantId);
 
-    List<MediaPortfolio> findByResumeIdAndVisibility(String resumeId, Visibility visibility);
+    List<MediaPortfolio> findByApplicantIdAndVisibility(String applicantId, Visibility visibility);
 
     Optional<MediaPortfolio> findByPublicId(String publicId);
 
-    void deleteByResumeId(String resumeId);
+    void deleteByApplicantId(String applicantId);
 }
