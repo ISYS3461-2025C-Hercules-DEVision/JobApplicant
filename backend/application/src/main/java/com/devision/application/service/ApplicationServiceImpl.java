@@ -64,18 +64,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .toList();
     }
 
-    @Override
-    public void deleteApplication(String applicationId) {
-        Application application = repository.findById(applicationId)
-                .filter(app -> app.getDeletedAt() == null)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found"));
-
-        application.setDeletedAt(Instant.now());
-        application.setUpdatedAt(Instant.now());
-
-        repository.save(application);
-    }
-
     public ApplicationDTO getById(String applicationId){
         Application application = repository.findById(applicationId)
                 .filter(app -> app.getDeletedAt() == null)
@@ -266,7 +254,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
 
     private Instant pickTimeApplied(Application app) {
-        if (app.getSubmissionDate() != null) return app.getSubmissionDate();
+        if (app.getSubmissionDate() != null) return app.getSubmissionDate();    
         if (app.getCreatedAt() != null) return app.getCreatedAt();
         return null;
     }
