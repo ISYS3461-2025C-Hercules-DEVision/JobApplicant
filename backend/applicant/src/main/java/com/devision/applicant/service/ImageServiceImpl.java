@@ -1,6 +1,7 @@
 package com.devision.applicant.service;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import com.devision.applicant.enums.MediaType;
 import com.devision.applicant.enums.Visibility;
@@ -54,15 +55,8 @@ public class ImageServiceImpl implements ImageService{
 
         Map result = cloudinary.uploader().upload(file.getBytes(), params);
 
-        Applicant a = applicantRepo.findById(applicantId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
-
-        if(a.getMediaPortfolios() == null){
-            a.setMediaPortfolios(new ArrayList<>());
-        }
-
         MediaPortfolio media = MediaPortfolio.builder()
-                .applicantId(a.getApplicantId())
+                .applicantId(applicantId)
                 .fileUrl((String) result.get("secure_url"))
                 .publicId((String) result.get("public_id"))
                 .mediaType(determineMediaType((String) result.get("resource_type")))
@@ -74,6 +68,12 @@ public class ImageServiceImpl implements ImageService{
 
         MediaPortfolio savedMedia = mediaRepo.save(media);
 
+        Applicant a = applicantRepo.findById(applicantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+
+        if(a.getMediaPortfolios() == null){
+            a.setMediaPortfolios(new ArrayList<>());
+        }
 
         //Add the new media
         a.getMediaPortfolios().add(savedMedia);
@@ -99,7 +99,7 @@ public class ImageServiceImpl implements ImageService{
 
         // Delete from DB
         Applicant a = applicantRepo.findById(applicantId)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't find applicant"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Can't find applicant"));
 
         if(a.getMediaPortfolios() != null){
             a.getMediaPortfolios().remove(media);
