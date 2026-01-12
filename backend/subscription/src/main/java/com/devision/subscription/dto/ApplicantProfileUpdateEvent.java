@@ -1,11 +1,12 @@
 package com.devision.subscription.dto;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 public class ApplicantProfileUpdateEvent {
     private String applicantId;
-    private Integer minSalary;
-    private Integer maxSalary;
+    private BigDecimal minSalary;
+    private BigDecimal maxSalary;
     private Instant updatedAt;
     private String source;
     private String eventType;
@@ -13,7 +14,7 @@ public class ApplicantProfileUpdateEvent {
     public ApplicantProfileUpdateEvent() {
     }
 
-    public ApplicantProfileUpdateEvent(String applicantId, Integer minSalary, Integer maxSalary, Instant updatedAt) {
+    public ApplicantProfileUpdateEvent(String applicantId, BigDecimal minSalary, BigDecimal maxSalary, Instant updatedAt) {
         this.applicantId = applicantId;
         this.minSalary = minSalary;
         this.maxSalary = maxSalary;
@@ -30,19 +31,19 @@ public class ApplicantProfileUpdateEvent {
         this.applicantId = applicantId;
     }
 
-    public Integer getMinSalary() {
+    public BigDecimal getMinSalary() {
         return minSalary;
     }
 
-    public void setMinSalary(Integer minSalary) {
+    public void setMinSalary(BigDecimal minSalary) {
         this.minSalary = minSalary;
     }
 
-    public Integer getMaxSalary() {
+    public BigDecimal getMaxSalary() {
         return maxSalary;
     }
 
-    public void setMaxSalary(Integer maxSalary) {
+    public void setMaxSalary(BigDecimal maxSalary) {
         this.maxSalary = maxSalary;
     }
 

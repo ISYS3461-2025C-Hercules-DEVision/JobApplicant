@@ -1,9 +1,15 @@
 package com.devision.application.service;
 
+import com.devision.application.config.KafkaConstant;
+import com.devision.application.connection.ApplicationCompanyCodeWithUuid;
+import com.devision.application.connection.ApplicationToCompanyEvent;
+import com.devision.application.connection.PendingCompanyRequest;
 import com.devision.application.dto.ApplicationCreateRequest;
 import com.devision.application.dto.ApplicationDTO;
+import com.devision.application.dto.AppliedApplicationDTO;
 import com.devision.application.dto.CompanyApplicationViewDTO;
 import com.devision.application.enums.ApplicationStatus;
+import com.devision.application.kafka.kafkaProducer.KafkaGenericProducer;
 import com.devision.application.mapper.ApplicationMapper;
 import com.devision.application.model.Application;
 import com.devision.application.model.FileReference;
@@ -21,14 +27,25 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationRepository repository;
 
     private final FileReferenceRepository fileReferenceRepository;
+    private final PendingCompanyRequest pendingCompanyRequest;
+    private final KafkaGenericProducer<ApplicationToCompanyEvent> produce;
+
+    public ApplicationServiceImpl(ApplicationRepository repository, FileReferenceRepository fileReferenceRepository, PendingCompanyRequest pendingCompanyRequest, KafkaGenericProducer<ApplicationToCompanyEvent> produce) {
+        this.repository = repository;
+        this.fileReferenceRepository = fileReferenceRepository;
+        this.pendingCompanyRequest = pendingCompanyRequest;
+        this.produce = produce;
+    }
 
     public List<ApplicationDTO> getApplicationsByApplicantId(String applicantId){
         return repository.findByApplicantId(applicantId)
@@ -70,28 +87,17 @@ public class ApplicationServiceImpl implements ApplicationService {
     public ApplicationDTO createApplication(ApplicationCreateRequest req) {
         log.info("========== [CREATE APPLICATION] START ==========");
         log.info("Incoming request: applicantId={}, jobPostId={}, companyId={}, documentsCount={}",
-                req.applicantId(),
-                req.jobPostId(),
-                req.companyId(),
+                req.applicantId(), req.jobPostId(), req.companyId(),
                 (req.documents() == null ? 0 : req.documents().size())
         );
 
         try {
-            // ✅ Defensive checks (helps debugging)
-            if (req.applicantId() == null || req.applicantId().isBlank()) {
-                log.error("❌ applicantId is NULL/BLANK");
+            if (req.applicantId() == null || req.applicantId().isBlank())
                 throw new IllegalArgumentException("applicantId is required");
-            }
-
-            if (req.jobPostId() == null || req.jobPostId().isBlank()) {
-                log.error("❌ jobPostId is NULL/BLANK");
+            if (req.jobPostId() == null || req.jobPostId().isBlank())
                 throw new IllegalArgumentException("jobPostId is required");
-            }
-
-            if (req.companyId() == null || req.companyId().isBlank()) {
-                log.error("❌ companyId is NULL/BLANK");
+            if (req.companyId() == null || req.companyId().isBlank())
                 throw new IllegalArgumentException("companyId is required");
-            }
 
             Application application = Application.builder()
                     .applicationId(UUID.randomUUID().toString())
@@ -103,34 +109,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                     .createdAt(Instant.now())
                     .updatedAt(Instant.now())
                     .isArchived(false)
+                    .documents(new ArrayList<>())
                     .build();
 
-            // ✅ Debug: check documents list
-            if (application.getDocuments() == null) {
-                log.warn("⚠️ application.getDocuments() is NULL. Initializing empty list now.");
-                application.setDocuments(new ArrayList<>());
-            }
-
-            log.info("✅ Application built: applicationId={}, status={}",
-                    application.getApplicationId(),
-                    application.getStatus()
-            );
-
-            // ✅ Log each document
             if (req.documents() != null && !req.documents().isEmpty()) {
-                log.info("📌 Adding {} documents to application", req.documents().size());
-
-                for (int i = 0; i < req.documents().size(); i++) {
-                    FileReference reference = req.documents().get(i);
-
-                    log.info("Document[{}] incoming: fileId={}, fileUrl={}, publicId={}, fileType={}",
-                            i,
-                            reference.getFileId(),
-                            reference.getFileUrl(),
-                            reference.getPublicId(),
-                            reference.getFileType()
-                    );
-
+                for (FileReference reference : req.documents()) {
                     FileReference doc = FileReference.builder()
                             .fileId(reference.getFileId() != null ? reference.getFileId() : UUID.randomUUID().toString())
                             .applicationId(application.getApplicationId())
@@ -140,33 +123,59 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .createdAt(Instant.now())
                             .updatedAt(Instant.now())
                             .build();
+
                     fileReferenceRepository.save(doc);
                     application.getDocuments().add(doc);
-
-                    log.info("✅ Document[{}] added: fileId={}, url={}", i, doc.getFileId(), doc.getFileUrl());
                 }
-            } else {
-                log.info("ℹ️ No documents provided in request.");
             }
 
-            log.info("💾 Saving application to database...");
+
+            log.info("Saving application to database...");
             Application saved = repository.save(application);
 
-            log.info("✅ Saved application: applicationId={}, documentsSaved={}",
+            log.info("Saved application: applicationId={}, documentsSaved={}",
                     saved.getApplicationId(),
                     (saved.getDocuments() == null ? 0 : saved.getDocuments().size())
             );
 
-            log.info("========== [CREATE APPLICATION] SUCCESS ==========");
 
+            String correlationId = UUID.randomUUID().toString();
+            CompletableFuture<ApplicationCompanyCodeWithUuid> future = pendingCompanyRequest.create(correlationId);
+
+            List<String> fileUrls = saved.getDocuments() == null
+                    ? List.of()
+                    : saved.getDocuments().stream()
+                    .map(FileReference::getFileUrl)
+                    .filter(url -> url != null && !url.isBlank())
+                    .toList();
+
+            ApplicationToCompanyEvent event = new ApplicationToCompanyEvent(
+                    correlationId,
+                    saved.getApplicationId(),
+                    saved.getApplicantId(),
+                    fileUrls
+            );
+
+            try {
+                produce.sendMessage(KafkaConstant.APPLICATION_COMPANY_TOPIC, event);
+
+
+                ApplicationCompanyCodeWithUuid resp = future.get(5, TimeUnit.SECONDS);
+                log.info("Company response received. correlationId={}, resp={}", correlationId, resp);
+
+                // implement in the future
+
+            } catch (Exception e) {
+                log.error("Kafka publish / company response failed. correlationId={}", correlationId, e);
+            }
+
+            log.info("========== [CREATE APPLICATION] SUCCESS ==========");
             return ApplicationMapper.toDto(saved);
 
         } catch (Exception ex) {
             log.error("========== [CREATE APPLICATION] FAILED ==========");
-            log.error("❌ Error message: {}", ex.getMessage());
-            log.error("❌ Full stack trace:", ex); // VERY IMPORTANT
-
-            // Optional: rethrow so controller returns proper error
+            log.error("Error message: {}", ex.getMessage());
+            log.error("Full stack trace:", ex);
             throw ex;
         }
     }
@@ -174,6 +183,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     public ApplicationDTO updateStatus(String applicationId, ApplicationStatus newStatus){
         Application application = repository.findById(applicationId)
+                .filter(app -> app.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cant find application"));
 
         application.setStatus(newStatus);
@@ -190,6 +200,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 repository.findByCompanyIdAndJobPostIdOrderBySubmissionDateDesc(companyId, jobPostId);
 
         return applications.stream()
+                .filter(app -> app.getDeletedAt() == null)
                 .map(app -> new CompanyApplicationViewDTO(
                         app.getApplicationId(),
                         app.getApplicantId(),
@@ -200,11 +211,59 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public void updateApplicationStatus(String jobPostId, String newStatus,String feedback) {
-        Application application = repository.findByJobPostId(jobPostId);
+    public void updateApplicationStatus(String jobPostId, String newStatus,String feedback,String applicationId) {
+        Application application = repository.findByJobPostIdAndApplicationId(jobPostId,applicationId);
+        if (application == null || application.getDeletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Application not found");
+        }
         application.setStatus(ApplicationStatus.valueOf(newStatus));
         application.setFeedback(feedback);
     }
+
+    @Override
+    public List<AppliedApplicationDTO> appliedApplications(String jobPostId) {
+        if (jobPostId == null || jobPostId.isBlank()) {
+            throw new IllegalArgumentException("jobPostId is required");
+        }
+
+        List<Application> apps = repository.findByJobPostId(jobPostId);
+
+        return repository.findByJobPostId(jobPostId).stream()
+                .filter(app -> app.getDeletedAt() == null)
+                .map(app -> new AppliedApplicationDTO(
+                        app.getApplicationId(),
+                        app.getApplicantId(),
+                        app.getDocuments() == null
+                                ? List.of()
+                                : app.getDocuments().stream()
+                                .map(FileReference::getFileUrl)
+                                .filter(url -> url != null && !url.isBlank())
+                                .toList()
+                ))
+                .toList();
+    }
+
+    @Override
+    public void deleteApplication(String applicationId) {
+        if (applicationId == null || applicationId.isBlank()) {
+            throw new IllegalArgumentException("applicationId is required");
+        }
+
+        Application app = repository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found: " + applicationId));
+
+        // already deleted? (idempotent)
+        if (Boolean.TRUE.equals(app.getIsArchived()) && app.getDeletedAt() != null) {
+            return;
+        }
+
+        app.setIsArchived(true);
+        app.setDeletedAt(Instant.now());
+        app.setUpdatedAt(Instant.now());
+
+        repository.save(app);
+    }
+
 
     private Instant pickTimeApplied(Application app) {
         if (app.getSubmissionDate() != null) return app.getSubmissionDate();
