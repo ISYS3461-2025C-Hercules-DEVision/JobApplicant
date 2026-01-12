@@ -10,6 +10,7 @@ import com.devision.subscription.service.NotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -73,7 +74,7 @@ public class MockNotificationController {
         req.technicalTags = java.util.List.of("java", "spring", "kafka");
         req.employmentStatuses = java.util.List.of("full-time");
         req.country = country;
-        req.minSalary = 0;
+        req.minSalary = BigDecimal.ZERO;
         req.maxSalary = null;
         req.jobTitles = "Engineer;Developer";
         SearchProfileResponse profile = searchProfileService.upsert(applicantId, req);

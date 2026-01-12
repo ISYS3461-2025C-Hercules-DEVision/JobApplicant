@@ -27,7 +27,7 @@ kafka:
     payment-success: ${KAFKA_PAYMENT_SUCCESS_TOPIC:payment-success}
     payment-failed: ${KAFKA_PAYMENT_FAILED_TOPIC:payment-failed}
     job-post-updates: ${KAFKA_JOB_POST_UPDATES_TOPIC:job-post-updates}
-    applicant-profile-updates: ${KAFKA_APPLICANT_PROFILE_UPDATES_TOPIC:applicant-profile-updates}
+    applicant-profile-updates: ${KAFKA_APPLICANT_PROFILE_UPDATES_TOPIC:subscription-salary-update}
 
 payment:
   consumer:
