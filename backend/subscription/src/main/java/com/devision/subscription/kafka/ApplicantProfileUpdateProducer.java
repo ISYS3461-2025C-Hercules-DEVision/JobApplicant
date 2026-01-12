@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Component
@@ -20,7 +21,7 @@ public class ApplicantProfileUpdateProducer {
         this.topic = topic;
     }
 
-    public void publishSalaryUpdate(String applicantId, Integer minSalary, Integer maxSalary) {
+    public void publishSalaryUpdate(String applicantId, BigDecimal minSalary, BigDecimal maxSalary) {
         ApplicantProfileUpdateEvent event = new ApplicantProfileUpdateEvent(
                 applicantId,
                 minSalary,

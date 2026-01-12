@@ -5,6 +5,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -23,8 +24,8 @@ public class SearchProfile {
     private List<String> technicalTags; // e.g., Kafka, React, Spring Boot
     private List<EmploymentStatus> employmentStatuses; // multiple selections
     private String country;
-    private Integer minSalary; // USD
-    private Integer maxSalary; // USD, null means no upper limit
+    private BigDecimal minSalary; // USD
+    private BigDecimal maxSalary; // USD, null means no upper limit
     private List<String> desiredJobTitles; // parsed from semicolon-separated string
 
     public String getId() {
@@ -67,19 +68,19 @@ public class SearchProfile {
         this.country = country;
     }
 
-    public Integer getMinSalary() {
+    public BigDecimal getMinSalary() {
         return minSalary;
     }
 
-    public void setMinSalary(Integer minSalary) {
+    public void setMinSalary(BigDecimal minSalary) {
         this.minSalary = minSalary;
     }
 
-    public Integer getMaxSalary() {
+    public BigDecimal getMaxSalary() {
         return maxSalary;
     }
 
-    public void setMaxSalary(Integer maxSalary) {
+    public void setMaxSalary(BigDecimal maxSalary) {
         this.maxSalary = maxSalary;
     }
 
