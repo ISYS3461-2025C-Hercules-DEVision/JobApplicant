@@ -372,9 +372,12 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .toList();
     }
 
+
     @Override
-    public Page<ApplicantWithResumeDTO> getApplicantsWithResume(
+    public Page<ApplicantWithResumeDTO> filterApplicantsWithResume(
             DegreeType degree,
+            List<String> skills,
+            Boolean matchAllSkills,
             int page,
             int take
     ) {
@@ -385,13 +388,36 @@ public class ApplicantServiceImpl implements ApplicantService {
         // Exclude deleted resumes
         query.addCriteria(Criteria.where("deletedAt").is(null));
 
-        // Filter theo degree (nếu có)
+        // Filter by degree (if provided)
         if (degree != null) {
             // Use elemMatch to search within the education array
-            // MongoDB stores enum as string, so we use the enum directly
             query.addCriteria(Criteria.where("education").elemMatch(
                     Criteria.where("degree").is(degree)
             ));
+        }
+
+        // Filter by skills (if provided)
+        if (skills != null && !skills.isEmpty()) {
+            // Clean up skill strings (trim whitespace)
+            List<String> cleanedSkills = skills.stream()
+                    .filter(skill -> skill != null && !skill.trim().isEmpty())
+                    .map(String::trim)
+                    .toList();
+
+            if (!cleanedSkills.isEmpty()) {
+                if (matchAllSkills != null && matchAllSkills) {
+                    // Match ALL skills (AND logic) - applicant must have all specified skills
+                    query.addCriteria(Criteria.where("skills").all(cleanedSkills));
+                } else {
+                    // Match ANY skill (OR logic) - applicant must have at least one skill
+                    // Use case-insensitive regex for better matching
+                    List<Criteria> skillCriteria = cleanedSkills.stream()
+                            .map(skill -> Criteria.where("skills")
+                                    .regex("^" + skill + "$", "i"))
+                            .toList();
+                    query.addCriteria(new Criteria().orOperator(skillCriteria.toArray(new Criteria[0])));
+                }
+            }
         }
 
         long total = mongoTemplate.count(query, Resume.class);
@@ -403,7 +429,6 @@ public class ApplicantServiceImpl implements ApplicantService {
                     Applicant applicant = repository.findById(resume.getApplicantId())
                             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                                     "Applicant not found for ID: " + resume.getApplicantId()));
-
 
                     return new ApplicantWithResumeDTO(
                             applicant.getApplicantId(),
@@ -423,7 +448,6 @@ public class ApplicantServiceImpl implements ApplicantService {
                             resume.getCertifications(),
                             resume.getExperience(),
                             resume.getSkills(),
-
                             resume.getMinSalary(),
                             resume.getMaxSalary()
                     );
@@ -435,3 +459,5 @@ public class ApplicantServiceImpl implements ApplicantService {
 
 
 }
+
+

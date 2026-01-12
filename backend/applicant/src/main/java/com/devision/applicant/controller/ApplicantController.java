@@ -138,18 +138,34 @@ public class ApplicantController {
         return service.getAllResumes();
     }
 
-    @GetMapping("/getApplicantResume")
-    public ResponseEntity<Page<ApplicantWithResumeDTO>> getApplicantsWithResume(
+    @GetMapping("/filter")
+    public ResponseEntity<Page<ApplicantWithResumeDTO>> filterApplicantsWithResume(
             @RequestParam(required = false) String degree,
+            @RequestParam(required = false) List<String> skills,
+            @RequestParam(required = false, defaultValue = "false") Boolean matchAllSkills,
             @RequestParam(defaultValue = "10") int take,
             @RequestParam(defaultValue = "1") int page
     ) {
+        // Parse degree enum
         DegreeType degreeEnum = null;
         if (degree != null && !degree.isBlank()) {
+            try {
                 degreeEnum = DegreeType.valueOf(degree.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().build();
+            }
         }
 
-        Page<ApplicantWithResumeDTO> result = service.getApplicantsWithResume(degreeEnum, page, take);
+        // Call service with filters
+        Page<ApplicantWithResumeDTO> result = service.filterApplicantsWithResume(
+                degreeEnum,
+                skills,
+                matchAllSkills,
+                page,
+                take
+        );
         return ResponseEntity.ok(result);
     }
 }
+
+

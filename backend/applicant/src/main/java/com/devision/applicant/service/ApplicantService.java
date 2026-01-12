@@ -41,8 +41,10 @@ public interface ApplicantService {
 
     List<ResumeDTO> getAllResumes();
 
-    Page<ApplicantWithResumeDTO> getApplicantsWithResume(
+    Page<ApplicantWithResumeDTO> filterApplicantsWithResume(
             DegreeType degree,
+            List<String> skills,
+            Boolean matchAllSkills,
             int page,
             int take
     );
