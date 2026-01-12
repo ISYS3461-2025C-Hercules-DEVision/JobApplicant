@@ -93,13 +93,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 User user = userRepo.findById(userId)
                         .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                // banned check -> 403
-                if (Boolean.FALSE.equals(user.getStatus())) {
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"message\":\"Your account has been banned\"}");
-                    return;
-                }
+//                // banned check -> 403
+//                if (Boolean.FALSE.equals(user.getStatus())) {
+//                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+//                    response.setContentType("application/json");
+//                    response.getWriter().write("{\"message\":\"Your account has been banned\"}");
+//                    return;
+//                }
 
                 // always trust DB role (not token)
                 String dbRole = user.getRole().name();
