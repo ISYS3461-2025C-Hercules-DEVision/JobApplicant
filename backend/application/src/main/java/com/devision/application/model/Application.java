@@ -21,11 +21,9 @@ public class Application {
 
     @Id
     private String applicationId;     // UUID
-
     private String applicantId;       // UUID
     private String jobPostId;         // from JM
     private String companyId;         // from JM
-
     private ApplicationStatus status;
 
     private Instant submissionDate;

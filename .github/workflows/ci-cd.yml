@@ -42,6 +42,12 @@ jobs:
           - name: frontend
             folder: frontend
             type: node
+          - name: subscription
+            folder: backend/subscription
+            type: java
+          - name: application
+            folder: backend/application
+            type: java
 
     steps:
       - name: Checkout
@@ -82,6 +88,71 @@ jobs:
         run: |
           npm ci
           npm run build
+
+  # -----------------------------
+  # CD (Frontend): Build + Upload to S3 + Invalidate CloudFront
+  # Runs ONLY on push to main
+  # -----------------------------
+  deploy_frontend:
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    env:
+      FRONTEND_S3_BUCKET: job-applicant.indevs.in
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.FRONTEND_CLOUDFRONT_DISTRIBUTION_ID }}
+      FRONTEND_BUILD_DIR: dist
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: ./frontend/package-lock.json
+
+      # ✅ Build with production API base (Vite example)
+      # If you don't use Vite, tell me your tool (CRA/Next) and I'll adjust env names.
+      - name: Build frontend (production)
+        working-directory: ./frontend
+        env:
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+          VITE_API_BASE_JOB_MANAGER: ${{ secrets.VITE_API_BASE_JOB_MANAGER }}
+        run: |
+          npm ci
+          npm run build
+
+      # ✅ Upload to S3 under /dist because your CloudFront Origin Path is /dist
+      - name: Sync build to S3 (/dist)
+        run: |
+          set -euo pipefail
+          aws s3 sync "./frontend/${FRONTEND_BUILD_DIR}/" "s3://${FRONTEND_S3_BUCKET}/dist/" --delete
+
+      # ✅ Prevent index.html being cached too long
+      - name: Set no-cache for index.html
+        run: |
+          set -euo pipefail
+          aws s3 cp "s3://${FRONTEND_S3_BUCKET}/dist/index.html" "s3://${FRONTEND_S3_BUCKET}/dist/index.html" \
+            --metadata-directive REPLACE \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "text/html"
+
+      - name: Invalidate CloudFront
+        run: |
+          set -euo pipefail
+          aws cloudfront create-invalidation \
+            --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" \
+            --paths "/*"
 
   # -----------------------------
   # CD: Build Docker images + push to ECR
@@ -131,6 +202,20 @@ jobs:
             host_port: "8083:8083"
             env_secret: ENV_APPLICANT
             target_host: service02
+
+          - folder: backend/subscription
+            repo: subscription
+            container_name: subscription-service
+            host_port: "8086:8086"
+            env_secret: ENV_SUBSCRIPTION
+            target_host: service03
+
+          - folder: backend/application
+            repo: application
+            container_name: application-service
+            host_port: "8084:8084"
+            env_secret: ENV_APPLICATION
+            target_host: service03
 
     steps:
       - name: Checkout
@@ -188,14 +273,19 @@ jobs:
           echo "✅ Done: ${IMAGE_URI} pushed"
 
       # -----------------------------
-      # SSH Setup (3 different keys)
+      # SSH Setup
+      # - gateway uses key_gateway
+      # - service01 uses key_service01 (ProxyJump gateway)
+      # - service02 uses key_service02 (ProxyJump gateway)
+      # - service03 uses key_gateway (ProxyJump gateway)
       # -----------------------------
-      - name: Setup SSH keys (gateway + service01 + service02)
+      - name: Setup SSH keys (gateway + service01 + service02 + service03)
         env:
           SSH_USER: ${{ secrets.EC2_SSH_USER }}
           GATEWAY_IP: ${{ secrets.EC2_GATEWAY_PUBLIC_IP }}
           SERVICE01_IP: ${{ secrets.EC2_SERVICE01_PRIVATE_IP }}
           SERVICE02_IP: ${{ secrets.EC2_SERVICE02_PRIVATE_IP }}
+          SERVICE03_IP: ${{ secrets.EC2_SERVICE03_PRIVATE_IP }}
 
           KEY_GATEWAY_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_GATEWAY_B64 }}
           KEY_SERVICE01_B64: ${{ secrets.EC2_SSH_PRIVATE_KEY_SERVICE01_B64 }}
@@ -204,7 +294,7 @@ jobs:
           set -euo pipefail
           mkdir -p ~/.ssh
 
-          echo "$KEY_GATEWAY_B64"  | base64 -d | tr -d '\r' > ~/.ssh/key_gateway
+          echo "$KEY_GATEWAY_B64"   | base64 -d | tr -d '\r' > ~/.ssh/key_gateway
           echo "$KEY_SERVICE01_B64" | base64 -d | tr -d '\r' > ~/.ssh/key_service01
           echo "$KEY_SERVICE02_B64" | base64 -d | tr -d '\r' > ~/.ssh/key_service02
 
@@ -233,6 +323,14 @@ jobs:
             IdentitiesOnly yes
             ProxyJump gateway
             StrictHostKeyChecking no
+
+          Host service03
+            HostName ${SERVICE03_IP}
+            User ${SSH_USER}
+            IdentityFile ~/.ssh/key_gateway
+            IdentitiesOnly yes
+            ProxyJump gateway
+            StrictHostKeyChecking no
           CFG
 
           chmod 600 ~/.ssh/config
@@ -251,6 +349,11 @@ jobs:
         run: |
           set -euo pipefail
           ssh service02 "echo SERVICE02_OK && hostname"
+
+      - name: Test SSH to service03
+        run: |
+          set -euo pipefail
+          ssh service03 "echo SERVICE03_OK && hostname"
 
       # -----------------------------
       # Deploy backend to EC2
@@ -274,6 +377,8 @@ jobs:
             SSH_HOST="service01"
           elif [ "$TARGET_HOST" = "service02" ]; then
             SSH_HOST="service02"
+          elif [ "$TARGET_HOST" = "service03" ]; then
+            SSH_HOST="service03"
           else
             echo "Unknown TARGET_HOST=$TARGET_HOST"
             exit 1

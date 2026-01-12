@@ -39,5 +39,4 @@ public interface ApplicantService {
 
     List<ResumeDTO> getAllResumes();
 
-
 }

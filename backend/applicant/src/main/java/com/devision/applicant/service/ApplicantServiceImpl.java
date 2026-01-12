@@ -114,6 +114,8 @@ public class ApplicantServiceImpl implements ApplicantService {
             ApplicantToJmEvent event = new ApplicantToJmEvent();
             event.setCorrelationId(correlationId);
             event.setCountry(req.country());
+            event.setFullName(req.fullName());
+            event.setEmploymentStatus(req.employmentStatus());
 
             kafkaGenericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
             shardMigrationService.migrateApplicant(a, oldCountry, req.country());

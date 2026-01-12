@@ -11,114 +11,132 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class SearchProfileServiceImpl implements SearchProfileService {
 
-    private final SearchProfileRepository searchProfileRepository;
-    private final SubscriptionRepository subscriptionRepository;
+        private final SearchProfileRepository searchProfileRepository;
+        private final SubscriptionRepository subscriptionRepository;
 
-    public SearchProfileServiceImpl(SearchProfileRepository searchProfileRepository,
-            SubscriptionRepository subscriptionRepository) {
-        this.searchProfileRepository = searchProfileRepository;
-        this.subscriptionRepository = subscriptionRepository;
-    }
+        private final com.devision.subscription.kafka.ApplicantProfileUpdateProducer profileUpdateProducer;
 
-    @Override
-    public SearchProfileResponse upsert(String applicantId, SearchProfileRequest request) {
-        // Require PREMIUM active subscription
-        subscriptionRepository.findByApplicantIdAndIsActiveTrue(applicantId)
-                .filter(sub -> sub.getPlanType() == PlanType.PREMIUM)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Premium plan required"));
-
-        // Normalize tags
-        List<String> tags = Optional.ofNullable(request.technicalTags)
-                .orElseGet(ArrayList::new)
-                .stream()
-                .map(s -> s == null ? null : s.trim())
-                .filter(s -> s != null && !s.isEmpty())
-                .distinct()
-                .collect(Collectors.toList());
-
-        // Parse employment statuses from strings to enum
-        Set<EmploymentStatus> statuses = Optional.ofNullable(request.employmentStatuses)
-                .orElseGet(ArrayList::new)
-                .stream()
-                .map(s -> s == null ? null : s.trim().toUpperCase(Locale.ROOT))
-                .filter(Objects::nonNull)
-                .map(s -> {
-                    try {
-                        return EmploymentStatus.valueOf(s.replace('-', '_'));
-                    } catch (IllegalArgumentException ex) {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(() -> EnumSet.noneOf(EmploymentStatus.class)));
-
-        // If neither FULL_TIME nor PART_TIME specified, include both
-        if (!statuses.contains(EmploymentStatus.FULL_TIME) && !statuses.contains(EmploymentStatus.PART_TIME)) {
-            statuses.add(EmploymentStatus.FULL_TIME);
-            statuses.add(EmploymentStatus.PART_TIME);
+        public SearchProfileServiceImpl(SearchProfileRepository searchProfileRepository,
+                        SubscriptionRepository subscriptionRepository,
+                        com.devision.subscription.kafka.ApplicantProfileUpdateProducer profileUpdateProducer) {
+                this.searchProfileRepository = searchProfileRepository;
+                this.subscriptionRepository = subscriptionRepository;
+                this.profileUpdateProducer = profileUpdateProducer;
         }
 
-        // Salary defaults
-        Integer minSalary = request.minSalary == null ? 0 : Math.max(0, request.minSalary);
-        Integer maxSalary = request.maxSalary; // null means no upper limit
+        @Override
+        public SearchProfileResponse upsert(String applicantId, SearchProfileRequest request) {
+                // Require PREMIUM active subscription
+                subscriptionRepository.findByApplicantIdAndIsActiveTrue(applicantId)
+                                .filter(sub -> sub.getPlanType() == PlanType.PREMIUM)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
+                                                "Premium plan required"));
 
-        // Parse job titles from semicolon-separated string
-        List<String> titles = Optional.ofNullable(request.jobTitles)
-                .map(str -> Arrays.stream(str.split(";"))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .distinct()
-                        .collect(Collectors.toList()))
-                .orElseGet(ArrayList::new);
+                // Normalize tags
+                List<String> tags = Optional.ofNullable(request.technicalTags)
+                                .orElseGet(ArrayList::new)
+                                .stream()
+                                .map(s -> s == null ? null : s.trim())
+                                .filter(s -> s != null && !s.isEmpty())
+                                .distinct()
+                                .collect(Collectors.toList());
 
-        // Upsert existing profile
-        SearchProfile profile = searchProfileRepository.findByApplicantId(applicantId)
-                .orElseGet(SearchProfile::new);
+                // Parse employment statuses from strings to enum
+                Set<EmploymentStatus> statuses = Optional.ofNullable(request.employmentStatuses)
+                                .orElseGet(ArrayList::new)
+                                .stream()
+                                .map(s -> s == null ? null : s.trim().toUpperCase(Locale.ROOT))
+                                .filter(Objects::nonNull)
+                                .map(s -> {
+                                        try {
+                                                return EmploymentStatus.valueOf(s.replace('-', '_'));
+                                        } catch (IllegalArgumentException ex) {
+                                                return null;
+                                        }
+                                })
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toCollection(() -> EnumSet.noneOf(EmploymentStatus.class)));
 
-        profile.setApplicantId(applicantId);
-        profile.setTechnicalTags(tags);
-        profile.setEmploymentStatuses(new ArrayList<>(statuses));
-        profile.setCountry(request.country);
-        profile.setMinSalary(minSalary);
-        profile.setMaxSalary(maxSalary);
-        profile.setDesiredJobTitles(titles);
+                // If neither FULL_TIME nor PART_TIME specified, include both
+                if (!statuses.contains(EmploymentStatus.FULL_TIME) && !statuses.contains(EmploymentStatus.PART_TIME)) {
+                        statuses.add(EmploymentStatus.FULL_TIME);
+                        statuses.add(EmploymentStatus.PART_TIME);
+                }
 
-        searchProfileRepository.save(profile);
+                // Salary defaults
+                BigDecimal minSalary = request.minSalary == null ? BigDecimal.ZERO : request.minSalary.max(BigDecimal.ZERO);
+                BigDecimal maxSalary = request.maxSalary; // null means no upper limit
 
-        return new SearchProfileResponse(
-                applicantId,
-                profile.getTechnicalTags(),
-                profile.getEmploymentStatuses(),
-                profile.getCountry(),
-                profile.getMinSalary(),
-                profile.getMaxSalary(),
-                profile.getDesiredJobTitles());
-    }
+                // Parse job titles from semicolon-separated string
+                List<String> titles = Optional.ofNullable(request.jobTitles)
+                                .map(str -> Arrays.stream(str.split(";"))
+                                                .map(String::trim)
+                                                .filter(s -> !s.isEmpty())
+                                                .distinct()
+                                                .collect(Collectors.toList()))
+                                .orElseGet(ArrayList::new);
 
-    @Override
-    public SearchProfileResponse get(String applicantId) {
-        return searchProfileRepository.findByApplicantId(applicantId)
-                .map(p -> new SearchProfileResponse(
-                        applicantId,
-                        p.getTechnicalTags(),
-                        p.getEmploymentStatuses(),
-                        p.getCountry(),
-                        p.getMinSalary(),
-                        p.getMaxSalary(),
-                        p.getDesiredJobTitles()))
-                .orElseGet(() -> new SearchProfileResponse(
-                        applicantId,
-                        Collections.emptyList(),
-                        Collections.emptyList(),
-                        null,
-                        null,
-                        null,
-                        Collections.emptyList()));
-    }
+                // Upsert existing profile
+                Optional<SearchProfile> existingOpt = searchProfileRepository.findByApplicantId(applicantId);
+                SearchProfile profile = existingOpt.orElseGet(SearchProfile::new);
+
+                profile.setApplicantId(applicantId);
+                profile.setTechnicalTags(tags);
+                profile.setEmploymentStatuses(new ArrayList<>(statuses));
+                profile.setCountry(request.country);
+                profile.setMinSalary(minSalary);
+                profile.setMaxSalary(maxSalary);
+                profile.setDesiredJobTitles(titles);
+
+                BigDecimal previousMin = existingOpt.map(SearchProfile::getMinSalary).orElse(null);
+                BigDecimal previousMax = existingOpt.map(SearchProfile::getMaxSalary).orElse(null);
+
+                boolean salaryChanged = !Objects.equals(previousMin, profile.getMinSalary())
+                                || !Objects.equals(previousMax, profile.getMaxSalary());
+
+                searchProfileRepository.save(profile);
+
+                // Publish Kafka event when salary range changes
+                if (salaryChanged) {
+                        profileUpdateProducer.publishSalaryUpdate(applicantId, profile.getMinSalary(),
+                                        profile.getMaxSalary());
+                }
+
+                return new SearchProfileResponse(
+                                applicantId,
+                                profile.getTechnicalTags(),
+                                profile.getEmploymentStatuses(),
+                                profile.getCountry(),
+                                profile.getMinSalary(),
+                                profile.getMaxSalary(),
+                                profile.getDesiredJobTitles());
+        }
+
+        @Override
+        public SearchProfileResponse get(String applicantId) {
+                return searchProfileRepository.findByApplicantId(applicantId)
+                                .map(p -> new SearchProfileResponse(
+                                                applicantId,
+                                                p.getTechnicalTags(),
+                                                p.getEmploymentStatuses(),
+                                                p.getCountry(),
+                                                p.getMinSalary(),
+                                                p.getMaxSalary(),
+                                                p.getDesiredJobTitles()))
+                                .orElseGet(() -> new SearchProfileResponse(
+                                                applicantId,
+                                                Collections.emptyList(),
+                                                Collections.emptyList(),
+                                                null,
+                                                null,
+                                                null,
+                                                Collections.emptyList()));
+        }
 }
