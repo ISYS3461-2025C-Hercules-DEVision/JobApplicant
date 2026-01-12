@@ -14,4 +14,5 @@ public interface ApplicationService {
     ApplicationDTO updateStatus(String applicationId, ApplicationStatus newStatus);
     List<CompanyApplicationViewDTO>getApplicationsForJobPost(String companyId, String jobPostId);
     List<ApplicationDTO> getAllApplications();
+    void updateApplicationStatus(String jobPostId, String newStatus, String feedback);
 }

@@ -186,6 +186,14 @@ public class ApplicationServiceImpl implements ApplicationService {
                 ))
                 .toList();
     }
+
+    @Override
+    public void updateApplicationStatus(String jobPostId, String newStatus,String feedback) {
+        Application application = repository.findByJobPostId(jobPostId);
+        application.setStatus(ApplicationStatus.valueOf(newStatus));
+        application.setFeedback(feedback);
+    }
+
     private Instant pickTimeApplied(Application app) {
         if (app.getSubmissionDate() != null) return app.getSubmissionDate();
         if (app.getCreatedAt() != null) return app.getCreatedAt();
