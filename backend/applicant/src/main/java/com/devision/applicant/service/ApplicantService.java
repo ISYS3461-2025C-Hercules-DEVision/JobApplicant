@@ -1,8 +1,10 @@
 package com.devision.applicant.service;
 
 import com.devision.applicant.dto.*;
+import com.devision.applicant.enums.DegreeType;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.model.MediaPortfolio;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -38,5 +40,11 @@ public interface ApplicantService {
     void deleteResume(String applicantId);
 
     List<ResumeDTO> getAllResumes();
+
+    Page<ApplicantWithResumeDTO> getApplicantsWithResume(
+            DegreeType degree,
+            int page,
+            int take
+    );
 
 }
