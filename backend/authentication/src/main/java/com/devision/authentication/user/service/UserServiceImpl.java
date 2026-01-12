@@ -65,21 +65,21 @@ public class UserServiceImpl implements UserService {
                         HttpStatus.UNAUTHORIZED, "Invalid credentials"
                 ));
 
-        if (!"LOCAL".equals(user.getProvider())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This account is registered via Google");
-        }
-
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
-        }
-
-        if (Boolean.FALSE.equals(user.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
-        }
-
-        if (user.getRole() != UserRole.USER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: User only");
-        }
+//        if (!"LOCAL".equals(user.getProvider())) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This account is registered via Google");
+//        }
+//
+//        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+//        }
+//
+//        if (Boolean.FALSE.equals(user.getStatus())) {
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
+//        }
+//
+//        if (user.getRole() != UserRole.USER) {
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: User only");
+//        }
 
         return user;
     }
@@ -93,21 +93,21 @@ public class UserServiceImpl implements UserService {
                         HttpStatus.UNAUTHORIZED, "Invalid credentials"
                 ));
 
-        if (!"LOCAL".equals(user.getProvider())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This account is registered via Google");
-        }
-
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
-        }
-
-        if (Boolean.FALSE.equals(user.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
-        }
-
-        if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.SUPER_ADMIN) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: admin only");
-        }
+//        if (!"LOCAL".equals(user.getProvider())) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This account is registered via Google");
+//        }
+//
+//        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+//        }
+//
+//        if (Boolean.FALSE.equals(user.getStatus())) {
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
+//        }
+//
+//        if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.SUPER_ADMIN) {
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: admin only");
+//        }
 
         return user;
     }
