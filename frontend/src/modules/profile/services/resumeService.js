@@ -14,7 +14,7 @@ export const resumeService = {
     },
 
     deleteResume(applicantId, fieldName) {
-        return request(`/api/v1/applicants//${applicantId}/field/${fieldName}`, {
+        return request(`/api/v1/applicants/${applicantId}/field/${fieldName}`, {
             method: "DELETE",
         });
     },

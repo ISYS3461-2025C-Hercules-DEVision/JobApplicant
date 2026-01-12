@@ -61,6 +61,12 @@ public class ApplicantController {
         service.delete(id);
     }
 
+    @DeleteMapping("/{id}/field/{fieldName}")
+    @ResponseStatus(HttpStatus.OK)
+    public ApplicantDTO deleteProfileByField(@PathVariable String id, @PathVariable String fieldName){
+        return service.deleteProfileByField(id, fieldName);
+    }
+
     //WORKED
     //Profile Image
     @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -72,30 +78,30 @@ public class ApplicantController {
 
     //WORKED
     //Media Portfolio
-    @PostMapping(value = "/{applicantId}/portfolio", consumes = "multipart/form-data")
-    public MediaPortfolio uploadPortfolio(@PathVariable String applicantId,
-                                                          @RequestParam("file") MultipartFile file,
-                                                          @RequestParam(value = "title", required = false) String title,
-                                                          @RequestParam(value = "description", required = false) String description,
-                                                          @RequestParam(value = "visibility", defaultValue = "PRIVATE") Visibility visibility){
+    @PostMapping(value = "/{id}/portfolio", consumes = "multipart/form-data")
+    public MediaPortfolio uploadPortfolio(@PathVariable String id,
+                                          @RequestParam("file") MultipartFile file,
+                                          @RequestParam(value = "title", required = false) String title,
+                                          @RequestParam(value = "description", required = false) String description,
+                                          @RequestParam(value = "visibility", defaultValue = "PRIVATE") Visibility visibility){
         var request = new UploadMediaPortfolioRequest(file, title, description, visibility);
 
-        return service.uploadMediaPortfolio(applicantId, request);
+        return service.uploadMediaPortfolio(id, request);
 
     }
 
-
-    @GetMapping("/{applicantId}/portfolio")
-    public List<MediaPortfolio> getPortfolio(@PathVariable String applicantId,
+    @GetMapping("/{id}/portfolio")
+    public List<MediaPortfolio> getPortfolio(@PathVariable String id,
                                              @RequestParam(value = "visibility", required = false) Visibility visibility){
 
-        return service.getMediaPortfolio(applicantId, visibility);
+        return service.getMediaPortfolio(id, visibility);
     }
 
-    @DeleteMapping("/{applicantId}/portfolio/{mediaId}")
-    public void deleteMediaPortfolio(@PathVariable String applicantId, @PathVariable String mediaId){
-        service.deleteMediaPortfolio(applicantId, mediaId);
+    @DeleteMapping("/{id}/portfolio/{mediaId}")
+    public void deleteMediaPortfolio(@PathVariable String id, @PathVariable String mediaId){
+        service.deleteMediaPortfolio(id, mediaId);
     }
+
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<ApplicantDTO> deactivateApplicant(@PathVariable("id") String id) {
         ApplicantDTO result = service.deactivateApplicantAccount(id);
