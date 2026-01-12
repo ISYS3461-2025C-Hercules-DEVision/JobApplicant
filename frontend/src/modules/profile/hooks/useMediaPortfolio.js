@@ -10,7 +10,10 @@ export const useMediaPortfolio = (resumeId) => {
     //Fetch portfolio
     useEffect(() => {
         // If no resumeId yet → keep loading, don't error yet
-        if (resumeId === undefined || resumeId === null) {
+        if (!resumeId) {
+            setLoading(true);
+            setError(null);
+            console.log("Fetching for ResumeId: ", resumeId);
             return; // wait for resumeId to arrive
         }
 

@@ -57,6 +57,7 @@ public class ApplicantServiceImpl implements ApplicantService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
         }
         Applicant saved = repository.save(ApplicantMapper.toEntity(req));
+        log.info("Applicant saved: id={}", saved.getApplicantId());
 
         Resume resume = Resume.builder()
                 .resumeId(UUID.randomUUID().toString())
@@ -64,19 +65,24 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .updatedAt(Instant.now())
                 .build();
 
+        Resume savedResume = resumeRepository.save(resume);
+        log.info("Resume saved: resumeId={}", savedResume.getResumeId());
+
         MediaPortfolio emptyPortfolio = MediaPortfolio.builder()
                 .mediaId(UUID.randomUUID().toString())
-                .resumeId(resume.getResumeId())  // ← foreign key to Resume
+                .resumeId(savedResume.getResumeId())  // ← foreign key to Resume
                 .createdAt(Instant.now())
                 .visibility(Visibility.PRIVATE)     // default visibility
                 .build();
 
-        resume.setMediaPortfolios(List.of(emptyPortfolio));
-        resumeRepository.save(resume);
+        MediaPortfolio savedPortfolio = mediaPortfolioRepository.save(emptyPortfolio);
+        log.info("Initial MediaPortfolio created: mediaId={}, resumeId={}",
+                emptyPortfolio.getMediaId(), savedPortfolio.getResumeId());
 
         saved.setResumeId(resume.getResumeId());
 
         repository.save(saved);
+
         return ApplicantMapper.toDto(saved);
     }
 
@@ -185,7 +191,7 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .filter(x -> x.getDeletedAt() == null)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
 
-        List<MediaPortfolio> portfolios = resume.getMediaPortfolios();
+        List<MediaPortfolio> portfolios = mediaPortfolioRepository.findByResumeId(resumeId);
         if (portfolios == null) {
             return Collections.emptyList();
         }
