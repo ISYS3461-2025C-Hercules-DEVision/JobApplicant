@@ -63,6 +63,7 @@ public class AuthenticationKafkaConsumer {
                 address,
                 phoneNumber,
                 null,
+                null,
                 null
         );
 

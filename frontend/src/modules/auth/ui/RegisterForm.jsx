@@ -14,7 +14,7 @@ export default function RegisterForm() {
         handleSubmit,
         signupWithGoogle,
     } = useRegister({
-        onSuccess: () => navigate("/login"),
+        onSuccess: () => navigate('/login')
     });
 
     return (

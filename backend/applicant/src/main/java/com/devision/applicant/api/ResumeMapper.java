@@ -22,7 +22,6 @@ public class ResumeMapper {
         r.setExperience(req.experience());
         r.setSkills(req.skills());
         r.setCertifications(req.certifications());
-        r.setMediaPortfolios(req.mediaPortfolios());
         r.setMinSalary(req.minSalary());
         r.setMaxSalary(req.maxSalary());
 
@@ -39,7 +38,6 @@ public class ResumeMapper {
                 r.getExperience(),
                 r.getSkills(),
                 r.getCertifications(),
-                r.getMediaPortfolios(),
                 r.getUpdatedAt(),
                 r.getMinSalary(),
                 r.getMaxSalary()
@@ -53,7 +51,6 @@ public class ResumeMapper {
         if (req.experience() != null) entity.setExperience(req.experience());
         if (req.skills() != null) entity.setSkills(req.skills());
         if (req.certifications() != null) entity.setCertifications(req.certifications());
-        if (req.mediaPortfolios() != null) entity.setMediaPortfolios(req.mediaPortfolios());
         if (req.minSalary() != null) entity.setMinSalary(req.minSalary());
         if (req.maxSalary() != null) entity.setMaxSalary(req.maxSalary());
         entity.setUpdatedAt(Instant.now());

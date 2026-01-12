@@ -1,92 +1,120 @@
+// src/modules/profile/ui/AboutSection.jsx
+import { useState } from "react";
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
-import {useProfile} from "../hooks/useProfile.js";
-import {useEffect, useState} from "react";
-import {useSelector} from "react-redux";
+import { useResume } from "../hooks/useResume";
+import { useSelector } from "react-redux";
 
 function AboutSection() {
-
-  // const applicantId = "86209834-9da5-4c8c-8b9a-ba4073850dba";
-  const {user} = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const applicantId = user?.applicantId;
 
-  const{profile, loading: profileLoading, error: profileError, updateProfile} = useProfile(applicantId);
+  const { resume, loading, error, updateResume, isSubmitting } = useResume(applicantId);
 
-  const [objectiveSummary, setObjectiveSummary] = useState('');
+  // Only local state needed for editing
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [editedObjective, setEditedObjective] = useState("");
 
-  useEffect(() => {
-    if(profile?.objectiveSummary){
-        setObjectiveSummary(profile.objectiveSummary);
+  // When entering edit mode → initialize with current value
+  const handleEnterEdit = () => {
+    setEditedObjective(resume?.objective || "");
+    setIsEditing(true);
+  };
+
+  // Save
+  const handleSave = async () => {
+    if (!editedObjective.trim()) {
+      alert("Please enter a professional summary.");
+      return;
     }
-  }, [profile]);
 
-  //SAVE
-  const handleSave = async () =>{
-    setSaving(true);
-    try{
-      await updateProfile({objectiveSummary: objectiveSummary});
+    try {
+      await updateResume({
+        objective: editedObjective.trim(),
+      });
+      alert("Professional summary updated!");
       setIsEditing(false);
-      alert('About section updated successfully');
-    }catch(err){
-      alert('Failed to save: '+ err.message);
-    }finally {
-      setSaving(false);
+    } catch (err) {
+      alert("Failed to save: " + (err.message || "Unknown error"));
     }
-  }
+  };
 
-  //CANCEL
-  const handleCancel = async () => {
-    setObjectiveSummary(profile?.objectiveSummary || '');
+  // Cancel → just exit edit mode (no need to reset, it will re-sync on next render)
+  const handleCancel = () => {
     setIsEditing(false);
   };
 
-  if(profileLoading) return <p className="text-center py-6">Loading About....</p>;
-  if(profileError) return <p className="text-center py-6">Error: {profileError.message}</p>;
+  // Loading / Error
+  if (loading) {
+    return (
+        <SectionWrapper title="About">
+          <p className="text-center py-6 text-gray-600">Loading...</p>
+        </SectionWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+        <SectionWrapper title="About">
+          <p className="text-center py-6 text-red-600">Error: {error}</p>
+        </SectionWrapper>
+    );
+  }
+
+  const objective = resume?.objective || "No professional summary added yet.";
 
   return (
-      <SectionWrapper title="About" onEdit={() => setIsEditing(true)}
+      <SectionWrapper
+          title="About"
+          onEdit={handleEnterEdit}
+          showEditButtons={!isEditing}
       >
         {isEditing ? (
-            <div className="space-y-4">
-              <textarea value={objectiveSummary}
-                        onChange={(e) => setObjectiveSummary(e.target.value)}
-                        placeholder="Share about your background...."
-                        className="w-full p-4 border-2 border-black rounded-md font-bold leading-relaxed resize-y-min-h-[120px]"
-                        />
-              <div className="flex gap-4">
-                   <button onClick={handleSave}
-                           disabled={saving}
-                           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                           >
-                     {saving ? 'Saving...' : 'Save'}
-                   </button>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-lg font-black uppercase mb-2">
+                  Professional Summary / Objective
+                </label>
+                <textarea
+                    value={editedObjective}
+                    onChange={(e) => setEditedObjective(e.target.value)}
+                    placeholder="Tell employers about yourself, your passion, skills, and what you bring..."
+                    rows={6}
+                    className="w-full px-4 py-3 border-4 border-black font-bold focus:outline-none focus:ring-4 focus:ring-primary placeholder:text-gray-500 resize-none"
+                />
+              </div>
+
+              <div className="flex gap-4 mt-8">
                 <button
-                  onClick={handleCancel}
-                  className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
-                  >
+                    onClick={handleSave}
+                    disabled={isSubmitting}
+                    className="px-8 py-4 bg-primary text-white font-black border-4 border-black rounded hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </button>
+
+                <button
+                    onClick={handleCancel}
+                    className="px-8 py-4 bg-gray-300 text-black font-black border-4 border-black rounded hover:bg-gray-400"
+                >
                   Cancel
                 </button>
+              </div>
             </div>
-            </div>
-          ):(
-              <p className="font-bold leading-relaxed">
-                {objectiveSummary || 'No about information added yet.'}
+        ) : (
+            <div className="space-y-4">
+              <p className="text-gray-700 whitespace-pre-line text-lg leading-relaxed">
+                {objective}
               </p>
+
+              {!resume?.objective && (
+                  <p className="text-sm text-gray-500 italic mt-4">
+                    Click Edit to add your professional summary — this is what employers read first!
+                  </p>
+              )}
+            </div>
         )}
       </SectionWrapper>
   );
-  // return (
-  //   <SectionWrapper
-  //     title="About"
-  //     onEdit={() => console.log("edit about")}
-  //   >
-  //     <p className="font-bold leading-relaxed">
-  //       I am a Software Engineering student with a passion for frontend
-  //       development, UI/UX design, and modern JavaScript engineering.
-  //     </p>
-  //   </SectionWrapper>
-  // );
-};
+}
 
 export default AboutSection;

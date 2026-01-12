@@ -25,9 +25,11 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -134,6 +136,45 @@ public class ApplicantServiceImpl implements ApplicantService {
         repository.save(a);
     }
 
+    @Override
+    public ApplicantDTO deleteProfileByField(String id, String fieldName){
+        Applicant a = repository.findById(id)
+                .filter(x -> x.getDeletedAt() == null)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+
+        switch (fieldName){
+            case "fullName":
+                a.setFullName(null);
+                break;
+            case "email":
+                a.setEmail(null);
+                break;
+            case "country":
+                a.setCountry(null);
+                break;
+            case "city":
+                a.setCity(null);
+                break;
+            case "streetAddress":
+                a.setStreetAddress(null);
+                break;
+            case "phoneNumber":
+                a.setPhoneNumber(null);
+                break;
+            case "profileImageUrl":
+                a.setProfileImageUrl(null);
+                break;
+            case "mediaPortfolios":
+                a.setMediaPortfolios(null);
+                break;
+            default:
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid field name: " + fieldName);
+        }
+
+        //Save the updated
+        Applicant saved = repository.save(a);
+        return ApplicantMapper.toDto(saved);
+    }
 
     @Override
     public ApplicantDTO uploadProfileImage(String id, UploadAvatarRequest request){
@@ -155,7 +196,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     public MediaPortfolio uploadMediaPortfolio(String applicantId, UploadMediaPortfolioRequest request){
          repository.findById(applicantId)
                  .filter(x -> x.getDeletedAt() == null)
-                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
 
         try{
             return imageService.uploadMediaPortfolio(
@@ -175,12 +216,12 @@ public class ApplicantServiceImpl implements ApplicantService {
     public List<MediaPortfolio> getMediaPortfolio(String applicantId, Visibility visibility) {
         repository.findById(applicantId)
                 .filter(x -> x.getDeletedAt() == null)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Applicant not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Resume not found"));
 
-            if (visibility == null) {
-                return mediaPortfolioRepository.findByApplicantId(applicantId);
-            }
-            return mediaPortfolioRepository.findByApplicantIdAndVisibility(applicantId, visibility);
+        if (visibility == null) {
+            return mediaPortfolioRepository.findByApplicantId(applicantId);
+        }
+        return mediaPortfolioRepository.findByApplicantIdAndVisibility(applicantId, visibility);
     }
 
     @Override
@@ -304,5 +345,7 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .map(ResumeMapper::toDto)
                 .toList();
     }
+
+
 
 }
