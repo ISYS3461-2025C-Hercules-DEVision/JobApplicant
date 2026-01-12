@@ -22,10 +22,17 @@ export default function CompanyTable() {
       setLoading(true);
       setError(null);
       try {
-        const res = await adminService.getAllCompaniesFromJM({ page: 0, size: 200 });
-        if (mounted) setCompanies(normalizeList(res));
+        // ✅ JM is 1-based paging
+        const res = await adminService.getAllCompaniesFromJM({
+          page: 1,
+          size: 200,
+        });
+
+        if (!mounted) return;
+        setCompanies(normalizeList(res));
       } catch (err) {
-        if (mounted) setError(err?.message || "Failed to load companies from JM");
+        if (!mounted) return;
+        setError(err?.message || "Failed to load companies from JM");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -40,12 +47,17 @@ export default function CompanyTable() {
     const s = q.trim().toLowerCase();
 
     const mapped = companies.map((c) => {
-      const id = c.companyId ?? c.id;
-      const companyName = c.companyName ?? c.name ?? c.company ?? "-";
-      const email = c.email ?? c.contactEmail ?? "-";
-      const industry = c.industry ?? c.sector ?? c.field ?? "-";
+      const id = c.companyId ?? c.id ?? "-";
+      const companyName =
+        c.companyName ?? c.name ?? c.company ?? c.displayName ?? "-";
 
-      // status mapping: string/boolean fallback
+      const email =
+        c.email ?? c.contactEmail ?? c.hrEmail ?? "-";
+
+      const industry =
+        c.industry ?? c.sector ?? c.field ?? c.category ?? "-";
+
+      // status normalization
       const statusRaw = c.status ?? c.active ?? c.activated;
       const status =
         typeof statusRaw === "boolean"
@@ -56,10 +68,10 @@ export default function CompanyTable() {
 
       return {
         id: String(id),
-        companyName,
-        email,
-        industry,
-        status,
+        companyName: String(companyName),
+        email: String(email),
+        industry: String(industry),
+        status: String(status),
         _raw: c,
       };
     });
@@ -95,9 +107,13 @@ export default function CompanyTable() {
         </div>
 
         {loading && (
-          <div className="alert alert-info py-2 mb-3">Loading companies...</div>
+          <div className="alert alert-info py-2 mb-3">
+            Loading companies...
+          </div>
         )}
-        {error && <div className="alert alert-danger py-2 mb-3">{error}</div>}
+        {error && (
+          <div className="alert alert-danger py-2 mb-3">{error}</div>
+        )}
 
         <div className="table-responsive">
           <table className="table align-middle">
@@ -126,21 +142,28 @@ export default function CompanyTable() {
                   <td>
                     <span
                       className={`badge ${
-                        c.status === "Active" ? "text-bg-success" : "text-bg-secondary"
+                        c.status === "Active"
+                          ? "text-bg-success"
+                          : "text-bg-secondary"
                       }`}
                     >
                       {c.status}
                     </span>
                   </td>
                   <td className="text-end">
-                    <button className="btn btn-sm btn-outline-secondary">⋮</button>
+                    <button className="btn btn-sm btn-outline-secondary">
+                      ⋮
+                    </button>
                   </td>
                 </tr>
               ))}
 
               {!loading && !rows.length && (
                 <tr>
-                  <td colSpan={6} className="text-center text-muted py-4">
+                  <td
+                    colSpan={6}
+                    className="text-center text-muted py-4"
+                  >
                     No companies found.
                   </td>
                 </tr>

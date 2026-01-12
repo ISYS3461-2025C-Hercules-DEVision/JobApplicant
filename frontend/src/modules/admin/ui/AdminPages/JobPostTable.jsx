@@ -21,7 +21,7 @@ export default function JobPostTable() {
       setLoading(true);
       setError(null);
       try {
-        const res = await adminService.getAllJobsFromJM({ page: 0, size: 200 });
+        const res = await adminService.getAllJobsFromJM({ page: 1, size: 200 });
         if (mounted) setJobs(normalizeList(res));
       } catch (err) {
         if (mounted) setError(err?.message || "Failed to load jobs from JM");

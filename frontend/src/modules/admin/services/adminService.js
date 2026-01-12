@@ -88,19 +88,20 @@ async function jmRequest(path, { method = "GET", body, headers } = {}) {
   return data;
 }
 
-export async function getAllJobsFromJM({ page = 0, size = 200 } = {}) {
+export async function getAllJobsFromJM({ page = 1, size = 200 } = {}) {
   const params = new URLSearchParams();
-  params.set("page", String(Math.max(0, page - 1)));
+  params.set("page", String(Math.max(1, page)));
   params.set("size", String(size));
   
   return jmRequest(`/internal/jobs/jobs?${params.toString()}`, { method: "GET" });
 }
 
-export async function getAllCompaniesFromJM({ page = 0, size = 200 } = {}) {
+export async function getAllCompaniesFromJM({ page = 1, size = 10 } = {}) {
   const params = new URLSearchParams();
-  params.set("page", String(page));
+  params.set("page", String(Math.max(1, page)));
   params.set("size", String(size));
 
-  // TODO: no have endpoint yet
-  return jmRequest(`/internal/companies?${params.toString()}`, { method: "GET" });
+  return jmRequest(`/internal/companies/companies?${params.toString()}`, {
+    method: "GET",
+  });
 }
