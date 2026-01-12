@@ -9,6 +9,7 @@ import java.util.List;
 
 public record ApplicantDTO(
         String applicantId,
+        String resumeId,
         String fullName,
         String email,
         String country,
@@ -19,6 +20,7 @@ public record ApplicantDTO(
         boolean activated,
         boolean archived,
         Boolean employmentStatus,
+        List<MediaPortfolio> mediaPortfolios,
         LocalDateTime createdAt
 
 ) {}

@@ -26,7 +26,7 @@ import UserProtectedRoute from "../routes/UserProtectedRoute.jsx";
 import AdminProtectedRoute from "../routes/AdminProtectedRoute.jsx";
 import AccountBannedPage from "../modules/auth/ui/AccountBannedPage.jsx";
 import AuthInitializer from "../components/AuthInitializer.jsx";
-import UpdateResumePage from "../pages/updateResumePage.jsx";
+// import UpdateResumePage from "../pages/updateResumePage.jsx";
 
 function App() {
     return (
@@ -36,7 +36,7 @@ function App() {
 
             <Routes>
                 <Route path="/applications" element={<ApplicationPage />} />
-                <Route path="/updateResume" element={<UpdateResumePage />} />
+                {/*<Route path="/updateResume" element={<UpdateResumePage />} />*/}
                 {/* Public routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/BannedAccount" element={<AccountBannedPage/>}/>

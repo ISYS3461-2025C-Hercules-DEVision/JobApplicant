@@ -20,7 +20,6 @@ public record ResumeDTO(
 
         List<String> skills,
         List<String> certifications,
-        List<MediaPortfolio> mediaPortfolios,
 
         Instant updatedAt,
         BigDecimal minSalary,
