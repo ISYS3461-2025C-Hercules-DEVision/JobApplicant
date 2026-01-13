@@ -13,6 +13,7 @@ function ExperienceSection() {
   const [isEditing, setIsEditing] = useState(false);
   const [localExperiences, setLocalExperiences] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   // Sync local state when resume data loads
   useEffect(() => {
@@ -80,6 +81,7 @@ function ExperienceSection() {
   const handleCancel = () => {
     setLocalExperiences(resume?.experience || []);
     setIsEditing(false);
+    setErrorMsg("");
   };
 
   // Loading / Error states
