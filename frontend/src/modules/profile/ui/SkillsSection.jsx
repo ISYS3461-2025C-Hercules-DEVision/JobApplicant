@@ -1,8 +1,14 @@
 // src/modules/profile/ui/SkillsSection.jsx
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import { useResume } from "../hooks/useResume";
-import { useSelector } from "react-redux";
-import { useState, useEffect } from "react";
+import { updateSkillsSchema } from "../../../schemas/profileSchema";
+
+function firstZodMessage(zodError) {
+  return zodError?.issues?.[0]?.message || "Invalid data.";
+}
 
 function SkillsSection() {
   const { user } = useSelector((state) => state.auth);
@@ -14,162 +20,180 @@ function SkillsSection() {
   const [isEditing, setIsEditing] = useState(false);
   const [newSkill, setNewSkill] = useState("");
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   // Sync local state when resume data loads
   useEffect(() => {
-    if (resume?.skills) {
-      setLocalSkills([...resume.skills]); // copy array to avoid mutation
-    }
+    setLocalSkills(Array.isArray(resume?.skills) ? resume.skills : []);
   }, [resume]);
 
-  // Add new skill
   const handleAddSkill = () => {
-    if (!newSkill.trim()) return;
+    setErrorMsg("");
 
     const cleaned = newSkill.trim();
-    if (localSkills.includes(cleaned)) return; // avoid duplicates
+    if (!cleaned) return;
 
-    setLocalSkills([...localSkills, cleaned]);
+    const exists = localSkills.some(
+      (s) => s.toLowerCase() === cleaned.toLowerCase()
+    );
+    if (exists) return;
+
+    setLocalSkills((prev) => [...prev, cleaned]);
     setNewSkill("");
   };
 
-  // Remove skill
   const handleRemoveSkill = (skillToRemove) => {
-    setLocalSkills(localSkills.filter(skill => skill !== skillToRemove));
+    setErrorMsg("");
+    setLocalSkills((prev) => prev.filter((s) => s !== skillToRemove));
   };
 
-  // Save changes to backend
   const handleSave = async () => {
+    setErrorMsg("");
+
+    const parsed = updateSkillsSchema.safeParse({ skills: localSkills });
+    if (!parsed.success) {
+      setErrorMsg(firstZodMessage(parsed.error));
+      return;
+    }
+
     setSaving(true);
     try {
-      await updateResume({ skills: localSkills });
-      alert("Skills updated successfully!");
+      await updateResume(parsed.data); // { skills: [...] }
       setIsEditing(false);
     } catch (err) {
-      alert("Failed to save: " + err.message);
+      setErrorMsg(err?.message || "Failed to save skills.");
     } finally {
       setSaving(false);
     }
   };
 
-  // Cancel → reset to original
   const handleCancel = () => {
-    setLocalSkills(resume?.skills || []);
+    setLocalSkills(Array.isArray(resume?.skills) ? resume.skills : []);
     setIsEditing(false);
     setNewSkill("");
+    setErrorMsg("");
   };
 
-  // Loading / Error states
   if (loading) {
     return (
-        <SectionWrapper title="Skills">
-          <p className="text-center py-6">Loading skills...</p>
-        </SectionWrapper>
+      <SectionWrapper title="Skills">
+        <p className="text-center py-6">Loading skills...</p>
+      </SectionWrapper>
     );
   }
 
   if (error) {
     return (
-        <SectionWrapper title="Skills">
-          <p className="text-center py-6 text-red-600">Error: {error}</p>
-        </SectionWrapper>
+      <SectionWrapper title="Skills">
+        <p className="text-center py-6 text-red-600">
+          Error: {typeof error === "string" ? error : error?.message || "Unknown error"}
+        </p>
+      </SectionWrapper>
     );
   }
 
   return (
-      <SectionWrapper
-          title="Skills"
-          onEdit={() => setIsEditing(true)}
-          onAdd={() => setIsEditing(true)} // optional - can trigger add input focus if you want
-          showEditButtons={!isEditing}
-      >
-        <div className="space-y-6">
-          {isEditing ? (
-              <div className="space-y-4">
-                {/* Current skills tags */}
-                <div className="flex flex-wrap gap-3">
-                  {localSkills.map((skill) => (
-                      <div
-                          key={skill}
-                          className="flex items-center gap-2 px-4 py-2 border-2 border-black font-bold rounded-md bg-white text-black"
-                      >
-                        {skill}
-                        <button
-                            onClick={() => handleRemoveSkill(skill)}
-                            className="text-red-600 hover:text-red-800 font-black text-lg leading-none"
-                        >
-                          ×
-                        </button>
-                      </div>
-                  ))}
-                </div>
+    <SectionWrapper
+      title="Skills"
+      onEdit={() => setIsEditing(true)}
+      onAdd={() => setIsEditing(true)}
+      showEditButtons={!isEditing}
+    >
+      {errorMsg && (
+        <div className="mb-3 p-3 border-2 border-red-600 bg-red-50 font-bold">
+          {errorMsg}
+        </div>
+      )}
 
-                {/* Add new skill input */}
-                <div className="flex gap-3">
-                  <input
-                      type="text"
-                      value={newSkill}
-                      onChange={(e) => setNewSkill(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleAddSkill();
-                        }
-                      }}
-                      placeholder="Add new skill (press Enter)"
-                      className="flex-1 px-4 py-3 border-4 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+      <div className="space-y-6">
+        {isEditing ? (
+          <div className="space-y-4">
+            {/* Current skills tags */}
+            <div className="flex flex-wrap gap-3">
+              {localSkills.map((skill) => (
+                <div
+                  key={skill}
+                  className="flex items-center gap-2 px-4 py-2 border-2 border-black font-bold rounded-md bg-white text-black"
+                >
+                  {skill}
                   <button
-                      onClick={handleAddSkill}
-                      className="px-6 py-3 bg-primary text-white font-black border-4 border-black rounded hover:bg-blue-700"
+                    type="button"
+                    onClick={() => handleRemoveSkill(skill)}
+                    className="text-red-600 hover:text-red-800 font-black text-lg leading-none"
                   >
-                    Add
+                    ×
                   </button>
                 </div>
+              ))}
+            </div>
 
-                {/* Save / Cancel */}
-                <div className="flex gap-4 mt-6">
-                  <button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="px-8 py-4 bg-green-600 text-white font-black border-4 border-black rounded hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {saving ? "Saving..." : "Save Changes"}
-                  </button>
+            {/* Add new skill input */}
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddSkill();
+                  }
+                }}
+                placeholder="Add new skill (press Enter)"
+                className="flex-1 px-4 py-3 border-4 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                type="button"
+                onClick={handleAddSkill}
+                className="px-6 py-3 bg-primary text-white font-black border-4 border-black rounded hover:bg-blue-700"
+              >
+                Add
+              </button>
+            </div>
 
-                  <button
-                      onClick={handleCancel}
-                      className="px-8 py-4 bg-gray-300 text-black font-black border-4 border-black rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-          ) : (
-              <div className="flex flex-wrap gap-3">
-                {localSkills.length > 0 ? (
-                    localSkills.map((skill) => (
-                        <span
-                            key={skill}
-                            className="
+            {/* Save / Cancel */}
+            <div className="flex gap-4 mt-6">
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="px-8 py-4 bg-green-600 text-white font-black border-4 border-black rounded hover:bg-green-700 disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-8 py-4 bg-gray-300 text-black font-black border-4 border-black rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {localSkills.length > 0 ? (
+              localSkills.map((skill) => (
+                <span
+                  key={skill}
+                  className="
                     px-5 py-2 border-4 border-black font-black rounded-md
                     bg-white text-black
                     hover:bg-primary hover:text-white
                     transition-none
                   "
-                        >
+                >
                   {skill}
                 </span>
-                    ))
-                ) : (
-                    <p className="text-gray-500 font-semibold">
-                      No skills added yet.
-                    </p>
-                )}
-              </div>
-          )}
-        </div>
-      </SectionWrapper>
+              ))
+            ) : (
+              <p className="text-gray-500 font-semibold">No skills added yet.</p>
+            )}
+          </div>
+        )}
+      </div>
+    </SectionWrapper>
   );
 }
 
