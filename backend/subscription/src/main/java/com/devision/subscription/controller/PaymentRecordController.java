@@ -26,8 +26,7 @@ public class PaymentRecordController {
     @PostMapping
     public ResponseEntity<?> receivePaymentRecord(
             @RequestBody PaymentRecordDTO dto,
-            @RequestHeader(value = "Authorization", required = false) String token
-    ) {
+            @RequestHeader(value = "Authorization", required = false) String token) {
         try {
             // TODO: validate JWT token from JM (when available)
             if (dto.getSubsystem() == null || !"JOB_APPLICANT".equals(dto.getSubsystem())) {
@@ -39,18 +38,15 @@ public class PaymentRecordController {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "message", "Payment record received and saved",
                     "id", saved.getId(),
-                    "transactionId", saved.getId()
-            ));
+                    "transactionId", saved.getId()));
         } catch (IllegalArgumentException ex) {
             log.warn("Invalid payment record: {}", ex.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
-                    "error", ex.getMessage()
-            ));
+                    "error", ex.getMessage()));
         } catch (Exception ex) {
             log.error("Error processing payment record", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
-                    "error", "Failed to process payment record"
-            ));
+                    "error", "Failed to process payment record"));
         }
     }
 

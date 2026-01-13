@@ -26,7 +26,7 @@ public class PaymentRecordService {
     private final SubscriptionRepository subRepo;
 
     public PaymentRecordService(PaymentTransactionRepository txRepo,
-                                SubscriptionRepository subRepo) {
+            SubscriptionRepository subRepo) {
         this.txRepo = txRepo;
         this.subRepo = subRepo;
     }
@@ -80,7 +80,8 @@ public class PaymentRecordService {
     }
 
     private PaymentStatus mapStatus(String raw) {
-        if (raw == null) return PaymentStatus.FAILED;
+        if (raw == null)
+            return PaymentStatus.FAILED;
         return switch (raw.toUpperCase()) {
             case "SUCCESS", "SUCCEEDED", "PAID" -> PaymentStatus.SUCCESS;
             case "CREATED", "PENDING" -> PaymentStatus.CREATED;
