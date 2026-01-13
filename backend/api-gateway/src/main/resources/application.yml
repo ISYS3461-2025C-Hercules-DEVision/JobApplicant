@@ -68,7 +68,6 @@ spring:
             - RewritePath=/job-manager/(?<segment>.*), /${segment}
 
             # Strip upstream CORS headers (Job Manager has global CORS; browser must only see gateway CORS)
-            - RemoveResponseHeader=Access-Control-Allow-Origin
             - RemoveResponseHeader=Access-Control-Allow-Credentials
             - RemoveResponseHeader=Access-Control-Allow-Headers
             - RemoveResponseHeader=Access-Control-Allow-Methods
