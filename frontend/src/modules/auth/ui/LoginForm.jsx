@@ -19,7 +19,9 @@ export default function LoginForm() {
         try {
             await login(formData);
             navigate("/");
-        } catch {}
+        } catch (err) {
+            console.log('Login failed:', err);
+        }
     };
 
     const loginWithGoogle = () => authService.googleLogin();
