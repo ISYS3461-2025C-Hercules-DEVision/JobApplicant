@@ -179,7 +179,7 @@ export async function request(
         credentials,
     });
 
-    // ✅ Log raw response status + headers
+    // Log raw response status + headers
     console.log(" RESPONSE", {
         url,
         status: res.status,

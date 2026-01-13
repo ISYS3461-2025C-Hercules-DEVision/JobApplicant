@@ -213,13 +213,13 @@ public class AuthServiceImpl {
         // LOGOUT USER (clears refresh cookie + revokes tokens)
         public void logout(String accessToken, String refreshToken, HttpServletResponse response) {
 
-                // ✅ clear refresh cookie
+                // clear refresh cookie
                 cookieService.clearRefreshTokenCookie(response);
 
-                // ✅ revoke ACCESS token in Redis (LOCAL only)
+                // revoke ACCESS token in Redis (LOCAL only)
                 revokeIfLocal(accessToken);
 
-                // ✅ existing refresh token revoke in DB
+                // existing refresh token revoke in DB
                 if (refreshToken == null || refreshToken.isBlank()) {
                         return;
                 }
@@ -228,7 +228,7 @@ public class AuthServiceImpl {
                         RefreshToken stored = refreshTokenService.validate(refreshToken);
                         refreshTokenService.revokeRefreshToken(stored);
 
-                        // ✅ OPTIONAL (extra safety): revoke refresh token JTI too
+                        // OPTIONAL (extra safety): revoke refresh token JTI too
                         revokeIfLocal(refreshToken);
 
                 } catch (Exception ignored) {
@@ -247,7 +247,7 @@ public class AuthServiceImpl {
                         if (provider == null)
                                 provider = "LOCAL";
 
-                        // ✅ only revoke non-SSO tokens
+                        // only revoke non-SSO tokens
                         if (!"LOCAL".equalsIgnoreCase(provider))
                                 return;
 
