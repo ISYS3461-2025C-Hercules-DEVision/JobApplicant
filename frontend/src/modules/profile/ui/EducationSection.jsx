@@ -13,7 +13,6 @@ function EducationSection() {
   const [isEditing, setIsEditing] = useState(false);
   const [localEducations, setLocalEducations] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   // Sync local state when resume data loads
   useEffect(() => {
@@ -81,7 +80,6 @@ function EducationSection() {
   const handleCancel = () => {
     setLocalEducations(resume?.education || []);
     setIsEditing(false);
-    setErrorMsg("");
   };
 
   // Loading / Error states

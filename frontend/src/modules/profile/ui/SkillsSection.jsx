@@ -14,7 +14,6 @@ function SkillsSection() {
   const [isEditing, setIsEditing] = useState(false);
   const [newSkill, setNewSkill] = useState("");
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   // Sync local state when resume data loads
   useEffect(() => {
@@ -41,14 +40,6 @@ function SkillsSection() {
 
   // Save changes to backend
   const handleSave = async () => {
-    setErrorMsg("");
-
-    const parsed = updateSkillsSchema.safeParse({ skills: localSkills });
-    if (!parsed.success) {
-      setErrorMsg(firstZodMessage(parsed.error));
-      return;
-    }
-
     setSaving(true);
     try {
       await updateResume({ skills: localSkills });

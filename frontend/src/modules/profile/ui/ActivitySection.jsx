@@ -1,84 +1,62 @@
 import { useState } from "react";
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
-import { useMediaPortfolio } from "../hooks/useMediaPortfolio.js";
-import { useSelector } from "react-redux";
-import { uploadMediaSchema } from "../../../schemas/mediaSchema";
-
-function firstZodMessage(zodError) {
-  return zodError?.issues?.[0]?.message || "Invalid data.";
-}
+import {useMediaPortfolio} from "../hooks/useMediaPortfolio.js";
+import {useSelector} from "react-redux";
 
 function ActivitySection() {
   const {user} = useSelector((state) => state.auth);
   const applicantId = user?.applicantId;
 
-  const { mediaItems, loading, error, uploading, uploadMedia, deleteMedia } =
-    useMediaPortfolio(applicantId);
+  const {mediaItems, loading, error, uploading, uploadMedia, deleteMedia} = useMediaPortfolio(applicantId);
 
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [visibility, setVisibility] = useState("PRIVATE");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [visibility, setVisibility] = useState('PRIVATE');
 
   const handleChange = (e) => {
-    setSelectedFile(e.target.files?.[0] || null);
+    setSelectedFile(e.target.files[0]);
   };
 
   const handleUpload = async () => {
-    setErrorMsg("");
-
-    const parsed = uploadMediaSchema.safeParse({
-      file: selectedFile,
-      title,
-      description,
-      visibility,
-    });
-
-    if (!parsed.success) {
-      setErrorMsg(firstZodMessage(parsed.error));
-      return;
-    }
-
+    if(!selectedFile) return alert('Select a file');
     try {
-      await uploadMedia(
-        parsed.data.file,
-        parsed.data.title,
-        parsed.data.description,
-        parsed.data.visibility
-      );
+      await uploadMedia(selectedFile, title, description, visibility);
+      alert('Media upload successfully');
 
+      //Clear form
       setSelectedFile(null);
-      setTitle("");
-      setDescription("");
-      setVisibility("PRIVATE");
+      setTitle('');
+      setDescription('');
+      setVisibility('PRIVATE');
       setShowUploadForm(false);
-    } catch (err) {
-      setErrorMsg(err?.message || "Upload failed.");
+    } catch (err){
+      alert('Upload failed: ' + err.message);
     }
   };
 
   const handleDelete = async (mediaId) => {
-    if (!window.confirm("Delete this media item ?")) return;
-    try {
-      await deleteMedia(mediaId);
-    } catch (err) {
-      setErrorMsg(err?.message || "Delete failed.");
+    if(window.confirm('Delete this media item ?')){
+      try {
+        await deleteMedia(mediaId);
+        alert('Media deleted successfully');
+      } catch (err){
+        alert('Delete failed: ' + err.message);
+      }
     }
   };
 
   const handleCancel = () => {
     setShowUploadForm(false);
     setSelectedFile(null);
-    setTitle("");
-    setDescription("");
-    setVisibility("PRIVATE");
-    setErrorMsg("");
-  };
+    setTitle('');
+    setDescription('');
+    setVisibility('PRIVATE');
+  }
 
-  if (loading) return <p className="text-center py-6">Loading Portfolio....</p>;
-  if (error) return <p className="text-center py-6 text-red-600">Error: {error.message}</p>;
+  if(loading) return <p className="text-center py-6">Loading Portfolio....</p>;
+  if(error) return  <p className="text-center py-6 text-red-600">Error: {error.message}</p>;
 
   return (
       <SectionWrapper title="Activity" onAdd={() => setShowUploadForm(true)}>
@@ -164,9 +142,43 @@ function ActivitySection() {
             )}
           </div>
         </div>
-      </div>
-    </SectionWrapper>
+      </SectionWrapper>
   );
+
+  // return (
+  //   <SectionWrapper
+  //     title="Activity"
+  //     onEdit={() => console.log("edit activity")}
+  //     onAdd={() => console.log("add new activity")}
+  //   >
+  //     <div className="grid md:grid-cols-3 gap-4">
+  //       {activities.map((i) => (
+  //         <div
+  //           key={i}
+  //           className="
+  //             border-4 border-black bg-white p-3
+  //             shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
+  //             hover:translate-x-1 hover:translate-y-1 hover:shadow-none
+  //             transition-none
+  //           "
+  //         >
+  //           <img
+  //             src={`https://picsum.photos/400?random=${i}`}
+  //             className="w-full h-32 object-cover border-2 border-black"
+  //           />
+  //
+  //           <p className="font-black mt-2">Wrapping up our Capstone Journey!</p>
+  //           <p className="text-sm text-gray-600">3w ago</p>
+  //
+  //           <div className="flex items-center gap-4 mt-2 text-sm">
+  //             <span>❤️ 1,498</span>
+  //             <span>💬 3,000</span>
+  //           </div>
+  //         </div>
+  //       ))}
+  //     </div>
+  //   </SectionWrapper>
+  // );
 }
 
 export default ActivitySection;
