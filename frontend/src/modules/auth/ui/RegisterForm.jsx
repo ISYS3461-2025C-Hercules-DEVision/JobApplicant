@@ -17,6 +17,26 @@ export default function RegisterForm() {
         onSuccess: () => navigate('/login')
     });
 
+    // Define cities based on country
+    const citiesByCountry = {
+        VN: [
+            { value: "hanoi", label: "Hanoi" },
+            { value: "hcmc", label: "Ho Chi Minh City" }
+        ],
+        SG: [
+            { value: "singapore", label: "Singapore" }
+        ],
+        AU: [
+            { value: "melbourne", label: "Melbourne" },
+            { value: "sydney", label: "Sydney" },
+            { value: "brisbane", label: "Brisbane" },
+            { value: "perth", label: "Perth" }
+        ]
+    };
+
+    // Get cities for selected country
+    const availableCities = formData.country ? citiesByCountry[formData.country] || [] : [];
+
     return (
         <div className="min-h-screen bg-light-gray flex items-center justify-center p-4">
             <div className="bg-white border-4 border-black p-10 w-full max-w-md shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -39,7 +59,7 @@ export default function RegisterForm() {
                                 placeholder="FULL NAME"
                                 value={formData.fullName}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold placeholder:text-dark"
                                 required
                             />
                             <input
@@ -48,7 +68,7 @@ export default function RegisterForm() {
                                 placeholder="EMAIL"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold placeholder:text-dark"
                                 required
                             />
                             <input
@@ -57,7 +77,7 @@ export default function RegisterForm() {
                                 placeholder="PASSWORD"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold placeholder:text-dark"
                                 required
                             />
                             <input
@@ -66,7 +86,7 @@ export default function RegisterForm() {
                                 placeholder="CONFIRM PASSWORD"
                                 value={formData.passwordConfirmation}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold placeholder:text-dark"
                                 required
                             />
                             <input
@@ -74,7 +94,13 @@ export default function RegisterForm() {
                                 name="phoneNumber"
                                 placeholder="PHONE NUMBER"
                                 value={formData.phoneNumber}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    // Only allow digits
+                                    const digitsOnly = e.target.value.replace(/\D/g, '');
+                                    handleChange({ target: { name: 'phoneNumber', value: digitsOnly } });
+                                }}
+                                pattern="[0-9]*"
+                                inputMode="numeric"
                                 className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
                                 required
                             />
@@ -82,42 +108,45 @@ export default function RegisterForm() {
                             <select
                                 name="country"
                                 value={formData.country}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    // Reset city when country changes
+                                    handleChange({ target: { name: 'city', value: '' } });
+                                }}
                                 className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase"
                                 required
                             >
-                                <option value="">COUNTRY</option>
-                                <option value="AU">Australia</option>
+                                <option value="">SELECT COUNTRY</option>
                                 <option value="VN">Vietnam</option>
-                                <option value="US">United States</option>
-                                <option value="UK">United Kingdom</option>
+                                <option value="SG">Singapore</option>
+                                <option value="AU">Australia</option>
                             </select>
 
                             <select
                                 name="city"
                                 value={formData.city}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase disabled:opacity-50"
                                 required
+                                disabled={!formData.country}
                             >
-                                <option value="">CITY</option>
-                                <option value="melbourne">Melbourne</option>
-                                <option value="sydney">Sydney</option>
-                                <option value="hanoi">Hanoi</option>
-                                <option value="hcmc">Ho Chi Minh City</option>
+                                <option value="">SELECT CITY</option>
+                                {availableCities.map((city) => (
+                                    <option key={city.value} value={city.value}>
+                                        {city.label}
+                                    </option>
+                                ))}
                             </select>
 
-                            <select
+                            <input
+                                type="text"
                                 name="streetAddress"
+                                placeholder="STREET ADDRESS"
                                 value={formData.streetAddress}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
                                 required
-                            >
-                                <option value="">STREET ADDRESS</option>
-                                <option value="address1">123 Main Street</option>
-                                <option value="address2">456 Park Avenue</option>
-                            </select>
+                            />
                         </>
                     )}
 
@@ -133,7 +162,6 @@ export default function RegisterForm() {
                     </button>
                 </form>
 
-                {/* Step Indicator (kept as your UI) */}
                 <div className="flex justify-center items-center gap-4 mt-8">
                     {[1, 2, 3].map((n) => (
                         <div
@@ -152,9 +180,9 @@ export default function RegisterForm() {
                         <div className="w-full border-t-4 border-black"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-white text-black font-black uppercase">
-              OR
-            </span>
+                        <span className="px-4 bg-white text-black font-black uppercase">
+                            OR
+                        </span>
                     </div>
                 </div>
 
