@@ -3,7 +3,7 @@ import { request } from "../../../utils/HttpUtil.js";
 import {API_BASE} from "../../../config/api.js";
 export const authService = {
     login(payload) {
-        // ✅ Normalize payload to guarantee correct JSON structure
+        //  Normalize payload to guarantee correct JSON structure
         const cleanPayload = {
             email: payload?.email ?? "",
             password: payload?.password ?? "",

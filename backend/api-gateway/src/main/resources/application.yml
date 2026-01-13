@@ -62,7 +62,7 @@ spring:
 
         # Gateway will forward to: http://job-manager-...elb.amazonaws.com
         - id: job-manager
-          uri: ${JOB_MANAGER_URI:http://job-manager-483228148.ap-southeast-2.elb.amazonaws.com}
+          uri: ${JOB_MANAGER_URI:http://13.236.146.126:8000}
           predicates:
             - Path=/job-manager/**
           filters:

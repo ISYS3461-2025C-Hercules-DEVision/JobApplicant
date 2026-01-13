@@ -54,8 +54,13 @@ export function useRegister({ onSuccess } = {}) {
             };
 
             const data = await authService.register(payload);
+            console.log("REGISTER data typeof:", typeof data);
+            console.log("REGISTER data:", data);
+            console.log("REGISTER keys:", data && Object.keys(data));
 
-            const token = data.token;
+            const token = data?.accessToken;
+            console.log("REGISTER accessToken:", token);
+
             const user = {
                 userId: data.userId,
                 applicantId: data.applicantId,
@@ -63,7 +68,9 @@ export function useRegister({ onSuccess } = {}) {
                 fullName: data.fullName,
             };
 
-            if (!token) throw new Error("Token missing from register response");
+            if (!token) {
+                throw new Error(`Token missing. Keys: ${data ? Object.keys(data).join(",") : "null"}`);
+            }
 
             dispatch(authSuccess({ token, user }));
             setStep(3);
