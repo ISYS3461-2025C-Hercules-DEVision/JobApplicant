@@ -1,6 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as adminService from "../../services/adminService.js";
 
+const MOCK_JOB_POSTS = [
+  {
+    id: "mock-job-1",
+    title: "Frontend Developer",
+    companyName: "Mock Company A",
+    status: "ACTIVE",
+    createdAt: "2024-01-05",
+  },
+  {
+    id: "mock-job-2",
+    title: "Backend Developer",
+    companyName: "Mock Company B",
+    status: "INACTIVE",
+    createdAt: "2024-01-06",
+  },
+];
+
 function normalizeList(data) {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.data)) return data.data;
@@ -14,17 +31,50 @@ export default function JobPostTable() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const handleDelete = async (jobId) => {
+    const ok = window.confirm("Delete this job post? This action cannot be undone.");
+    if (!ok) return;
+
+    try {
+      await adminService.deleteJobPostFromJM(jobId);
+
+      // remove from UI safely (supports jobId / id / jobPostId)
+      setJobs((prev) =>
+        prev.filter((job) => {
+          const id = String(job.jobId ?? job.id ?? job.jobPostId);
+          return id !== String(jobId);
+        })
+      );
+    } catch (error) {
+      console.error("Delete job failed", error);
+      alert(error?.message || "Delete job failed");
+    }
+  };
+
+
   useEffect(() => {
     let mounted = true;
 
     (async () => {
       setLoading(true);
       setError(null);
+
       try {
-        const res = await adminService.getAllJobsFromJM({ page: 1, size: 200 });
-        if (mounted) setJobs(normalizeList(res));
+        const res = await adminService.getAllJobsFromJM({
+          page: 1,
+          size: 200,
+        });
+
+        if (!mounted) return;
+
+        setJobs(normalizeList(res));
       } catch (err) {
-        if (mounted) setError(err?.message || "Failed to load jobs from JM");
+        if (!mounted) return;
+
+        console.error("Fetch jobs from JM failed, using mock data", err);
+
+        setError(err?.message || "Failed to load jobs from JM");
+        setJobs(MOCK_JOB_POSTS);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -123,7 +173,13 @@ export default function JobPostTable() {
                     </span>
                   </td>
                   <td className="text-end">
-                    <button className="btn btn-sm btn-outline-secondary">⋮</button>
+                    <button
+                      className="btn btn-sm btn-outline-danger"
+                      disabled={loading}
+                      onClick={() => handleDelete(j.id)}
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}

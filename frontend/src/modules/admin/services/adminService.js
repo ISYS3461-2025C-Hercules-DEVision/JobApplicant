@@ -105,3 +105,22 @@ export async function getAllCompaniesFromJM({ page = 1, size = 10 } = {}) {
     method: "GET",
   });
 }
+
+//no endpoint from jm yet
+export async function activateCompany(companyId) {
+  return jmRequest(
+    `/internal/companies/companies/${companyId}/activate`,
+    { method: "PATCH" }
+  );
+}
+
+export async function deactivateCompany(companyId) {
+  return jmRequest(
+    `/internal/companies/companies/${companyId}/deactivate`,
+    { method: "PATCH" }
+  );
+}
+  
+export async function deleteJobPostFromJM(jobId) {
+  return jmRequest(`/internal/jobs/jobs/${jobId}`, { method: "DELETE" });
+}
