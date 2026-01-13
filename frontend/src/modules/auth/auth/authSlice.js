@@ -1,12 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const tokenFromStorage = localStorage.getItem("token");
+const tokenFromStorage =
+    localStorage.getItem("access_token") || localStorage.getItem("token"); // fallback
 const userFromStorage = localStorage.getItem("user");
 
 const initialState = {
     token: tokenFromStorage || null,
     user: userFromStorage ? JSON.parse(userFromStorage) : null,
-    status: "idle", // idle | loading | succeeded | failed
+    status: "idle",
     error: null,
 };
 
@@ -26,9 +27,12 @@ const authSlice = createSlice({
             state.status = "succeeded";
             state.error = null;
 
-            localStorage.setItem("token", token);
+            //  store in the new key
+            localStorage.setItem("access_token", token);
             localStorage.setItem("user", JSON.stringify(user));
 
+            //  cleanup legacy
+            localStorage.removeItem("token");
         },
         authFail: (state, action) => {
             state.status = "failed";
@@ -40,9 +44,9 @@ const authSlice = createSlice({
             state.status = "idle";
             state.error = null;
 
-            localStorage.removeItem("token");
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("token"); // legacy cleanup
             localStorage.removeItem("user");
-
         },
     },
 });

@@ -23,12 +23,13 @@ public class AuthController {
             @RequestBody RegisterRequest request,
             HttpServletResponse response
     ) {
+        log.warn("REGISTER DTO = {}", request);
         return authService.register(request, response);
     }
 
     @PostMapping("/login")
     public AuthCookieResponse login(@RequestBody LoginRequest request, HttpServletResponse response) {
-        log.info("✅ HIT /auth/login: email={}", request.email());
+        log.info(" HIT /auth/login: email={}", request.email());
         return authService.login(request, response);
     }
 
