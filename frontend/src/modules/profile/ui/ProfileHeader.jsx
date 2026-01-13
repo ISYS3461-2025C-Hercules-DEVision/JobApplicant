@@ -4,6 +4,10 @@ import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import { useProfile } from "../hooks/useProfile.js";
 import { profileService } from "../services/profileService.js"; // Import service
 import { subscriptionService } from "../../subscription/services/subscriptionService";
+import {
+  onSubscriptionUpdated,
+  offSubscriptionUpdated,
+} from "../../subscription/events/subscriptionEvents";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -44,6 +48,19 @@ function ProfileHeader() {
       .getMySubscription(applicantId)
       .then(setSubscription)
       .catch(console.error);
+  }, [applicantId]);
+
+  // Refresh subscription when a payment completes elsewhere
+  useEffect(() => {
+    const handler = () => {
+      if (!applicantId) return;
+      subscriptionService
+        .getMySubscription(applicantId)
+        .then(setSubscription)
+        .catch(console.error);
+    };
+    onSubscriptionUpdated(handler);
+    return () => offSubscriptionUpdated(handler);
   }, [applicantId]);
 
   // Trigger file input click
@@ -105,7 +122,6 @@ function ProfileHeader() {
   if (!profile) return <p className="text-center p-12">No profile found</p>;
 
   const name = profile.fullName || "Unknown";
-  const skills = profile.skills?.join(", ") || "No skills added";
   const location = `${localCity || "City"}, ${
     localCountry || "Country"
   }`.trim();
@@ -152,7 +168,7 @@ function ProfileHeader() {
             </h1>
 
             <p className="text-xl font-medium text-gray-700 mt-2">
-              Full Stack Developer | {skills}
+              Full Stack Developer
             </p>
 
             {/* Subscription status button */}

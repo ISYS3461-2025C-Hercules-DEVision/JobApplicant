@@ -12,4 +12,8 @@ public interface SubscriptionRepository
         extends MongoRepository<Subscription, String> {
 
     Optional<Subscription> findByApplicantIdAndIsActiveTrue(String applicantId);
+
+    Optional<Subscription> findTopByApplicantIdAndIsActiveTrueOrderByStartDateDesc(String applicantId);
+
+    java.util.List<Subscription> findByApplicantIdAndIsActiveTrueOrderByStartDateDesc(String applicantId);
 }

@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useRegister } from "../hooks/useRegister";
 
 export default function RegisterForm() {
     const navigate = useNavigate();
+
     const {
         formData,
         step,
@@ -14,8 +15,134 @@ export default function RegisterForm() {
         handleSubmit,
         signupWithGoogle,
     } = useRegister({
-        onSuccess: () => navigate('/login')
+        onSuccess: () => navigate("/login"),
     });
+
+    // ---------------------------
+    // Validation requirements
+    // ---------------------------
+
+    // Password: >=8, >=1 digit, >=1 special, >=1 uppercase
+    const passwordErrors = useMemo(() => {
+        const p = formData.password || "";
+        const errs = [];
+        if (p.length < 8) errs.push("Password must be at least 8 characters.");
+        if (!/[0-9]/.test(p)) errs.push("Password must contain at least 1 number.");
+        if (!/[^A-Za-z0-9]/.test(p))
+            errs.push("Password must contain at least 1 special character (e.g., $#@!).");
+        if (!/[A-Z]/.test(p)) errs.push("Password must contain at least 1 capital letter.");
+        return errs;
+    }, [formData.password]);
+
+    // Email:
+    // - exactly one '@'
+    // - at least one '.' after '@'
+    // - length < 255
+    // - no spaces
+    // - no prohibited characters: ( ) [ ] ; :
+    const emailErrors = useMemo(() => {
+        const e = (formData.email || "").trim();
+        const errs = [];
+
+        if (e.length >= 255) errs.push("Email must be less than 255 characters.");
+        if (/\s/.test(e)) errs.push("Email must not contain spaces.");
+        if (/[()\[\];:]/.test(e))
+            errs.push("Email contains prohibited characters: ( ) [ ] ; :");
+
+        const atCount = (e.match(/@/g) || []).length;
+        if (atCount !== 1) errs.push("Email must contain exactly one '@' symbol.");
+
+        const atIndex = e.indexOf("@");
+        if (atIndex > -1) {
+            const domainPart = e.slice(atIndex + 1);
+            if (!domainPart.includes(".")) {
+                errs.push("Email must contain at least one '.' (dot) after the '@' symbol.");
+            } else {
+                // ensure dot isn't first/last in domain
+                if (domainPart.startsWith(".") || domainPart.endsWith(".")) {
+                    errs.push("Email domain format is invalid.");
+                }
+            }
+            // basic sanity: local part and domain part must not be empty
+            if (atIndex === 0 || atIndex === e.length - 1) {
+                errs.push("Email format is invalid.");
+            }
+        }
+
+        return errs;
+    }, [formData.email]);
+
+    // Phone (if provided):
+    // - only digits and must start with valid international dial code (e.g. +84, +49)
+    // - digits after dial code length must be less than some limit
+    //
+    // NOTE: Your requirement text is cut off after "must be less than".
+    // Here we use < 15 digits after dial code as a safe common constraint.
+    const VALID_DIAL_CODES = useMemo(() => ["+84", "+49", "+1", "+44", "+61", "+65"], []);
+    const MAX_DIGITS_AFTER_DIAL_CODE = 15; // adjust to your real requirement
+
+    const phoneErrors = useMemo(() => {
+        const raw = (formData.phoneNumber || "").trim();
+        const errs = [];
+
+        // If phone is optional, only validate when provided:
+        if (!raw) return errs;
+
+        if (!raw.startsWith("+")) {
+            errs.push("Phone number must start with '+' followed by an international dial code (e.g., +84).");
+            return errs;
+        }
+
+        // must be '+' followed by digits only
+        if (!/^\+\d+$/.test(raw)) {
+            errs.push("Phone number must contain only digits after '+'.");
+            return errs;
+        }
+
+        const matchedDial = VALID_DIAL_CODES.find((c) => raw.startsWith(c));
+        if (!matchedDial) {
+            errs.push(`Phone number must start with a valid dial code (e.g., ${VALID_DIAL_CODES.join(", ")}).`);
+            return errs;
+        }
+
+        const digitsAfter = raw.slice(matchedDial.length);
+        if (digitsAfter.length === 0) {
+            errs.push("Phone number must include digits after the dial code.");
+            return errs;
+        }
+
+        if (digitsAfter.length >= MAX_DIGITS_AFTER_DIAL_CODE) {
+            errs.push(`Digits after dial code must be less than ${MAX_DIGITS_AFTER_DIAL_CODE}.`);
+        }
+
+        return errs;
+    }, [formData.phoneNumber, VALID_DIAL_CODES]);
+
+    const allValidationErrors = useMemo(() => {
+        return [...emailErrors, ...passwordErrors, ...phoneErrors];
+    }, [emailErrors, passwordErrors, phoneErrors]);
+
+    const isFormInvalid =
+        loading ||
+        isPasswordMismatch ||
+        allValidationErrors.length > 0;
+
+    // Define cities based on country
+    const citiesByCountry = {
+        VN: [
+            { value: "Hanoi", label: "Hanoi" },
+            { value: "Ho Chi Minh City", label: "Ho Chi Minh City" },
+        ],
+        SG: [{ value: "Singapore", label: "Singapore" }],
+        AU: [
+            { value: "Melbourne", label: "Melbourne" },
+            { value: "Sydney", label: "Sydney" },
+            { value: "Brisbane", label: "Brisbane" },
+            { value: "Perth", label: "Perth" },
+        ],
+    };
+
+    const availableCities = formData.country ? citiesByCountry[formData.country] || [] : [];
 
     return (
         <div className="min-h-screen bg-light-gray flex items-center justify-center p-4">
@@ -24,13 +151,23 @@ export default function RegisterForm() {
                     Get started now!
                 </h1>
 
-                {(error || isPasswordMismatch) && (
+                {(error || isPasswordMismatch || allValidationErrors.length > 0) && (
                     <div className="border-4 border-black p-3 mb-5 font-bold">
-                        {error || "Password confirmation does not match."}
+                        {error ? (
+                            error
+                        ) : isPasswordMismatch ? (
+                            "Password confirmation does not match."
+                        ) : (
+                            <ul className="list-disc pl-5 space-y-1">
+                                {allValidationErrors.map((msg, idx) => (
+                                    <li key={idx}>{msg}</li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                     {step === 1 && (
                         <>
                             <input
@@ -39,92 +176,113 @@ export default function RegisterForm() {
                                 placeholder="FULL NAME"
                                 value={formData.fullName}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold placeholder:text-dark"
                                 required
                             />
+
                             <input
                                 type="email"
                                 name="email"
                                 placeholder="EMAIL"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold placeholder:text-dark"
                                 required
+                                maxLength={254}
                             />
+
                             <input
                                 type="password"
                                 name="password"
                                 placeholder="PASSWORD"
                                 value={formData.password}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold placeholder:text-dark"
                                 required
+                                minLength={8}
                             />
+
                             <input
                                 type="password"
                                 name="passwordConfirmation"
                                 placeholder="CONFIRM PASSWORD"
                                 value={formData.passwordConfirmation}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold placeholder:text-dark"
                                 required
                             />
+
                             <input
                                 type="tel"
                                 name="phoneNumber"
-                                placeholder="PHONE NUMBER"
+                                placeholder="PHONE NUMBER (OPTIONAL) e.g. +84901234567"
                                 value={formData.phoneNumber}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    // Allow '+' at first position, and digits otherwise
+                                    let v = e.target.value;
+                                    v = v.replace(/[^\d+]/g, "");         // remove everything except digits and +
+                                    v = v.replace(/\+/g, (m, offset) => (offset === 0 ? "+" : "")); // only one + at start
+                                    handleChange({ target: { name: "phoneNumber", value: v } });
+                                }}
+                                inputMode="tel"
                                 className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
-                                required
+                                // optional: do NOT require if it's optional
+                                // required
                             />
 
                             <select
                                 name="country"
                                 value={formData.country}
-                                onChange={handleChange}
+                                onChange={(e) => {
+                                    handleChange(e);
+                                    handleChange({ target: { name: "city", value: "" } });
+                                }}
                                 className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase"
                                 required
                             >
-                                <option value="">COUNTRY</option>
-                                <option value="AU">Australia</option>
+                                <option value="">SELECT COUNTRY</option>
                                 <option value="VN">Vietnam</option>
-                                <option value="US">United States</option>
-                                <option value="UK">United Kingdom</option>
+                                <option value="SG">Singapore</option>
+                                <option value="AU">Australia</option>
                             </select>
 
                             <select
                                 name="city"
                                 value={formData.city}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase disabled:opacity-50"
                                 required
+                                disabled={!formData.country}
                             >
-                                <option value="">CITY</option>
-                                <option value="melbourne">Melbourne</option>
-                                <option value="sydney">Sydney</option>
-                                <option value="hanoi">Hanoi</option>
-                                <option value="hcmc">Ho Chi Minh City</option>
+                                <option value="">SELECT CITY</option>
+                                {availableCities.map((city) => (
+                                    <option key={city.value} value={city.value}>
+                                        {city.label}
+                                    </option>
+                                ))}
                             </select>
 
-                            <select
+                            <input
+                                type="text"
                                 name="streetAddress"
+                                placeholder="STREET ADDRESS"
                                 value={formData.streetAddress}
                                 onChange={handleChange}
-                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase"
+                                className="w-full px-4 py-3 border-4 border-black focus:outline-none focus:ring-4 focus:ring-primary font-bold uppercase placeholder:text-dark"
                                 required
-                            >
-                                <option value="">STREET ADDRESS</option>
-                                <option value="address1">123 Main Street</option>
-                                <option value="address2">456 Park Avenue</option>
-                            </select>
+                            />
                         </>
                     )}
 
                     <button
                         type="submit"
-                        disabled={loading || isPasswordMismatch}
+                        disabled={isFormInvalid}
                         className="w-full bg-primary text-white font-black py-4 border-4 border-black uppercase hover:translate-x-1 hover:translate-y-1 hover:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-none flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                        title={
+                            allValidationErrors.length > 0
+                                ? "Please fix validation errors above."
+                                : undefined
+                        }
                     >
                         {loading ? "Loading..." : step < 3 ? "Create Profile" : "Complete"}
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
@@ -133,7 +291,6 @@ export default function RegisterForm() {
                     </button>
                 </form>
 
-                {/* Step Indicator (kept as your UI) */}
                 <div className="flex justify-center items-center gap-4 mt-8">
                     {[1, 2, 3].map((n) => (
                         <div
@@ -152,9 +309,7 @@ export default function RegisterForm() {
                         <div className="w-full border-t-4 border-black"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-white text-black font-black uppercase">
-              OR
-            </span>
+                        <span className="px-4 bg-white text-black font-black uppercase">OR</span>
                     </div>
                 </div>
 

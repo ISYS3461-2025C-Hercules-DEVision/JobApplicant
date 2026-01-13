@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import FooterSection from "../components/Footer/FooterSection";
 import HomeNavbar from '../components/Navbar/HomeNavbar';
+import ProfileNavBar from "../components/Navbar/ProfileNavBar.jsx";
+import {useSelector} from "react-redux";
 
 
 function HomePage() {
@@ -10,6 +12,7 @@ function HomePage() {
   const [isDeleting, setIsDeleting] = useState(false);
   
   const words = ['Opportunities.', 'Roles.', 'Companies.', 'Careers.'];
+  const {token} = useSelector((state) => state.auth);
   
   useEffect(() => {
     const currentWord = words[currentIndex];
@@ -36,7 +39,7 @@ function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <HomeNavbar />
+      {token ? <ProfileNavBar /> : <HomeNavbar/> }
       
       {/* Hero Section */}
       <section className="bg-light-gray border-b-4 border-black py-20 lg:py-32">
