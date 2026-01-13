@@ -71,10 +71,9 @@ public class PaymentEventConsumer {
         }
         paymentTransactionRepository.save(tx);
 
-        // Deactivate all current actives to avoid duplicates
         subscriptionRepository
-                .findByApplicantIdAndIsActiveTrueOrderByStartDateDesc(event.getCustomerId())
-                .forEach(old -> {
+                .findByApplicantIdAndIsActiveTrue(event.getCustomerId())
+                .ifPresent(old -> {
                     old.setActive(false);
                     subscriptionRepository.save(old);
                 });

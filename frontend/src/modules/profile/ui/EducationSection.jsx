@@ -14,6 +14,16 @@ function EducationSection() {
   const [localEducations, setLocalEducations] = useState([]);
   const [saving, setSaving] = useState(false);
 
+  const validDegrees = [
+    "BACHELOR",
+    "MASTER",
+    "DOCTORATE",
+    "ASSOCIATE",
+    "DIPLOMA",
+    "CERTIFICATE",
+    "OTHER",
+  ];
+
   // Sync local state when resume data loads
   useEffect(() => {
     if (resume?.education) {
@@ -122,13 +132,19 @@ function EducationSection() {
                           className="w-full p-3 border-2 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
                       />
 
-                      <input
-                          type="text"
-                          placeholder="Degree"
+                      <select
                           value={edu.degree}
                           onChange={(e) => handleChange(index, "degree", e.target.value)}
                           className="w-full p-3 border-2 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
+                          required
+                      >
+                        <option value="">Select Degree</option>
+                        {validDegrees.map((deg) => (
+                            <option key={deg} value={deg}>
+                              {deg.charAt(0) + deg.slice(1).toLowerCase()} {/* Display nicely */}
+                            </option>
+                        ))}
+                      </select>
 
                       <div className="grid grid-cols-2 gap-4">
                         <input

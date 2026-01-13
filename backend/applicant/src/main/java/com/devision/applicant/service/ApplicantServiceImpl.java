@@ -9,13 +9,13 @@ import com.devision.applicant.enums.DegreeType;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.model.Applicant;
-import com.devision.applicant.model.Education;
 import com.devision.applicant.model.Resume;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
 import com.devision.applicant.repository.ResumeRepository;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -44,19 +44,19 @@ public class ApplicantServiceImpl implements ApplicantService {
     private final MediaPortfolioRepository mediaPortfolioRepository;
     private final ResumeRepository resumeRepository;
     private final ImageService imageService;
-    private final MongoTemplate mongoTemplate;
 
     private final KafkaGenericProducer<Object> kafkaGenericProducer;
     private final ShardMigrationService shardMigrationService;
+    private final MongoTemplate mongoTemplate;
 
-    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, ResumeRepository resumeRepository, MongoTemplate mongoTemplate, KafkaGenericProducer<Object> kafkaGenericProducer, ShardMigrationService shardMigrationService) {
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, ResumeRepository resumeRepository, KafkaGenericProducer<Object> kafkaGenericProducer, ShardMigrationService shardMigrationService, MongoTemplate mongoTemplate) {
         this.repository = repository;
         this.mediaPortfolioRepository = mediaPortfolioRepository;
         this.imageService = mediaService;
         this.resumeRepository = resumeRepository;
-        this.mongoTemplate = mongoTemplate;
         this.kafkaGenericProducer = kafkaGenericProducer;
         this.shardMigrationService = shardMigrationService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -116,7 +116,7 @@ public class ApplicantServiceImpl implements ApplicantService {
 
         boolean countryChanged = req.country() != null && !req.country().equals(oldCountry);
 
-        //Publish to Kafka when country changes
+        //Publish to Kafka
         if(countryChanged){
             String correlationId = UUID.randomUUID().toString();
             ApplicantToJmEvent event = new ApplicantToJmEvent();
@@ -311,23 +311,6 @@ public class ApplicantServiceImpl implements ApplicantService {
             a.setIsResumeUpdated(true);
             repository.save(a);
         }
-
-        List<String> oldSkills = resume.getSkills();
-
-        boolean skillChanged = request.skills() != null && !request.skills().equals(oldSkills);
-
-        //Publish to Kafka when skill changes
-        if(skillChanged){
-            String correlationId = UUID.randomUUID().toString();
-            ApplicantToJmEvent event = new ApplicantToJmEvent();
-            event.setCorrelationId(correlationId);
-            event.setSkills(request.skills());
-            event.setFullName(a.getFullName());
-            event.setEmploymentStatus(a.getEmploymentStatus());
-
-            kafkaGenericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
-        }
-
         resume = resumeRepository.save(resume);
 
         return ResumeMapper.toDto(resume);
@@ -371,8 +354,6 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .map(ResumeMapper::toDto)
                 .toList();
     }
-
-
     @Override
     public Page<ApplicantWithResumeDTO> filterApplicantsWithResume(
             DegreeType degree,
@@ -457,7 +438,4 @@ public class ApplicantServiceImpl implements ApplicantService {
         return new PageImpl<>(dtos, pageable, total);
     }
 
-
 }
-
-

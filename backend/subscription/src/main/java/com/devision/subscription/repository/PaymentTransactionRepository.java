@@ -11,12 +11,10 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  *
  * SRS MAPPING:
  * - Requirement 5.1.2:
- * Record payment transaction with email and transaction time
+ *   Record payment transaction with email and transaction time
  */
 public interface PaymentTransactionRepository
-                extends MongoRepository<PaymentTransaction, String> {
-
-        java.util.List<PaymentTransaction> findByApplicantId(String applicantId);
-
-        java.util.Optional<PaymentTransaction> findByStripeSessionId(String stripeSessionId);
+        extends MongoRepository<PaymentTransaction, String> {
 }
+
+

@@ -17,10 +17,9 @@ public class PaymentInitiateResponseDTO {
         this.paymentId = paymentId;
         this.status = status;
         this.message = message;
-        this.checkoutUrl = checkoutUrl;
-        this.paymentUrl = paymentUrl;
-        this.sessionId = sessionId;
     }
+
+    // getters
 
     public String getPaymentId() {
         return paymentId;

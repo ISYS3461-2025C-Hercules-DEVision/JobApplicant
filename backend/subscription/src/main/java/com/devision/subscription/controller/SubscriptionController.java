@@ -38,7 +38,7 @@ public class SubscriptionController {
      * Initiates a subscription payment for the applicant via Stripe Checkout.
      */
     @PostMapping("/{applicantId}/checkout")
-    public org.springframework.http.ResponseEntity<?> checkout(
+    public PaymentInitiateResponseDTO checkout(
             @PathVariable String applicantId,
             @RequestParam(name = "email", required = false) String email,
             @RequestHeader(name = "Authorization", required = false) String authorization) {

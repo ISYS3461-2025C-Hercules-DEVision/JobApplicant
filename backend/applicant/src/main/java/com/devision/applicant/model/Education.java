@@ -1,12 +1,13 @@
 package com.devision.applicant.model;
 
-import com.devision.applicant.enums.DegreeType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+
+import com.devision.applicant.enums.DegreeType;
 
 @Data
 @Builder

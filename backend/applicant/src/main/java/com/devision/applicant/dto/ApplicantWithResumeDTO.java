@@ -1,6 +1,5 @@
 package com.devision.applicant.dto;
 
-import com.devision.applicant.enums.DegreeType;
 import com.devision.applicant.model.Education;
 import com.devision.applicant.model.WorkExperience;
 

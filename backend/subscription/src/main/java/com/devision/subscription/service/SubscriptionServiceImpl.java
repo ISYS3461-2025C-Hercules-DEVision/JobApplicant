@@ -38,23 +38,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 this.stripePaymentService = stripePaymentService;
         }
 
-        /**
-         * Finds the active subscription for an applicant, returning FREE/inactive
-         * when none exists.
-         */
-        @Override
-        public SubscriptionStatusResponse getMySubscription(String applicantId) {
-                return subscriptionRepository
-                                .findTopByApplicantIdAndIsActiveTrueOrderByStartDateDesc(applicantId)
-                                .map(sub -> new SubscriptionStatusResponse(
-                                                sub.getPlanType(),
-                                                true,
-                                                sub.getExpiryDate()))
-                                .orElse(new SubscriptionStatusResponse(
-                                                PlanType.FREE,
-                                                false,
-                                                null));
-        }
+        // 1. Create payment transaction
+        String paymentId = UUID.randomUUID().toString();
 
         /**
          * Either forwards a payment initiation to JM (recording CREATED
@@ -68,53 +53,53 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 String currency = "USD";
                 String description = "Premium Subscription";
 
-                com.stripe.model.checkout.Session session = stripePaymentService.initiateCheckout(
-                                applicantId, email, amount, currency, description);
+        paymentTransactionRepository.save(tx);
 
-                // Use Stripe session id as transaction id surrogate for response
-                String transactionId = java.util.Optional.ofNullable(session.getMetadata())
-                                .map(m -> m.get("transactionId"))
-                                .orElse(session.getId());
+        // 2. Deactivate old subscription (if any)
+        subscriptionRepository
+                .findByApplicantIdAndIsActiveTrue(applicantId)
+                .ifPresent(old -> {
+                    old.setActive(false);
+                    subscriptionRepository.save(old);
+                });
 
-                return new PaymentInitiateResponseDTO(
-                                transactionId,
-                                "PENDING",
-                                "Initiated via JA Stripe API",
-                                session.getUrl(),
-                                session.getUrl(),
-                                session.getId());
-        }
+        // 3. Create new PREMIUM subscription
+        Subscription sub = new Subscription();
+        sub.setApplicantId(applicantId);
+        sub.setPlanType(PlanType.PREMIUM);
+        sub.setStartDate(Instant.now());
+        sub.setExpiryDate(Instant.now().plus(30, ChronoUnit.DAYS));
+        sub.setActive(true);
 
-        /**
-         * Creates a FREE active subscription if the applicant does not already
-         * have an active plan, and returns the resulting status.
-         */
-        @Override
-        public SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId) {
-                // If an active subscription already exists, return it
-                return subscriptionRepository
-                                .findByApplicantIdAndIsActiveTrue(applicantId)
-                                .map(sub -> new SubscriptionStatusResponse(
-                                                sub.getPlanType(),
-                                                true,
-                                                sub.getExpiryDate()))
-                                .orElseGet(() -> {
-                                        // Create a FREE active subscription
-                                        Subscription sub = new Subscription();
-                                        sub.setApplicantId(applicantId);
-                                        sub.setPlanType(PlanType.FREE);
-                                        sub.setStartDate(Instant.now());
-                                        sub.setExpiryDate(null); // Free plan: no expiry
-                                        sub.setActive(true);
+        subscriptionRepository.save(sub);
 
-                                        subscriptionRepository.save(sub);
+        return new PaymentInitiateResponseDTO(
+                paymentId,
+                "SUCCESS",
+                "Mock payment successful");
+    }
 
-                                        return new SubscriptionStatusResponse(
-                                                        PlanType.FREE,
-                                                        true,
-                                                        null);
-                                });
-        }
+    /**
+     * Creates a FREE active subscription if the applicant does not already
+     * have an active plan, and returns the resulting status.
+     */
+    @Override
+    public SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId) {
+        // If an active subscription already exists, return it
+        return subscriptionRepository
+                .findByApplicantIdAndIsActiveTrue(applicantId)
+                .map(sub -> new SubscriptionStatusResponse(
+                        sub.getPlanType(),
+                        true,
+                        sub.getExpiryDate()))
+                .orElseGet(() -> {
+                    // Create a FREE active subscription
+                    Subscription sub = new Subscription();
+                    sub.setApplicantId(applicantId);
+                    sub.setPlanType(PlanType.FREE);
+                    sub.setStartDate(Instant.now());
+                    sub.setExpiryDate(null); // Free plan: no expiry
+                    sub.setActive(true);
 
         @Override
         public void completePayment(String sessionId) {

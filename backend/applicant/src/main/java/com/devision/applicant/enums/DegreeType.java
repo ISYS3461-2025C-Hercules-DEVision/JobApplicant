@@ -1,9 +1,5 @@
 package com.devision.applicant.enums;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
-import java.util.stream.Stream;
-
 public enum DegreeType {
     BACHELOR,
     MASTER,
@@ -13,4 +9,3 @@ public enum DegreeType {
     CERTIFICATE,
     OTHER
 }
-

@@ -98,10 +98,6 @@ services:
       - discovery-server
     env_file:
       - backend/subscription/.env
-    environment:
-      STRIPE_API_KEY: ${STRIPE_API_KEY}
-      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
-      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
     ports:
       - "8086:8086"
 

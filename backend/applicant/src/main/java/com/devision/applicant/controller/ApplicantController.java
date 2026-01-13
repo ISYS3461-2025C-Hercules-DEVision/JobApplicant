@@ -10,6 +10,7 @@ import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.service.ApplicantService;
 import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -167,5 +168,3 @@ public class ApplicantController {
         return ResponseEntity.ok(result);
     }
 }
-
-
