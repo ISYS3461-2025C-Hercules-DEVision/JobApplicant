@@ -49,10 +49,12 @@ public class SubscriptionController {
             return org.springframework.http.ResponseEntity.ok(dto);
         } catch (IllegalStateException ex) {
             return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of(
-                    "error", ex.getMessage()));
+                    "error", ex.getMessage()
+            ));
         } catch (Exception ex) {
             return org.springframework.http.ResponseEntity.status(500).body(java.util.Map.of(
-                    "error", "Failed to initiate payment"));
+                    "error", "Failed to initiate payment"
+            ));
         }
     }
 
