@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
+import com.devision.applicant.enums.DegreeType;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,7 +19,7 @@ public class Education {
     private String applicantId;       // UUID
 
     private String institution;
-    private String degree;
+    private DegreeType degree;
     private Integer fromYear;
     private Integer toYear;
     private Double gpa;               // nullable (from 0-100)

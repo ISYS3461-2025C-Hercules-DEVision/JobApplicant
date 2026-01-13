@@ -5,6 +5,7 @@ import com.devision.applicant.api.ResumeMapper;
 import com.devision.applicant.config.KafkaConstant;
 import com.devision.applicant.connection.ApplicantToJmEvent;
 import com.devision.applicant.dto.*;
+import com.devision.applicant.enums.DegreeType;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.model.Applicant;
@@ -14,6 +15,11 @@ import com.devision.applicant.repository.ApplicantRepository;
 import com.devision.applicant.repository.MediaPortfolioRepository;
 import com.devision.applicant.repository.ResumeRepository;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -41,14 +47,16 @@ public class ApplicantServiceImpl implements ApplicantService {
 
     private final KafkaGenericProducer<Object> kafkaGenericProducer;
     private final ShardMigrationService shardMigrationService;
+    private final MongoTemplate mongoTemplate;
 
-    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, ResumeRepository resumeRepository, KafkaGenericProducer<Object> kafkaGenericProducer, ShardMigrationService shardMigrationService) {
+    public ApplicantServiceImpl(ApplicantRepository repository, MediaPortfolioRepository mediaPortfolioRepository, ImageService mediaService, ObjectMapper mapper, ResumeRepository resumeRepository, KafkaGenericProducer<Object> kafkaGenericProducer, ShardMigrationService shardMigrationService, MongoTemplate mongoTemplate) {
         this.repository = repository;
         this.mediaPortfolioRepository = mediaPortfolioRepository;
         this.imageService = mediaService;
         this.resumeRepository = resumeRepository;
         this.kafkaGenericProducer = kafkaGenericProducer;
         this.shardMigrationService = shardMigrationService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -118,7 +126,8 @@ public class ApplicantServiceImpl implements ApplicantService {
             event.setEmploymentStatus(req.employmentStatus());
 
             kafkaGenericProducer.sendMessage(KafkaConstant.PROFILE_UPDATE_TOPIC, event);
-            shardMigrationService.migrateApplicant(a, oldCountry, req.country());
+            repository.save(a);
+//            shardMigrationService.migrateApplicant(a, oldCountry, req.country());
         }else {
             repository.save(a);
         }
@@ -345,7 +354,88 @@ public class ApplicantServiceImpl implements ApplicantService {
                 .map(ResumeMapper::toDto)
                 .toList();
     }
+    @Override
+    public Page<ApplicantWithResumeDTO> filterApplicantsWithResume(
+            DegreeType degree,
+            List<String> skills,
+            Boolean matchAllSkills,
+            int page,
+            int take
+    ) {
+        Pageable pageable = PageRequest.of(page - 1, take);
 
+        Query query = new Query();
 
+        // Exclude deleted resumes
+        query.addCriteria(Criteria.where("deletedAt").is(null));
+
+        // Filter by degree (if provided)
+        if (degree != null) {
+            // Use elemMatch to search within the education array
+            query.addCriteria(Criteria.where("education").elemMatch(
+                    Criteria.where("degree").is(degree)
+            ));
+        }
+
+        // Filter by skills (if provided)
+        if (skills != null && !skills.isEmpty()) {
+            // Clean up skill strings (trim whitespace)
+            List<String> cleanedSkills = skills.stream()
+                    .filter(skill -> skill != null && !skill.trim().isEmpty())
+                    .map(String::trim)
+                    .toList();
+
+            if (!cleanedSkills.isEmpty()) {
+                if (matchAllSkills != null && matchAllSkills) {
+                    // Match ALL skills (AND logic) - applicant must have all specified skills
+                    query.addCriteria(Criteria.where("skills").all(cleanedSkills));
+                } else {
+                    // Match ANY skill (OR logic) - applicant must have at least one skill
+                    // Use case-insensitive regex for better matching
+                    List<Criteria> skillCriteria = cleanedSkills.stream()
+                            .map(skill -> Criteria.where("skills")
+                                    .regex("^" + skill + "$", "i"))
+                            .toList();
+                    query.addCriteria(new Criteria().orOperator(skillCriteria.toArray(new Criteria[0])));
+                }
+            }
+        }
+
+        long total = mongoTemplate.count(query, Resume.class);
+
+        List<Resume> resumes = mongoTemplate.find(query.with(pageable), Resume.class);
+
+        List<ApplicantWithResumeDTO> dtos = resumes.stream()
+                .map(resume -> {
+                    Applicant applicant = repository.findById(resume.getApplicantId())
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                                    "Applicant not found for ID: " + resume.getApplicantId()));
+
+                    return new ApplicantWithResumeDTO(
+                            applicant.getApplicantId(),
+                            applicant.getFullName(),
+                            applicant.getEmail(),
+                            applicant.getCountry(),
+                            applicant.getCity(),
+                            applicant.getStreetAddress(),
+                            applicant.getPhoneNumber(),
+                            applicant.getIsActivated(),
+                            applicant.getIsArchived(),
+                            applicant.getEmploymentStatus(),
+                            resume.getResumeId(),
+                            resume.getHeadline(),
+                            resume.getObjective(),
+                            resume.getEducation(),
+                            resume.getCertifications(),
+                            resume.getExperience(),
+                            resume.getSkills(),
+                            resume.getMinSalary(),
+                            resume.getMaxSalary()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(dtos, pageable, total);
+    }
 
 }
