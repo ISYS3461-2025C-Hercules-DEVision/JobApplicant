@@ -15,3 +15,4 @@ export { default as SearchProfilePage } from './SearchProfilePage';
 export { default as NotificationPage } from "./NotificationPage";
 export { default as AuthCallback} from "./AuthCallback.jsx";
 export { default as MockPaymentPage} from "./MockPaymentPage.jsx";
+export { default as SubscriptionReturnPage } from "./SubscriptionReturnPage.jsx";

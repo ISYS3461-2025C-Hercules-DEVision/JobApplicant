@@ -33,11 +33,10 @@ payment:
   consumer:
     enabled: ${PAYMENT_CONSUMER_ENABLED:false}
 
-  forward:
-    enabled: ${PAYMENT_FORWARD_ENABLED:false}
-    base-url: ${PAYMENT_BASE_URL:http://localhost:8084}
-    initiate-path: /payments/initiate
-    bearer: ${PAYMENT_FORWARD_AUTH_TOKEN:}
+stripe:
+  api-key: ${STRIPE_API_KEY:}
+  success-url: ${STRIPE_SUCCESS_URL:http://localhost:5173/subscription/return}
+  cancel-url: ${STRIPE_CANCEL_URL:http://localhost:5173/subscription}
 
 notification:
   consumer:

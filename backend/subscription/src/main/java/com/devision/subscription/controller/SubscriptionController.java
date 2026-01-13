@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.*;
  *
  * Routes are served behind the API Gateway under /api/v1/subscriptions.
  * - GET /{applicantId}: Current subscription status for the applicant
- * - POST /{applicantId}/checkout: Create a mock payment or forward to JM
+ * - POST /{applicantId}/checkout: Initiate Stripe checkout for subscription
+ * - POST /{applicantId}/cancel: Cancel current subscription (set to FREE)
  * - POST /{applicantId}/default: Create a FREE active subscription when missing
  */
 @RestController
@@ -34,16 +35,43 @@ public class SubscriptionController {
     }
 
     /**
-     * Initiates a subscription payment for the applicant.
-     * When forwarding is disabled, a mock SUCCESS payment is recorded and a
-     * PREMIUM subscription is created. When enabled, the request is forwarded
-     * to JM and a CREATED transaction is stored locally.
+     * Initiates a subscription payment for the applicant via Stripe Checkout.
      */
     @PostMapping("/{applicantId}/checkout")
-    public PaymentInitiateResponseDTO checkout(
+    public org.springframework.http.ResponseEntity<?> checkout(
             @PathVariable String applicantId,
-            @RequestParam(name = "email", required = false) String email) {
-        return subscriptionService.createMockPayment(applicantId, email);
+            @RequestParam(name = "email", required = false) String email,
+            @RequestHeader(name = "Authorization", required = false) String authorization) {
+        try {
+            PaymentInitiateResponseDTO dto = subscriptionService.initiatePayment(applicantId, email, authorization);
+            return org.springframework.http.ResponseEntity.ok(dto);
+        } catch (IllegalStateException ex) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of(
+                    "error", ex.getMessage()));
+        } catch (Exception ex) {
+            return org.springframework.http.ResponseEntity.status(500).body(java.util.Map.of(
+                    "error", "Failed to initiate payment",
+                    "details", ex.getMessage()));
+        }
+    }
+
+    /**
+     * Completes a payment after Stripe redirects the frontend with a session_id
+     * query parameter. The frontend should call this endpoint with that session
+     * id to finalize the subscription.
+     */
+    @GetMapping("/complete")
+    public String complete(
+            @RequestParam(name = "sessionId", required = false) String sessionId,
+            @RequestParam(name = "session_id", required = false) String session_id) {
+        if (sessionId == null || sessionId.isBlank()) {
+            sessionId = session_id;
+        }
+        if (sessionId == null || sessionId.isBlank()) {
+            throw new IllegalArgumentException("Missing session id");
+        }
+        subscriptionService.completePayment(sessionId);
+        return "Payment completed";
     }
 
     /**
@@ -54,5 +82,14 @@ public class SubscriptionController {
     public SubscriptionStatusResponse createDefault(
             @PathVariable String applicantId) {
         return subscriptionService.createDefaultSubscriptionForUser(applicantId);
+    }
+
+    /**
+     * Cancels the current subscription (if any) and sets plan to FREE (active).
+     */
+    @PostMapping("/{applicantId}/cancel")
+    public SubscriptionStatusResponse cancel(
+            @PathVariable String applicantId) {
+        return subscriptionService.cancelSubscription(applicantId);
     }
 }

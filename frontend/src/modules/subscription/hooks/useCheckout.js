@@ -9,8 +9,24 @@ export function useCheckout() {
   const navigate = useNavigate();
 
   const startCheckout = async () => {
-    // Navigate to mock payment page; payment happens on click there
-    navigate(`/payment/mock`);
+    if (!applicantId) {
+      navigate(`/login`);
+      return;
+    }
+    try {
+      const res = await subscriptionService.createCheckoutSession(applicantId, user?.email);
+      const redirectUrl = res?.checkoutUrl || res?.paymentUrl || res?.stripeUrl;
+      if (redirectUrl) {
+        sessionStorage.setItem("postPaymentReturn", "/subscription");
+        window.location.href = redirectUrl;
+        return;
+      }
+      throw new Error("No checkout URL returned");
+    } catch (e) {
+      console.error("Checkout initiation failed", e);
+      // fallback to subscription page
+      navigate(`/subscription`);
+    }
   };
 
   return { startCheckout };
