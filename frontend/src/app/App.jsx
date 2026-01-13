@@ -27,21 +27,21 @@ import UserProtectedRoute from "../routes/UserProtectedRoute.jsx";
 import AdminProtectedRoute from "../routes/AdminProtectedRoute.jsx";
 import AccountBannedPage from "../modules/auth/ui/AccountBannedPage.jsx";
 import AuthInitializer from "../components/AuthInitializer.jsx";
-// import UpdateResumePage from "../pages/updateResumePage.jsx";
 
 function App() {
     return (
         <Router>
-            <Route path="/BannedAccount" element={<AccountBannedPage/>}/>
             {/* Handle when reloading page, the redux resets */}
-            <AuthInitializer/>
+            <AuthInitializer />
 
             <Routes>
+                {/*  Public banned route MUST be inside Routes */}
+                <Route path="/BannedAccount" element={<AccountBannedPage />} />
+
                 <Route path="/applications" element={<ApplicationPage />} />
-                {/*<Route path="/updateResume" element={<UpdateResumePage />} />*/}
+
                 {/* Public routes */}
                 <Route path="/" element={<HomePage />} />
-
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/jobs" element={<JobListPage />} />
@@ -54,7 +54,7 @@ function App() {
                 {/* Admin login is public */}
                 <Route path="/adminLogin" element={<AdminLogin />} />
 
-                {/*  Protected USER routes */}
+                {/* Protected USER routes */}
                 <Route
                     path="/profile"
                     element={
@@ -63,7 +63,6 @@ function App() {
                         </UserProtectedRoute>
                     }
                 />
-
                 <Route
                     path="/apply/:id"
                     element={
@@ -72,7 +71,6 @@ function App() {
                         </UserProtectedRoute>
                     }
                 />
-
                 <Route
                     path="/notifications"
                     element={
@@ -82,7 +80,7 @@ function App() {
                     }
                 />
 
-                {/*  Protected ADMIN routes */}
+                {/* Protected ADMIN routes */}
                 <Route
                     path="/adminDashboard"
                     element={
@@ -94,7 +92,7 @@ function App() {
                     <Route index element={<ApplicantTable />} />
                     <Route path="adminApplicants" element={<ApplicantTable />} />
                     <Route path="adminCompanies" element={<CompanyTable />} />
-                    <Route path="adminApplications" element={<ApplicationTable   />} />
+                    <Route path="adminApplications" element={<ApplicationTable />} />
                     <Route path="adminJobs" element={<JobPostTable />} />
                 </Route>
 
@@ -103,9 +101,7 @@ function App() {
                     path="*"
                     element={
                         <div className="p-6">
-                            <div className="text-lg font-semibold text-slate-900">
-                                Not found
-                            </div>
+                            <div className="text-lg font-semibold text-slate-900">Not found</div>
                             <div className="mt-1 text-sm text-slate-500">
                                 The page you are looking for doesn’t exist.
                             </div>
