@@ -12,7 +12,7 @@ public interface SubscriptionService {
     SubscriptionStatusResponse getMySubscription(String applicantId);
 
     /** Initiates payment for a subscription via Stripe checkout. */
-    PaymentInitiateResponseDTO createMockPayment(String applicantId, String email, String authBearer);
+    PaymentInitiateResponseDTO initiatePayment(String applicantId, String email, String authBearer);
 
     /** Completes payment for a subscription using the provided session ID. */
     void completePayment(String sessionId);

@@ -62,7 +62,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
          * subscription for 30 days.
          */
         @Override
-        public PaymentInitiateResponseDTO createMockPayment(String applicantId, String email, String authBearer) {
+        public PaymentInitiateResponseDTO initiatePayment(String applicantId, String email, String authBearer) {
                 // Always use JA-native Stripe now (forwarding disabled in env)
                 java.math.BigDecimal amount = java.math.BigDecimal.valueOf(10.00);
                 String currency = "USD";

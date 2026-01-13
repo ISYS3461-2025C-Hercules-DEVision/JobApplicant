@@ -43,7 +43,7 @@ public class SubscriptionController {
             @RequestParam(name = "email", required = false) String email,
             @RequestHeader(name = "Authorization", required = false) String authorization) {
         try {
-            PaymentInitiateResponseDTO dto = subscriptionService.createMockPayment(applicantId, email, authorization);
+            PaymentInitiateResponseDTO dto = subscriptionService.initiatePayment(applicantId, email, authorization);
             return org.springframework.http.ResponseEntity.ok(dto);
         } catch (IllegalStateException ex) {
             return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of(
