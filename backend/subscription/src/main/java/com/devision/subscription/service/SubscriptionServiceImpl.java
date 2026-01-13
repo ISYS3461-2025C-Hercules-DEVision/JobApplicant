@@ -1,7 +1,5 @@
 package com.devision.subscription.service;
 
-import com.devision.subscription.client.PaymentInitiationClient;
-import com.devision.subscription.dto.JmPaymentInitiateRequest;
 import com.devision.subscription.dto.PaymentInitiateResponseDTO;
 import com.devision.subscription.dto.SubscriptionStatusResponse;
 import com.devision.subscription.enums.PlanType;
@@ -29,21 +27,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         private final SubscriptionRepository subscriptionRepository;
         private final PaymentTransactionRepository paymentTransactionRepository;
-        private final PaymentInitiationClient paymentInitiationClient;
         private final StripePaymentService stripePaymentService;
-        @Value("${payment.forward.enabled:false}")
-        private boolean forwardEnabled;
-        @Value("${payment.forward.checkout-url:}")
-        private String fallbackCheckoutUrl;
 
         public SubscriptionServiceImpl(
                         SubscriptionRepository subscriptionRepository,
                         PaymentTransactionRepository paymentTransactionRepository,
-                        PaymentInitiationClient paymentInitiationClient,
                         StripePaymentService stripePaymentService) {
                 this.subscriptionRepository = subscriptionRepository;
                 this.paymentTransactionRepository = paymentTransactionRepository;
-                this.paymentInitiationClient = paymentInitiationClient;
                 this.stripePaymentService = stripePaymentService;
         }
 

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
  *
  * Routes are served behind the API Gateway under /api/v1/subscriptions.
  * - GET /{applicantId}: Current subscription status for the applicant
- * - POST /{applicantId}/checkout: Create a mock payment or forward to JM
+ * - POST /{applicantId}/checkout: Initiate Stripe checkout for subscription
  * - POST /{applicantId}/default: Create a FREE active subscription when missing
  */
 @RestController
@@ -34,10 +34,7 @@ public class SubscriptionController {
     }
 
     /**
-     * Initiates a subscription payment for the applicant.
-     * When forwarding is disabled, a mock SUCCESS payment is recorded and a
-     * PREMIUM subscription is created. When enabled, the request is forwarded
-     * to JM and a CREATED transaction is stored locally.
+     * Initiates a subscription payment for the applicant via Stripe Checkout.
      */
     @PostMapping("/{applicantId}/checkout")
     public org.springframework.http.ResponseEntity<?> checkout(

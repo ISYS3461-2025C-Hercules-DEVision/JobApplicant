@@ -11,11 +11,7 @@ public interface SubscriptionService {
     /** Returns current subscription status for the given applicant. */
     SubscriptionStatusResponse getMySubscription(String applicantId);
 
-    /**
-     * Initiates payment for a subscription. When forwarding is disabled, this
-     * records a mock SUCCESS and creates a PREMIUM subscription; otherwise it
-     * forwards to JM and records a CREATED transaction for reconciliation.
-     */
+    /** Initiates payment for a subscription via Stripe checkout. */
     PaymentInitiateResponseDTO createMockPayment(String applicantId, String email, String authBearer);
 
     /** Completes payment for a subscription using the provided session ID. */

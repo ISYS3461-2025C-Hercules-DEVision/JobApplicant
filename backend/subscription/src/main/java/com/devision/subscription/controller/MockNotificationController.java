@@ -8,6 +8,7 @@ import com.devision.subscription.service.SearchProfileService;
 import com.devision.subscription.service.SubscriptionService;
 import com.devision.subscription.service.NotificationService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -19,6 +20,7 @@ import java.util.List;
  * frontend integration prior to enabling Kafka consumers.
  */
 @RestController
+@Profile("dev")
 @RequestMapping("/api/v1/subscriptions")
 public class MockNotificationController {
 
