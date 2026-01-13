@@ -73,10 +73,10 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        if (Boolean.FALSE.equals(user.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
-        }
-
+//        if (Boolean.FALSE.equals(user.getStatus())) {
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
+//        }
+//
         if (user.getRole() != UserRole.USER) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: User only");
         }
@@ -101,9 +101,9 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        if (Boolean.FALSE.equals(user.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
-        }
+//        if (Boolean.FALSE.equals(user.getStatus())) {
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Your account has been banned.");
+//        }
 
         if (user.getRole() != UserRole.ADMIN && user.getRole() != UserRole.SUPER_ADMIN) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied: admin only");

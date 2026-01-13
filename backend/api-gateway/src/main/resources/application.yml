@@ -15,7 +15,8 @@ spring:
         add-to-simple-url-handler-mapping: true
         corsConfigurations:
           "[/**]":
-            allowedOrigins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
+            allowedOriginPatterns: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
+
             allowedMethods:
               - GET
               - POST
@@ -37,6 +38,16 @@ spring:
           uri: lb://authentication-service
           predicates:
             - Path=/auth/**,/oauth2/**,/login/oauth2/**
+
+        - id: application-service-files
+          uri: lb://application-service
+          predicates:
+            - Path=/api/files/**
+
+        - id: application-service-applications
+          uri: lb://application-service
+          predicates:
+            - Path=/api/v1/applications/**
 
         - id: applicant-service
           uri: lb://applicant-service
@@ -60,3 +71,8 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: ${EUREKA_DEFAULT_ZONE}
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
+    reactor.netty.http.server: DEBUG

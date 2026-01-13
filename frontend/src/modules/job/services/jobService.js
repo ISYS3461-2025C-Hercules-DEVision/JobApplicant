@@ -1,8 +1,4 @@
-// src/services/jobService.js
 import { API_BASE_JOB_MANAGER } from "../../../config/api.js";
-
-// src/services/jobService.js
-
 
 async function parseBody(res) {
     const text = await res.text();
@@ -22,21 +18,26 @@ function getAccessToken(auth = "user") {
             sessionStorage.getItem("admin_token")
         );
     }
-    return localStorage.getItem("access_token") || localStorage.getItem("token");
+
+    return (
+        localStorage.getItem("accessToken") ||     // ✅ add this
+        sessionStorage.getItem("accessToken") ||   // ✅ and this
+        localStorage.getItem("access_token") ||
+        sessionStorage.getItem("access_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token")
+    );
 }
 
-/**
- * Request helper for Job Manager service
- */
-async function jobRequest(
-    path,
-    { method = "GET", body, headers, auth = "user" } = {}
-) {
-    const url = `${API_BASE_JOB_MANAGER}${path}`;
+export async function jobRequest(path, { method = "GET", body, headers, auth = "user" } = {}) {
+    const base = API_BASE_JOB_MANAGER.replace(/\/$/, "");
+    const url = `${base}${path}`;
     console.log("Job API URL:", url);
 
     const isFormData = body instanceof FormData;
     const token = getAccessToken(auth);
+
+    console.log("Job API Token exists:", !!token);
 
     const res = await fetch(url, {
         method,
@@ -46,7 +47,8 @@ async function jobRequest(
             ...(headers || {}),
         },
         body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-        credentials: "include",
+
+        credentials: "omit",
     });
 
     const data = await parseBody(res);
@@ -65,13 +67,6 @@ async function jobRequest(
     return data;
 }
 
-/**
- * ✅ Correct endpoint:
- * GET /internal/jobs/jobs?page=1&size=10
- *
- * Supports filters if backend supports them (optional):
- * title, location, employmentType, keyWord
- */
 export async function getJobs({
                                   title,
                                   location,
@@ -80,19 +75,15 @@ export async function getJobs({
                                   page = 1,
                                   size = 10,
                               } = {}) {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(); //a built-in helper that constructs URL query params like :/internal/jobs/jobs?page=1&size=10
 
     if (title) params.set("title", title);
     if (location) params.set("location", location);
     if (employmentType) params.set("employmentType", employmentType);
     if (keyWord) params.set("keyWord", keyWord);
 
-    params.set("page", String(page));
+    params.set("page", String(Math.max(1, page)));
     params.set("size", String(size));
 
-    const qs = params.toString();
-    const path = `/internal/jobs/jobs?${qs}`;
-
-    return jobRequest(path, { method: "GET" });
+    return jobRequest(`/internal/jobs/jobs?${params.toString()}`, { method: "GET" });
 }
-

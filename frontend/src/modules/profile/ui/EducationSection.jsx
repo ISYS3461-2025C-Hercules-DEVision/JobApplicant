@@ -1,45 +1,49 @@
+// src/modules/profile/ui/EducationSection.jsx
 import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
-import { useState, useEffect } from "react";
-import { useProfile } from "../hooks/useProfile.js";
+import { useResume } from "../hooks/useResume";
 import { useSelector } from "react-redux";
-import { updateEducationsSchema } from "../../../schemas/profileSchema";
-
-function firstZodMessage(zodError) {
-  return zodError?.issues?.[0]?.message || "Invalid data.";
-}
+import { useState, useEffect } from "react";
 
 function EducationSection() {
   const { user } = useSelector((state) => state.auth);
   const applicantId = user?.applicantId;
 
-  const { profile, loading: profileLoading, error: profileError, updateProfile } = useProfile(applicantId);
+  const { resume, loading, error, updateResume } = useResume(applicantId);
 
-  const [educations, setEducations] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [localEducations, setLocalEducations] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
+  const validDegrees = [
+    "BACHELOR",
+    "MASTER",
+    "DOCTORATE",
+    "ASSOCIATE",
+    "DIPLOMA",
+    "CERTIFICATE",
+    "OTHER",
+  ];
+
+  // Sync local state when resume data loads
   useEffect(() => {
-    if (profile?.educations) {
-      setEducations(
-        profile.educations.map((edu) => ({
-          educationId: edu.educationId || null,
-          applicantId: edu.applicantId || applicantId,
-          institution: edu.institution || "",
-          degree: edu.degree || "",
-          fromYear: edu.fromYear || "",
-          toYear: edu.toYear || "",
-          gpa: edu.gpa || "",
-        }))
+    if (resume?.education) {
+      setLocalEducations(
+          resume.education.map((edu, index) => ({
+            ...edu,
+            educationId: edu.educationId || `temp-${index}`, // fallback temp ID for React key
+            applicantId: edu.applicantId || applicantId,
+          }))
       );
     }
-  }, [profile, applicantId]);
+  }, [resume, applicantId]);
 
+  // Add new empty education entry
   const handleAdd = () => {
-    setEducations((prev) => [
-      ...prev,
+    setLocalEducations([
+      ...localEducations,
       {
         educationId: null,
+        applicantId,
         institution: "",
         degree: "",
         fromYear: "",
@@ -50,158 +54,181 @@ function EducationSection() {
     setIsEditing(true);
   };
 
+  // Update a field in local state
   const handleChange = (index, field, value) => {
-    const updated = [...educations];
+    const updated = [...localEducations];
     updated[index] = { ...updated[index], [field]: value };
-    setEducations(updated);
+    setLocalEducations(updated);
   };
 
-  const handleDelete = async (index) => {
-    if (!window.confirm("Delete this education ?")) return;
+  // Delete education entry
+  const handleDelete = (index) => {
+    if (!window.confirm("Delete this education entry?")) return;
 
-    try {
-      const updatedEducation = educations.filter((_, i) => i !== index);
+    const updated = localEducations.filter((_, i) => i !== index);
+    setLocalEducations(updated);
 
-      const parsed = updateEducationsSchema.safeParse({ educations: updatedEducation });
-      if (!parsed.success) {
-        setErrorMsg(firstZodMessage(parsed.error));
-        return;
-      }
-
-      await updateProfile(parsed.data);
-      setEducations(updatedEducation);
-      setErrorMsg("");
-    } catch (err) {
-      setErrorMsg(err?.message || "Cant delete this education.");
-    }
+    // Save to backend immediately
+    handleSave(updated);
   };
 
-  const handleSave = async () => {
-    setErrorMsg("");
-
-    const parsed = updateEducationsSchema.safeParse({ educations });
-    if (!parsed.success) {
-      setErrorMsg(firstZodMessage(parsed.error));
-      return;
-    }
-
+  // Save all educations to backend
+  const handleSave = async (educationsToSave = localEducations) => {
     setSaving(true);
     try {
-      await updateProfile(parsed.data);
+      await updateResume({ education: educationsToSave });
+      alert("Education saved successfully!");
       setIsEditing(false);
     } catch (err) {
-      setErrorMsg(err?.message || "Failed to save education.");
+      alert("Failed to save: " + err.message);
     } finally {
       setSaving(false);
     }
   };
 
+  // Cancel editing → reset to original
   const handleCancel = () => {
-    setEducations(profile?.educations || []);
+    setLocalEducations(resume?.education || []);
     setIsEditing(false);
-    setErrorMsg("");
   };
 
-  if (profileLoading) return <p className="text-center py-6">Loading Education....</p>;
-  if (profileError) return <p className="text-center py-6">Error: {profileError.message}</p>;
+  // Loading / Error states
+  if (loading) {
+    return (
+        <SectionWrapper title="Education">
+          <p className="text-center py-6">Loading education...</p>
+        </SectionWrapper>
+    );
+  }
+
+  if (error) {
+    return (
+        <SectionWrapper title="Education">
+          <p className="text-center py-6 text-red-600">Error: {error}</p>
+        </SectionWrapper>
+    );
+  }
 
   return (
-    <SectionWrapper title="Education" onEdit={() => setIsEditing(true)} onAdd={handleAdd} showEditButtons={!isEditing}>
-      {errorMsg && (
-        <div className="mb-3 p-3 border-2 border-red-600 bg-red-50 font-bold">
-          {errorMsg}
+      <SectionWrapper
+          title="Education"
+          onEdit={() => setIsEditing(true)}
+          onAdd={handleAdd}
+          showEditButtons={!isEditing}
+      >
+        <div className="space-y-8">
+          {isEditing ? (
+              <>
+                {localEducations.map((edu, index) => (
+                    <div
+                        key={index}
+                        className="border-4 border-black p-6 rounded-lg bg-gray-50 space-y-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    >
+                      <input
+                          type="text"
+                          placeholder="Institution"
+                          value={edu.institution}
+                          onChange={(e) => handleChange(index, "institution", e.target.value)}
+                          className="w-full p-3 border-2 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+
+                      <select
+                          value={edu.degree}
+                          onChange={(e) => handleChange(index, "degree", e.target.value)}
+                          className="w-full p-3 border-2 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                          required
+                      >
+                        <option value="">Select Degree</option>
+                        {validDegrees.map((deg) => (
+                            <option key={deg} value={deg}>
+                              {deg.charAt(0) + deg.slice(1).toLowerCase()} {/* Display nicely */}
+                            </option>
+                        ))}
+                      </select>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <input
+                            type="number"
+                            placeholder="From Year (e.g. 2021)"
+                            value={edu.fromYear}
+                            onChange={(e) => handleChange(index, "fromYear", e.target.value)}
+                            className="w-full p-3 border-2 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+
+                        <input
+                            type="number"
+                            placeholder="To Year (or Present)"
+                            value={edu.toYear}
+                            onChange={(e) => handleChange(index, "toYear", e.target.value)}
+                            className="w-full p-3 border-2 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+
+                      <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          placeholder="GPA (optional, 0-100)"
+                          value={edu.gpa}
+                          onChange={(e) => handleChange(index, "gpa", e.target.value)}
+                          className="w-full p-3 border-2 border-black rounded font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+
+                      <button
+                          onClick={() => handleDelete(index)}
+                          className="text-red-600 hover:text-red-800 font-bold mt-2"
+                      >
+                        Delete Education
+                      </button>
+                    </div>
+                ))}
+
+                {/* Action buttons */}
+                <div className="flex gap-4 mt-8">
+                  <button
+                      onClick={() => handleSave()}
+                      disabled={saving}
+                      className="px-8 py-4 bg-primary text-white font-black border-4 border-black rounded hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {saving ? "Saving..." : "Save Changes"}
+                  </button>
+
+                  <button
+                      onClick={handleCancel}
+                      className="px-8 py-4 bg-gray-300 text-black font-black border-4 border-black rounded hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+          ) : (
+              <>
+                {localEducations.length > 0 ? (
+                    localEducations.map((edu, index) => (
+                        <div
+                            key={index}
+                            className="border-b-4 border-black pb-6 last:border-b-0"
+                        >
+                          <h4 className="font-black text-xl">{edu.institution || "Institution"}</h4>
+                          <p className="font-bold text-lg mt-1">{edu.degree || "Degree"}</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {edu.fromYear} - {edu.toYear || "Present"}
+                          </p>
+                          {edu.gpa && (
+                              <p className="text-sm text-gray-700 mt-2">GPA: {edu.gpa}</p>
+                          )}
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-center text-gray-500 py-8 font-semibold">
+                      No education entries added yet.
+                    </p>
+                )}
+              </>
+          )}
         </div>
-      )}
-
-      <div className="space-y-6">
-        {isEditing ? (
-          <>
-            {educations.map((edu, index) => (
-              <div key={index} className="border p-4 rounded-lg bg-gray-50 space-y-3">
-                <input
-                  type="text"
-                  placeholder="Institution"
-                  value={edu.institution}
-                  onChange={(e) => handleChange(index, "institution", e.target.value)}
-                  className="w-full p-2 border rounded"
-                />
-                <input
-                  type="text"
-                  placeholder="Degree"
-                  value={edu.degree}
-                  onChange={(e) => handleChange(index, "degree", e.target.value)}
-                  className="w-full p-2 border rounded"
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="number"
-                    placeholder="From Year"
-                    value={edu.fromYear}
-                    onChange={(e) => handleChange(index, "fromYear", e.target.value)}
-                    className="w-full p-2 border rounded"
-                  />
-
-                  <input
-                    type="number"
-                    placeholder="To Year"
-                    value={edu.toYear}
-                    onChange={(e) => handleChange(index, "toYear", e.target.value)}
-                    className="w-full p-2 border rounded"
-                  />
-                </div>
-
-                <input
-                  type="number"
-                  placeholder="GPA (optional)"
-                  value={edu.gpa}
-                  onChange={(e) => handleChange(index, "gpa", e.target.value)}
-                  className="w-full p-2 border rounded"
-                />
-
-                <button type="button" onClick={() => handleDelete(index)} className="text-red-600 hover:underline">
-                  Delete
-                </button>
-              </div>
-            ))}
-
-            <div className="flex gap-4 mt-4">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-
-              <button type="button" onClick={handleCancel} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-                Cancel
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            {educations.length > 0 ? (
-              educations.map((edu, index) => (
-                <div key={index}>
-                  <h4 className="font-black">{edu.institution}</h4>
-                  <p className="font-bold">{edu.degree}</p>
-                  <p className="text-sm text-gray-600">
-                    {edu.fromYear} - {edu.toYear || "Present"}
-                  </p>
-                  {edu.gpa && <p className="text-sm">GPA: {edu.gpa}</p>}
-
-                  {index < educations.length - 1 && <hr className="my-6 border-t border-gray-300" />}
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No education entries yet.</p>
-            )}
-          </>
-        )}
-      </div>
-    </SectionWrapper>
+      </SectionWrapper>
   );
 }
 

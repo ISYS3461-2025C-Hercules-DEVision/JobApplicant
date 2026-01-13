@@ -1,14 +1,13 @@
 package com.devision.application.controller;
 
-import com.devision.application.dto.ApplicationCreateRequest;
-import com.devision.application.dto.ApplicationDTO;
-import com.devision.application.dto.CompanyApplicationViewDTO;
-import com.devision.application.dto.UpdateStatusRequest;
+import com.devision.application.dto.*;
 import com.devision.application.service.ApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +22,18 @@ public class ApplicationController {
     @ResponseStatus(HttpStatus.OK)
     public List<ApplicationDTO> getApplicationsByApplicantId(@PathVariable String applicantId){
         return applicationService.getApplicationsByApplicantId(applicantId);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    public List<ApplicationDTO> getAllApplications() {
+        return applicationService.getAllApplications();
+    }
+
+    @DeleteMapping("/{applicationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteApplication(@PathVariable String applicationId) {
+        applicationService.deleteApplication(applicationId);
     }
 
     @GetMapping("/{applicationId}")
@@ -51,4 +62,22 @@ public class ApplicationController {
         return applicationService.getApplicationsForJobPost(companyId, jobPostId);
     }
 
+    @GetMapping("/job-posts/{jobPostId}/applied")
+    @ResponseStatus(HttpStatus.OK)
+    public List<AppliedApplicationDTO> getAppliedApplications(@PathVariable String jobPostId) {
+        return applicationService.appliedApplications(jobPostId);
+    }
+    @PatchMapping("/job-posts/{jobPostId}/applications/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateApplicationStatus(
+            @PathVariable String jobPostId,
+            @Valid @RequestBody UpdateApplicationStatusRequest req
+    ) {
+        applicationService.updateApplicationStatus(
+                jobPostId,
+                req.newStatus(),
+                req.feedback(),
+                req.applicationId()
+        );
+    }
 }

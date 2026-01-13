@@ -27,6 +27,7 @@ kafka:
     payment-success: ${KAFKA_PAYMENT_SUCCESS_TOPIC:payment-success}
     payment-failed: ${KAFKA_PAYMENT_FAILED_TOPIC:payment-failed}
     job-post-updates: ${KAFKA_JOB_POST_UPDATES_TOPIC:job-post-updates}
+    applicant-profile-updates: ${KAFKA_APPLICANT_PROFILE_UPDATES_TOPIC:subscription-salary-update}
 
 payment:
   consumer:
@@ -45,7 +46,8 @@ notification:
 eureka:
   instance:
     hostname: ${EUREKA_INSTANCE_HOSTNAME}
-    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS}
+    ip-address: ${EUREKA_INSTANCE_IP_ADDRESS:${EUREKA_INSTANCE_HOSTNAME}}
+    prefer-ip-address: ${EUREKA_PREFER_IP_ADDRESS:true}
   client:
     service-url:
       defaultZone: ${EUREKA_DEFAULT_ZONE}
