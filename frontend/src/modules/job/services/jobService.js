@@ -20,8 +20,8 @@ function getAccessToken(auth = "user") {
     }
 
     return (
-        localStorage.getItem("accessToken") ||     // ✅ add this
-        sessionStorage.getItem("accessToken") ||   // ✅ and this
+        localStorage.getItem("accessToken") ||
+        sessionStorage.getItem("accessToken") ||
         localStorage.getItem("access_token") ||
         sessionStorage.getItem("access_token") ||
         localStorage.getItem("token") ||

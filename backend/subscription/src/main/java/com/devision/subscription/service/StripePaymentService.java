@@ -28,7 +28,7 @@ public class StripePaymentService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final SubscriptionRepository subscriptionRepository;
 
-    @Value("${STRIPE_API_KEY:}")
+    @Value("${stripe.api-key}")
     private String stripeApiKey;
 
     @Value("${stripe.success-url}")
