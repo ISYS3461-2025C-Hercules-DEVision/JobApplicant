@@ -1,6 +1,23 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as adminService from "../../services/adminService.js";
 
+const MOCK_COMPANIES = [
+  {
+    id: "mock-1",
+    name: "Mock Company A",
+    email: "contact@mocka.com",
+    status: "ACTIVE",
+    createdAt: "2024-01-01",
+  },
+  {
+    id: "mock-2",
+    name: "Mock Company B",
+    email: "contact@mockb.com",
+    status: "INACTIVE",
+    createdAt: "2024-01-02",
+  },
+];
+
 function normalizeList(data) {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.data)) return data.data;
@@ -14,6 +31,45 @@ export default function CompanyTable() {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  const handleToggleStatus = async (companyRow) => {
+    const companyId = companyRow.id;
+
+    const isActive = String(companyRow.status).toLowerCase() === "active";
+    const action = isActive ? "deactivate" : "activate";
+
+    const ok = window.confirm(
+      `${isActive ? "Deactivate" : "Activate"} this company?`
+    );
+    if (!ok) return;
+
+    try {
+      if (isActive) {
+        await adminService.deactivateCompany(companyId);
+      } else {
+        await adminService.activateCompany(companyId);
+      }
+
+      // Update UI (companies raw list) safely
+      setCompanies((prev) =>
+        prev.map((c) => {
+          const id = String(c.companyId ?? c.id ?? "");
+          if (id !== String(companyId)) return c;
+
+          // Update status on raw object so your rows useMemo will reflect it
+          return {
+            ...c,
+            status: isActive ? "INACTIVE" : "ACTIVE",
+            active: !isActive, // optional: if backend uses boolean
+            activated: !isActive, // optional
+          };
+        })
+      );
+    } catch (error) {
+      console.error("Toggle company status failed", error);
+      alert(error?.message || "Toggle company status failed");
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -21,6 +77,7 @@ export default function CompanyTable() {
     (async () => {
       setLoading(true);
       setError(null);
+
       try {
         const res = await adminService.getAllCompaniesFromJM({
           page: 1,
@@ -28,10 +85,15 @@ export default function CompanyTable() {
         });
 
         if (!mounted) return;
+
         setCompanies(normalizeList(res));
       } catch (err) {
         if (!mounted) return;
+
+        console.error("Fetch companies from JM failed, using mock data", err);
+
         setError(err?.message || "Failed to load companies from JM");
+        setCompanies(MOCK_COMPANIES);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -41,6 +103,7 @@ export default function CompanyTable() {
       mounted = false;
     };
   }, []);
+
 
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -150,8 +213,14 @@ export default function CompanyTable() {
                     </span>
                   </td>
                   <td className="text-end">
-                    <button className="btn btn-sm btn-outline-secondary">
-                      ⋮
+                    <button
+                      className={`btn btn-sm ${
+                        c.status === "Active" ? "btn-outline-warning" : "btn-outline-success"
+                      }`}
+                      disabled={loading}
+                      onClick={() => handleToggleStatus(c)}
+                    >
+                      {c.status === "Active" ? "Deactivate" : "Activate"}
                     </button>
                   </td>
                 </tr>
