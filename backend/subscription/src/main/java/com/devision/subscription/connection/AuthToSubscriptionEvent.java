@@ -9,4 +9,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class AuthToSubscriptionEvent {
     private String applicantId;
+
+    public String getApplicantId() {
+        return applicantId;
+    }
 }

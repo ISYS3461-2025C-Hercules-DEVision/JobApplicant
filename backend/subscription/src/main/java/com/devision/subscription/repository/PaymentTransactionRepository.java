@@ -15,6 +15,8 @@ import org.springframework.data.mongodb.repository.MongoRepository;
  */
 public interface PaymentTransactionRepository
         extends MongoRepository<PaymentTransaction, String> {
+
+        java.util.Optional<PaymentTransaction> findByStripeSessionId(String stripeSessionId);
 }
 
 
