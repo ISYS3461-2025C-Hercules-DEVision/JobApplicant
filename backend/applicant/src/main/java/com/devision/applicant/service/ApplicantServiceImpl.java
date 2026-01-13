@@ -356,7 +356,7 @@ public class ApplicantServiceImpl implements ApplicantService {
     }
     @Override
     public Page<ApplicantWithResumeDTO> filterApplicantsWithResume(
-            DegreeType degree,
+            List<DegreeType> degrees,
             List<String> skills,
             Boolean matchAllSkills,
             int page,
@@ -369,12 +369,21 @@ public class ApplicantServiceImpl implements ApplicantService {
         // Exclude deleted resumes
         query.addCriteria(Criteria.where("deletedAt").is(null));
 
-        // Filter by degree (if provided)
-        if (degree != null) {
-            // Use elemMatch to search within the education array
-            query.addCriteria(Criteria.where("education").elemMatch(
-                    Criteria.where("degree").is(degree)
-            ));
+        // Filter by degrees (if provided)
+        if (degrees != null && !degrees.isEmpty()) {
+            // Match any of the specified degrees in the education array
+            List<Criteria> degreeCriteria = degrees.stream()
+                    .map(degree -> Criteria.where("education").elemMatch(
+                            Criteria.where("degree").is(degree)
+                    ))
+                    .toList();
+
+            // Use OR operator to match any of the degrees
+            if (degreeCriteria.size() == 1) {
+                query.addCriteria(degreeCriteria.get(0));
+            } else {
+                query.addCriteria(new Criteria().orOperator(degreeCriteria.toArray(new Criteria[0])));
+            }
         }
 
         // Filter by skills (if provided)
@@ -401,10 +410,13 @@ public class ApplicantServiceImpl implements ApplicantService {
             }
         }
 
+        // Get total count for pagination
         long total = mongoTemplate.count(query, Resume.class);
 
+        // Execute query with pagination
         List<Resume> resumes = mongoTemplate.find(query.with(pageable), Resume.class);
 
+        // Map resumes to DTOs with applicant data
         List<ApplicantWithResumeDTO> dtos = resumes.stream()
                 .map(resume -> {
                     Applicant applicant = repository.findById(resume.getApplicantId())
@@ -437,5 +449,6 @@ public class ApplicantServiceImpl implements ApplicantService {
 
         return new PageImpl<>(dtos, pageable, total);
     }
+
 
 }
