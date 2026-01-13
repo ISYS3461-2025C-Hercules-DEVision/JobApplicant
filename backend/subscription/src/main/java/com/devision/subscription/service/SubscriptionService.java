@@ -16,7 +16,10 @@ public interface SubscriptionService {
      * records a mock SUCCESS and creates a PREMIUM subscription; otherwise it
      * forwards to JM and records a CREATED transaction for reconciliation.
      */
-    PaymentInitiateResponseDTO createMockPayment(String applicantId, String email);
+    PaymentInitiateResponseDTO createMockPayment(String applicantId, String email, String authBearer);
+
+    /** Completes payment for a subscription using the provided session ID. */
+    void completePayment(String sessionId);
 
     /** Ensures a FREE active subscription exists and returns the status. */
     SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId);

@@ -29,17 +29,22 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentTransactionRepository paymentTransactionRepository;
-    private final PaymentInitiationClient paymentInitiationClient;
+        private final PaymentInitiationClient paymentInitiationClient;
+        private final StripePaymentService stripePaymentService;
     @Value("${payment.forward.enabled:false}")
     private boolean forwardEnabled;
+        @Value("${payment.forward.checkout-url:}")
+        private String fallbackCheckoutUrl;
 
     public SubscriptionServiceImpl(
             SubscriptionRepository subscriptionRepository,
             PaymentTransactionRepository paymentTransactionRepository,
-            PaymentInitiationClient paymentInitiationClient) {
+                        PaymentInitiationClient paymentInitiationClient,
+                        StripePaymentService stripePaymentService) {
         this.subscriptionRepository = subscriptionRepository;
         this.paymentTransactionRepository = paymentTransactionRepository;
-        this.paymentInitiationClient = paymentInitiationClient;
+                this.paymentInitiationClient = paymentInitiationClient;
+                this.stripePaymentService = stripePaymentService;
     }
 
     /**
@@ -48,9 +53,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
      */
     @Override
     public SubscriptionStatusResponse getMySubscription(String applicantId) {
-
         return subscriptionRepository
-                .findByApplicantIdAndIsActiveTrue(applicantId)
+                .findTopByApplicantIdAndIsActiveTrueOrderByStartDateDesc(applicantId)
                 .map(sub -> new SubscriptionStatusResponse(
                         sub.getPlanType(),
                         true,
@@ -67,76 +71,28 @@ public class SubscriptionServiceImpl implements SubscriptionService {
      * subscription for 30 days.
      */
     @Override
-    public PaymentInitiateResponseDTO createMockPayment(String applicantId, String email) {
+            public PaymentInitiateResponseDTO createMockPayment(String applicantId, String email, String authBearer) {
+                // Always use JA-native Stripe now (forwarding disabled in env)
+                java.math.BigDecimal amount = java.math.BigDecimal.valueOf(10.00);
+                String currency = "USD";
+                String description = "Premium Subscription";
 
-        if (forwardEnabled) {
-            // Forward to JM Payment API and record CREATED transaction locally
-            JmPaymentInitiateRequest req = new JmPaymentInitiateRequest();
-            req.setSubsystem("JOB_APPLICANT");
-            req.setPaymentType("SUBSCRIPTION");
-            req.setCustomerId(applicantId);
-            req.setEmail(email);
-            req.setReferenceId("sub-" + applicantId);
-            req.setAmount(java.math.BigDecimal.valueOf(10.00));
-            req.setCurrency("USD");
-            req.setGateway("STRIPE");
-            req.setDescription("Premium Subscription");
+                com.stripe.model.checkout.Session session = stripePaymentService.initiateCheckout(
+                        applicantId, email, amount, currency, description);
 
-            java.util.Map<String, Object> resp = paymentInitiationClient.initiate(req).block();
-            String transactionId = resp != null && resp.get("transactionId") != null
-                    ? resp.get("transactionId").toString()
-                    : java.util.UUID.randomUUID().toString();
-            String status = resp != null && resp.get("status") != null ? resp.get("status").toString() : "CREATED";
+                // Use Stripe session id as transaction id surrogate for response
+                String transactionId = java.util.Optional.ofNullable(session.getMetadata())
+                        .map(m -> m.get("transactionId"))
+                        .orElse(session.getId());
 
-            com.devision.subscription.model.PaymentTransaction tx = new com.devision.subscription.model.PaymentTransaction();
-            tx.setId(transactionId);
-            tx.setApplicantId(applicantId);
-            tx.setEmail(email);
-            tx.setPaymentStatus(com.devision.subscription.enums.PaymentStatus.CREATED);
-            tx.setTransactionTime(java.time.Instant.now());
-            paymentTransactionRepository.save(tx);
-
-            return new PaymentInitiateResponseDTO(
-                    transactionId,
-                    status,
-                    "Initiated via JM Payment API");
-        }
-
-        // 1. Create payment transaction
-        String paymentId = UUID.randomUUID().toString();
-
-        PaymentTransaction tx = new PaymentTransaction();
-        tx.setId(paymentId);
-        tx.setApplicantId(applicantId);
-        tx.setPaymentStatus(com.devision.subscription.enums.PaymentStatus.SUCCESS);
-        tx.setEmail(email);
-        tx.setTransactionTime(Instant.now());
-
-        paymentTransactionRepository.save(tx);
-
-        // 2. Deactivate old subscription (if any)
-        subscriptionRepository
-                .findByApplicantIdAndIsActiveTrue(applicantId)
-                .ifPresent(old -> {
-                    old.setActive(false);
-                    subscriptionRepository.save(old);
-                });
-
-        // 3. Create new PREMIUM subscription
-        Subscription sub = new Subscription();
-        sub.setApplicantId(applicantId);
-        sub.setPlanType(PlanType.PREMIUM);
-        sub.setStartDate(Instant.now());
-        sub.setExpiryDate(Instant.now().plus(30, ChronoUnit.DAYS));
-        sub.setActive(true);
-
-        subscriptionRepository.save(sub);
-
-        return new PaymentInitiateResponseDTO(
-                paymentId,
-                "SUCCESS",
-                "Mock payment successful");
-    }
+                return new PaymentInitiateResponseDTO(
+                        transactionId,
+                        "PENDING",
+                        "Initiated via JA Stripe API",
+                        session.getUrl(),
+                        session.getUrl(),
+                        session.getId());
+            }
 
     /**
      * Creates a FREE active subscription if the applicant does not already
@@ -168,4 +124,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                             null);
                 });
     }
+
+        @Override
+        public void completePayment(String sessionId) {
+                stripePaymentService.completePayment(sessionId);
+        }
 }

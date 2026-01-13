@@ -67,7 +67,7 @@ public class MockNotificationController {
             @RequestParam(name = "count", required = false, defaultValue = "3") int count,
             @RequestParam(name = "country", required = false, defaultValue = "US") String country) {
         // 1) Ensure PREMIUM subscription
-        subscriptionService.createMockPayment(applicantId, email);
+        subscriptionService.createMockPayment(applicantId, email, null);
 
         // 2) Upsert a basic search profile
         SearchProfileRequest req = new SearchProfileRequest();
