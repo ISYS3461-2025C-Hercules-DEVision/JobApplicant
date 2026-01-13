@@ -20,17 +20,17 @@ export default function RegisterForm() {
     // Define cities based on country
     const citiesByCountry = {
         VN: [
-            { value: "hanoi", label: "Hanoi" },
-            { value: "hcmc", label: "Ho Chi Minh City" }
+            { value: "Hanoi", label: "Hanoi" },
+            { value: "Ho Chi Minh City", label: "Ho Chi Minh City" }
         ],
         SG: [
-            { value: "singapore", label: "Singapore" }
+            { value: "Singapore", label: "Singapore" }
         ],
         AU: [
-            { value: "melbourne", label: "Melbourne" },
-            { value: "sydney", label: "Sydney" },
-            { value: "brisbane", label: "Brisbane" },
-            { value: "perth", label: "Perth" }
+            { value: "Melbourne", label: "Melbourne" },
+            { value: "Sydney", label: "Sydney" },
+            { value: "Brisbane", label: "Brisbane" },
+            { value: "Perth", label: "Perth" }
         ]
     };
 
