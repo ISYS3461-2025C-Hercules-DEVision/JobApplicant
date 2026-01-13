@@ -14,7 +14,6 @@ import {
     SubscriptionPage,
     MockPaymentPage,
 } from "../pages";
-import SubscriptionReturnPage from "../pages/SubscriptionReturnPage.jsx";
 
 import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
 import ApplicationTable from "../modules/admin/ui/AdminPages/ApplicationTable.jsx";
@@ -47,7 +46,6 @@ function App() {
                 <Route path="/searchProfile" element={<SearchProfilePage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/subscription" element={<SubscriptionPage />} />
-                <Route path="/subscription/return" element={<SubscriptionReturnPage />} />
                 <Route path="/payment/mock" element={<MockPaymentPage />} />
 
                 {/* Admin login is public */}

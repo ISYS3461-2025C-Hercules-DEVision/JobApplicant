@@ -24,11 +24,4 @@ export const subscriptionService = {
       method: "POST",
     });
   },
-
-  // Complete payment after Stripe redirects back with session_id
-  completePayment(sessionId) {
-    return request(`/api/v1/subscriptions/complete?sessionId=${encodeURIComponent(sessionId)}`, {
-      method: "GET",
-    });
-  },
 };

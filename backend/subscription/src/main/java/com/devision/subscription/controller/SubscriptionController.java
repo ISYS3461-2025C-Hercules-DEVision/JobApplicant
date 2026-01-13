@@ -40,33 +40,10 @@ public class SubscriptionController {
      * to JM and a CREATED transaction is stored locally.
      */
     @PostMapping("/{applicantId}/checkout")
-    public org.springframework.http.ResponseEntity<?> checkout(
+    public PaymentInitiateResponseDTO checkout(
             @PathVariable String applicantId,
-            @RequestParam(name = "email", required = false) String email,
-            @RequestHeader(name = "Authorization", required = false) String authorization) {
-        try {
-            PaymentInitiateResponseDTO dto = subscriptionService.createMockPayment(applicantId, email, authorization);
-            return org.springframework.http.ResponseEntity.ok(dto);
-        } catch (IllegalStateException ex) {
-            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of(
-                    "error", ex.getMessage()
-            ));
-        } catch (Exception ex) {
-            return org.springframework.http.ResponseEntity.status(500).body(java.util.Map.of(
-                    "error", "Failed to initiate payment"
-            ));
-        }
-    }
-
-    /**
-     * Completes a payment after Stripe redirects the frontend with a session_id
-     * query parameter. The frontend should call this endpoint with that session
-     * id to finalize the subscription.
-     */
-    @GetMapping("/complete")
-    public String complete(@RequestParam("sessionId") String sessionId) {
-        subscriptionService.completePayment(sessionId);
-        return "Payment completed";
+            @RequestParam(name = "email", required = false) String email) {
+        return subscriptionService.createMockPayment(applicantId, email);
     }
 
     /**

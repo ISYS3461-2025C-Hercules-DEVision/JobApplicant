@@ -34,7 +34,7 @@ public class SearchProfileServiceImpl implements SearchProfileService {
         @Override
         public SearchProfileResponse upsert(String applicantId, SearchProfileRequest request) {
                 // Require PREMIUM active subscription
-                subscriptionRepository.findTopByApplicantIdAndIsActiveTrueOrderByStartDateDesc(applicantId)
+                subscriptionRepository.findByApplicantIdAndIsActiveTrue(applicantId)
                                 .filter(sub -> sub.getPlanType() == PlanType.PREMIUM)
                                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
                                                 "Premium plan required"));
