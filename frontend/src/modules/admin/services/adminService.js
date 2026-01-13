@@ -1,4 +1,3 @@
-import axios from "axios";
 import {request} from "../../../utils/HttpUtil.js";
 import { API_BASE_JOB_MANAGER } from "../../../config/api.js";
 
@@ -108,12 +107,20 @@ export async function getAllCompaniesFromJM({ page = 1, size = 10 } = {}) {
 }
 
 //no endpoint from jm yet
-export const activateCompany = (companyId) =>
-  axios.patch(`/internal/companies/${companyId}/activate`);
+export async function activateCompany(companyId) {
+  return jmRequest(
+    `/internal/companies/companies/${companyId}/activate`,
+    { method: "PATCH" }
+  );
+}
 
-export const deactivateCompany = (companyId) =>
-  axios.patch(`/internal/companies/${companyId}/deactivate`);
-
+export async function deactivateCompany(companyId) {
+  return jmRequest(
+    `/internal/companies/companies/${companyId}/deactivate`,
+    { method: "PATCH" }
+  );
+}
+  
 export async function deleteJobPostFromJM(jobId) {
   return jmRequest(`/internal/jobs/jobs/${jobId}`, { method: "DELETE" });
 }
