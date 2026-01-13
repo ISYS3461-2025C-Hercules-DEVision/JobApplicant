@@ -50,7 +50,8 @@ public class SubscriptionController {
                     "error", ex.getMessage()));
         } catch (Exception ex) {
             return org.springframework.http.ResponseEntity.status(500).body(java.util.Map.of(
-                    "error", "Failed to initiate payment"));
+                    "error", "Failed to initiate payment",
+                    "details", ex.getMessage()));
         }
     }
 
@@ -60,7 +61,15 @@ public class SubscriptionController {
      * id to finalize the subscription.
      */
     @GetMapping("/complete")
-    public String complete(@RequestParam("sessionId") String sessionId) {
+    public String complete(
+            @RequestParam(name = "sessionId", required = false) String sessionId,
+            @RequestParam(name = "session_id", required = false) String session_id) {
+        if (sessionId == null || sessionId.isBlank()) {
+            sessionId = session_id;
+        }
+        if (sessionId == null || sessionId.isBlank()) {
+            throw new IllegalArgumentException("Missing session id");
+        }
         subscriptionService.completePayment(sessionId);
         return "Payment completed";
     }

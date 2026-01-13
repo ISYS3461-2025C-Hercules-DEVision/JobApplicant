@@ -74,10 +74,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                                 session.getId());
         }
 
-    /**
-     * Creates a FREE active subscription if the applicant does not already
-     * have an active plan, and returns the resulting status.
-     */
+        /**
+         * Creates a FREE active subscription if the applicant does not already
+         * have an active plan, and returns the resulting status.
+         */
         @Override
         public SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId) {
                 // If an active subscription already exists, return it

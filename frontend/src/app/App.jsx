@@ -47,6 +47,7 @@ function App() {
                 <Route path="/searchProfile" element={<SearchProfilePage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/subscription/return" element={<SubscriptionReturnPage />} />
                 <Route path="/payment/mock" element={<MockPaymentPage />} />
 
                 {/* Admin login is public */}

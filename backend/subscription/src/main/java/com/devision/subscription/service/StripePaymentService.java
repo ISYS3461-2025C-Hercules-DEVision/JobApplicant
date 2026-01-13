@@ -28,7 +28,7 @@ public class StripePaymentService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final SubscriptionRepository subscriptionRepository;
 
-    @Value("${stripe.api-key}")
+    @Value("${STRIPE_API_KEY:}")
     private String stripeApiKey;
 
     @Value("${stripe.success-url}")
@@ -38,7 +38,7 @@ public class StripePaymentService {
     private String cancelUrl;
 
     public StripePaymentService(PaymentTransactionRepository paymentTransactionRepository,
-                                SubscriptionRepository subscriptionRepository) {
+            SubscriptionRepository subscriptionRepository) {
         this.paymentTransactionRepository = paymentTransactionRepository;
         this.subscriptionRepository = subscriptionRepository;
     }
@@ -47,7 +47,10 @@ public class StripePaymentService {
      * Creates a Stripe Checkout session and records a CREATED transaction.
      */
     public Session initiateCheckout(String applicantId, String email,
-                                    BigDecimal amount, String currency, String description) {
+            BigDecimal amount, String currency, String description) {
+        if (stripeApiKey == null || stripeApiKey.isBlank()) {
+            throw new IllegalStateException("Stripe API key not configured");
+        }
         Stripe.apiKey = stripeApiKey;
 
         long unitAmount = amount.multiply(BigDecimal.valueOf(100)).longValue();
@@ -72,16 +75,22 @@ public class StripePaymentService {
                         .build())
                 .build();
 
-        SessionCreateParams params = SessionCreateParams.builder()
+        SessionCreateParams.Builder builder = SessionCreateParams.builder()
                 .addLineItem(SessionCreateParams.LineItem.builder()
                         .setQuantity(1L)
                         .setPriceData(priceData)
                         .build())
                 .setMode(SessionCreateParams.Mode.PAYMENT)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
                 .putAllMetadata(metadata)
                 .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl(cancelUrl)
-                .build();
+                .setCancelUrl(cancelUrl);
+
+        if (email != null && !email.isBlank()) {
+            builder.setCustomerEmail(email);
+        }
+
+        SessionCreateParams params = builder.build();
 
         try {
             Session session = Session.create(params);
@@ -89,7 +98,7 @@ public class StripePaymentService {
             paymentTransactionRepository.save(tx);
             return session;
         } catch (StripeException e) {
-            throw new RuntimeException("Failed to create Stripe session", e);
+            throw new RuntimeException("Stripe error: " + e.getMessage(), e);
         }
     }
 
@@ -101,8 +110,8 @@ public class StripePaymentService {
         try {
             Session session = Session.retrieve(sessionId);
 
-                // Find transaction and applicant
-                PaymentTransaction tx = paymentTransactionRepository
+            // Find transaction and applicant
+            PaymentTransaction tx = paymentTransactionRepository
                     .findByStripeSessionId(sessionId)
                     .orElse(null);
 
