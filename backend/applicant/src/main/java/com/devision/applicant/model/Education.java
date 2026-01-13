@@ -1,6 +1,5 @@
 package com.devision.applicant.model;
 
-import com.devision.applicant.enums.DegreeType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,7 +17,7 @@ public class Education {
     private String applicantId;       // UUID
 
     private String institution;
-    private DegreeType degree;
+    private String degree;
     private Integer fromYear;
     private Integer toYear;
     private Double gpa;               // nullable (from 0-100)

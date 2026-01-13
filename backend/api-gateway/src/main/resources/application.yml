@@ -1,6 +1,6 @@
 server:
   port: ${SERVER_PORT:10789}
-  forward-headers-strategy: native
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -15,7 +15,7 @@ spring:
         add-to-simple-url-handler-mapping: true
         corsConfigurations:
           "[/**]":
-            allowedOriginPatterns: ${CORS_ALLOWED_ORIGINS=https://d3v5irw7bgqyjf.cloudfront.net,https://job-applicant.indevs.in,http://localhost:5173,http://localhost:5174,http://job-manager-483228148.ap-southeast-2.elb.amazonaws.com}
+            allowedOriginPatterns: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174}
 
             allowedMethods:
               - GET
