@@ -31,6 +31,7 @@ import AuthInitializer from "../components/AuthInitializer.jsx";
 function App() {
     return (
         <Router>
+            <Route path="/BannedAccount" element={<AccountBannedPage/>}/>
             {/* Handle when reloading page, the redux resets */}
             <AuthInitializer/>
 
@@ -39,7 +40,7 @@ function App() {
                 {/*<Route path="/updateResume" element={<UpdateResumePage />} />*/}
                 {/* Public routes */}
                 <Route path="/" element={<HomePage />} />
-                <Route path="/BannedAccount" element={<AccountBannedPage/>}/>
+
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/jobs" element={<JobListPage />} />
