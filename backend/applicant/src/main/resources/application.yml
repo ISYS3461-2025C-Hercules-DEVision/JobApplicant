@@ -21,6 +21,10 @@ spring:
   mongodb:
     database: ${MONGODB_DATABASE}
     uri: ${MONGODB_URI}
+app:
+  auth:
+    jwt-secret: ${JWT_SECRET}
+    jwt-expiration-ms: ${JWT_EXPIRATION_MS}
 
 eureka:
   instance:

@@ -17,7 +17,12 @@ public record jwtUserDto(
 
         if (email != null) claims.put("email", email);
         if (applicantId != null) claims.put("applicantId", applicantId);
-        if (role != null) claims.put("role", role.name());
+        if (role != null) {
+            String r = role.name();
+            if ("USER".equalsIgnoreCase(r)) r = "APPLICANT";
+            if ("ADMIN".equalsIgnoreCase(r)) r = "SUPER_ADMIN";
+            claims.put("role", r);
+        }
         if (status != null) claims.put("status", status);
         return claims;
     }

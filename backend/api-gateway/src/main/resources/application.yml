@@ -35,27 +35,32 @@ spring:
 
       routes:
         - id: authentication-service
-          uri: lb://authentication-service
+          uri: lb://AUTHENTICATION-SERVICE
           predicates:
             - Path=/auth/**,/oauth2/**,/login/oauth2/**
 
+        - id: authorization-service
+          uri: lb://AUTHORIZATION-SERVICE
+          predicates:
+            - Path=/api/v1/authorization/**
+
         - id: application-service-files
-          uri: lb://application-service
+          uri: lb://APPLICATION-SERVICE
           predicates:
             - Path=/api/files/**
 
         - id: application-service-applications
-          uri: lb://application-service
+          uri: lb://APPLICATION-SERVICE
           predicates:
             - Path=/api/v1/applications/**
 
         - id: applicant-service
-          uri: lb://applicant-service
+          uri: lb://APPLICANT-SERVICE
           predicates:
             - Path=/api/v1/applicants/**
 
         - id: subscription-service
-          uri: lb://subscription-service
+          uri: lb://SUBSCRIPTION-SERVICE
           predicates:
             - Path=/api/v1/subscriptions/**
       forwarded:

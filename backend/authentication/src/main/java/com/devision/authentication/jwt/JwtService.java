@@ -7,6 +7,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import io.jsonwebtoken.JwtException;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -19,10 +20,10 @@ public class JwtService {
     @Value("${app.auth.jwt-secret}")
     private String jwtSecret;
 
-    @Value("${app.auth.access-token-expiration-ms}")
+    @Value("${app.auth.access-token-expiration-ms:180000}")
     private long accessTokenExpirationMs;
 
-    @Value("${app.auth.refresh-token-expiration-ms}")
+    @Value("${app.auth.refresh-token-expiration-ms:604800000}")
     private long refreshTokenExpirationMs;
 
     private Key getSigningKey() {
@@ -45,6 +46,10 @@ public class JwtService {
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .addClaims(user.toClaims())
+                .claim("role", user.role())
+                .claim("applicantId", user.applicantId())
+                .claim("email", user.email())
+                .claim("status", user.status())
                 .claim("type", "access")
                 .claim("provider", "LOCAL") //  marks as non-SSO token
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -85,8 +90,12 @@ public class JwtService {
     }
 
     public boolean isAccessToken(String token) {
-        Claims claims = parseClaims(token);
-        return "access".equals(claims.get("type", String.class));
+        try {
+            Claims claims = parseClaims(token);
+            return "access".equals(claims.get("type", String.class));
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
     }
 
     // Convenience helpers you’ll use in logout/revoke logic
@@ -102,5 +111,10 @@ public class JwtService {
     public String getProvider(String token) {
         String provider = parseClaims(token).get("provider", String.class);
         return provider != null ? provider : "LOCAL";
+    }
+
+    public String getRole(String token) {
+        String role = parseClaims(token).get("role", String.class);
+        return role;
     }
 }
