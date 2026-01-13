@@ -8,6 +8,7 @@ import com.devision.subscription.service.SearchProfileService;
 import com.devision.subscription.service.SubscriptionService;
 import com.devision.subscription.service.NotificationService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -19,6 +20,7 @@ import java.util.List;
  * frontend integration prior to enabling Kafka consumers.
  */
 @RestController
+@Profile("dev")
 @RequestMapping("/api/v1/subscriptions")
 public class MockNotificationController {
 
@@ -66,8 +68,8 @@ public class MockNotificationController {
             @RequestParam(name = "email", required = false) String email,
             @RequestParam(name = "count", required = false, defaultValue = "3") int count,
             @RequestParam(name = "country", required = false, defaultValue = "US") String country) {
-        // 1) Ensure PREMIUM subscription
-        subscriptionService.createMockPayment(applicantId, email);
+        // 1) Ensure PREMIUM subscription (initiate payment; auth not required here)
+        subscriptionService.initiatePayment(applicantId, email, null);
 
         // 2) Upsert a basic search profile
         SearchProfileRequest req = new SearchProfileRequest();

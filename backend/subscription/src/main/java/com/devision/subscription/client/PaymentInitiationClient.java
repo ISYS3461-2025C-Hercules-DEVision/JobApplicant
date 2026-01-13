@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -16,6 +17,7 @@ import java.util.Map;
  * requests to the JM Payment API. Activated when forwarding is enabled.
  */
 @Component
+@Profile("forwarding")
 public class PaymentInitiationClient {
 
     private final WebClient webClient;

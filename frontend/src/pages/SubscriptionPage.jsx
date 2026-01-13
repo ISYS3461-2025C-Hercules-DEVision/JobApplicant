@@ -4,10 +4,15 @@ import PlanCard from "../modules/subscription/ui/PlanCard";
 import SubscribeButton from "../modules/subscription/ui/SubscribeButton";
 import { useSubscription } from "../modules/subscription/hooks/useSubscription";
 import { useCheckout } from "../modules/subscription/hooks/useCheckout";
+import { useSelector } from "react-redux";
+import { subscriptionService } from "../modules/subscription/services/subscriptionService";
+import { emitSubscriptionUpdated } from "../modules/subscription/events/subscriptionEvents";
 
 function SubscriptionPage() {
   const { subscription, isPremium, loading } = useSubscription();
   const { startCheckout } = useCheckout();
+  const { user } = useSelector((state) => state.auth);
+  const applicantId = user?.applicantId;
 
   if (loading) {
     return <div className="text-center mt-20 font-black">Loading...</div>;
@@ -63,7 +68,22 @@ function SubscriptionPage() {
           />
         </div>
 
-        <SubscribeButton onClick={startCheckout} />
+        <SubscribeButton
+          onClick={async () => {
+            if (isPremium) {
+              try {
+                if (!applicantId) return;
+                await subscriptionService.cancelSubscription(applicantId);
+                emitSubscriptionUpdated();
+              } catch (e) {
+                console.error("Cancel subscription failed", e);
+              }
+            } else {
+              startCheckout();
+            }
+          }}
+          label={isPremium ? "CANCEL SUBSCRIPTION" : "SUBSCRIBE NOW"}
+        />
       </main>
 
       <FooterSection />

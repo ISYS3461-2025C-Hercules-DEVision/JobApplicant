@@ -4,6 +4,10 @@ import SectionWrapper from "../../../components/SectionWrapper/SectionWrapper";
 import { useProfile } from "../hooks/useProfile.js";
 import { profileService } from "../services/profileService.js"; // Import service
 import { subscriptionService } from "../../subscription/services/subscriptionService";
+import {
+  onSubscriptionUpdated,
+  offSubscriptionUpdated,
+} from "../../subscription/events/subscriptionEvents";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -44,6 +48,19 @@ function ProfileHeader() {
       .getMySubscription(applicantId)
       .then(setSubscription)
       .catch(console.error);
+  }, [applicantId]);
+
+  // Refresh subscription when a payment completes elsewhere
+  useEffect(() => {
+    const handler = () => {
+      if (!applicantId) return;
+      subscriptionService
+        .getMySubscription(applicantId)
+        .then(setSubscription)
+        .catch(console.error);
+    };
+    onSubscriptionUpdated(handler);
+    return () => offSubscriptionUpdated(handler);
   }, [applicantId]);
 
   // Trigger file input click

@@ -2,17 +2,18 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import React from "react";
 
 import {
-    HomePage,
-    LoginPage,
-    RegisterPage,
-    ProfilePage,
-    JobListPage,
-    NotificationPage,
-    ApplicationPage,
-    SearchProfilePage,
-    AuthCallback,
-    SubscriptionPage,
-    MockPaymentPage,
+  HomePage,
+  LoginPage,
+  RegisterPage,
+  ProfilePage,
+  JobListPage,
+  NotificationPage,
+  ApplicationPage,
+  SearchProfilePage,
+  AuthCallback,
+  SubscriptionPage,
+  MockPaymentPage,
+  SubscriptionReturnPage,
 } from "../pages";
 
 import AdminLogin from "../modules/admin/ui/AdminLogin.jsx";
@@ -47,6 +48,7 @@ function App() {
                 <Route path="/searchProfile" element={<SearchProfilePage />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/subscription" element={<SubscriptionPage />} />
+                <Route path="/subscription/return" element={<SubscriptionReturnPage />} />
                 <Route path="/payment/mock" element={<MockPaymentPage />} />
 
                 {/* Admin login is public */}

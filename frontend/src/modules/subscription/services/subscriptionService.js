@@ -24,4 +24,18 @@ export const subscriptionService = {
       method: "POST",
     });
   },
+
+  // Complete Stripe payment by sessionId
+  completePayment(sessionId) {
+    return request(`/api/v1/subscriptions/complete?sessionId=${encodeURIComponent(sessionId)}`, {
+      method: "GET",
+    });
+  },
+
+  // Cancel current subscription and set plan to FREE
+  cancelSubscription(applicantId) {
+    return request(`/api/v1/subscriptions/${applicantId}/cancel`, {
+      method: "POST",
+    });
+  },
 };
