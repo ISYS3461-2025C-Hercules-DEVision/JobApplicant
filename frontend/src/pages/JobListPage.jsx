@@ -4,15 +4,19 @@ import FooterSection from "../components/Footer/FooterSection";
 
 import JobListPanel from "../modules/job/ui/JobListPanel";
 import JobDetailPanel from "../modules/job/ui/JobDetailPanel";
+import ProfileNavBar from "../components/Navbar/ProfileNavBar.jsx";
+import {useSelector} from "react-redux";
 
 function JobListPage() {
   const [selectedJob, setSelectedJob] = useState(null);
+
+    const {token} = useSelector((state) => state.auth);
 
   return (
     <div className="min-h-screen bg-light-gray flex flex-col">
 
       {/* Header */}
-      <HomeNavbar />
+        {token ? <ProfileNavBar /> : <HomeNavbar/> }
 
       {/* Main Content */}
       <main className="flex-grow max-w-7xl mx-auto w-full px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">

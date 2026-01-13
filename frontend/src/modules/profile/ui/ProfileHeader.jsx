@@ -122,7 +122,6 @@ function ProfileHeader() {
   if (!profile) return <p className="text-center p-12">No profile found</p>;
 
   const name = profile.fullName || "Unknown";
-  const skills = profile.skills?.join(", ") || "No skills added";
   const location = `${localCity || "City"}, ${
     localCountry || "Country"
   }`.trim();
@@ -169,7 +168,7 @@ function ProfileHeader() {
             </h1>
 
             <p className="text-xl font-medium text-gray-700 mt-2">
-              Full Stack Developer | {skills}
+              Full Stack Developer
             </p>
 
             {/* Subscription status button */}
