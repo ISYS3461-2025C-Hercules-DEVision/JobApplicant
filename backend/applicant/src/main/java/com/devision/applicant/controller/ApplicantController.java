@@ -4,11 +4,14 @@ import com.devision.applicant.api.ApplicantMapper;
 import com.devision.applicant.config.KafkaConstant;
 import com.devision.applicant.connection.ApplicantToJmEvent;
 import com.devision.applicant.dto.*;
+import com.devision.applicant.enums.DegreeType;
 import com.devision.applicant.enums.Visibility;
 import com.devision.applicant.kafka.kafka_producer.KafkaGenericProducer;
 import com.devision.applicant.model.MediaPortfolio;
 import com.devision.applicant.service.ApplicantService;
 import jakarta.validation.Valid;
+
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -134,5 +137,34 @@ public class ApplicantController {
     @GetMapping("/resumes")
     public List<ResumeDTO> getAllResumes(){
         return service.getAllResumes();
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<ApplicantWithResumeDTO>> filterApplicantsWithResume(
+            @RequestParam(required = false) String degree,
+            @RequestParam(required = false) List<String> skills,
+            @RequestParam(required = false, defaultValue = "false") Boolean matchAllSkills,
+            @RequestParam(defaultValue = "10") int take,
+            @RequestParam(defaultValue = "1") int page
+    ) {
+        // Parse degree enum
+        DegreeType degreeEnum = null;
+        if (degree != null && !degree.isBlank()) {
+            try {
+                degreeEnum = DegreeType.valueOf(degree.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
+        // Call service with filters
+        Page<ApplicantWithResumeDTO> result = service.filterApplicantsWithResume(
+                degreeEnum,
+                skills,
+                matchAllSkills,
+                page,
+                take
+        );
+        return ResponseEntity.ok(result);
     }
 }
