@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
  * Routes are served behind the API Gateway under /api/v1/subscriptions.
  * - GET /{applicantId}: Current subscription status for the applicant
  * - POST /{applicantId}/checkout: Initiate Stripe checkout for subscription
+ * - POST /{applicantId}/cancel: Cancel current subscription (set to FREE)
  * - POST /{applicantId}/default: Create a FREE active subscription when missing
  */
 @RestController
@@ -72,5 +73,14 @@ public class SubscriptionController {
     public SubscriptionStatusResponse createDefault(
             @PathVariable String applicantId) {
         return subscriptionService.createDefaultSubscriptionForUser(applicantId);
+    }
+
+    /**
+     * Cancels the current subscription (if any) and sets plan to FREE (active).
+     */
+    @PostMapping("/{applicantId}/cancel")
+    public SubscriptionStatusResponse cancel(
+            @PathVariable String applicantId) {
+        return subscriptionService.cancelSubscription(applicantId);
     }
 }

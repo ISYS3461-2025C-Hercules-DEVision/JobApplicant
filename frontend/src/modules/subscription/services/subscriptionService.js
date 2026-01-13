@@ -31,4 +31,11 @@ export const subscriptionService = {
       method: "GET",
     });
   },
+
+  // Cancel current subscription and set plan to FREE
+  cancelSubscription(applicantId) {
+    return request(`/api/v1/subscriptions/${applicantId}/cancel`, {
+      method: "POST",
+    });
+  },
 };

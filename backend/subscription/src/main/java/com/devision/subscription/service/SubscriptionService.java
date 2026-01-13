@@ -19,4 +19,7 @@ public interface SubscriptionService {
 
     /** Ensures a FREE active subscription exists and returns the status. */
     SubscriptionStatusResponse createDefaultSubscriptionForUser(String applicantId);
+
+    /** Cancels current subscription and sets plan to FREE (active). */
+    SubscriptionStatusResponse cancelSubscription(String applicantId);
 }

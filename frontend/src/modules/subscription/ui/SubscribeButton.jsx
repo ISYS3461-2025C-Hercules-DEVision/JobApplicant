@@ -1,4 +1,4 @@
-function SubscribeButton({ onClick }) {
+function SubscribeButton({ onClick, label = "SUBSCRIBE NOW" }) {
   return (
     <div className="flex justify-center mt-10">
       <button
@@ -11,7 +11,7 @@ function SubscribeButton({ onClick }) {
           transition-none
         "
       >
-        SUBSCRIBE NOW
+        {label}
       </button>
     </div>
   );

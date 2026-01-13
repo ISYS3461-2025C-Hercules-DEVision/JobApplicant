@@ -120,4 +120,25 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         public void completePayment(String sessionId) {
                 stripePaymentService.completePayment(sessionId);
         }
+
+        @Override
+        public SubscriptionStatusResponse cancelSubscription(String applicantId) {
+                // Deactivate all active subscriptions for the user
+                subscriptionRepository.findByApplicantIdAndIsActiveTrueOrderByStartDateDesc(applicantId)
+                                .forEach(s -> {
+                                        s.setActive(false);
+                                        subscriptionRepository.save(s);
+                                });
+
+                // Create a FREE active subscription (no expiry)
+                Subscription free = new Subscription();
+                free.setApplicantId(applicantId);
+                free.setPlanType(PlanType.FREE);
+                free.setStartDate(Instant.now());
+                free.setExpiryDate(null);
+                free.setActive(true);
+                subscriptionRepository.save(free);
+
+                return new SubscriptionStatusResponse(PlanType.FREE, true, null);
+        }
 }
