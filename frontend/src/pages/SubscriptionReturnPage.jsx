@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { subscriptionService } from "../modules/subscription/services/subscriptionService";
+import { emitSubscriptionUpdated } from "../modules/subscription/events/subscriptionEvents";
 
 export default function SubscriptionReturnPage() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function SubscriptionReturnPage() {
     (async () => {
       try {
         await subscriptionService.completePayment(sessionId);
+        emitSubscriptionUpdated();
       } catch (e) {
         console.error("Complete payment failed", e);
       } finally {

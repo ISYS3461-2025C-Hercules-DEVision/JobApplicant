@@ -9,26 +9,23 @@ export function useCheckout() {
   const navigate = useNavigate();
 
   const startCheckout = async () => {
-    if (!applicantId) return;
+    if (!applicantId) {
+      navigate(`/login`);
+      return;
+    }
     try {
       const res = await subscriptionService.createCheckoutSession(applicantId, user?.email);
       const redirectUrl = res?.checkoutUrl || res?.paymentUrl || res?.stripeUrl;
-      // If backend provides Stripe URL, redirect there
       if (redirectUrl) {
         sessionStorage.setItem("postPaymentReturn", "/subscription");
         window.location.href = redirectUrl;
         return;
       }
-      // Fallback: if mock success was processed locally
-      if (res?.status === "SUCCESS") {
-        navigate("/subscription");
-        return;
-      }
-      // Otherwise, keep user on page
-      alert(res?.message || "Unable to start checkout");
+      throw new Error("No checkout URL returned");
     } catch (e) {
-      console.error(e);
-      alert("Failed to start checkout");
+      console.error("Checkout initiation failed", e);
+      // fallback to subscription page
+      navigate(`/subscription`);
     }
   };
 

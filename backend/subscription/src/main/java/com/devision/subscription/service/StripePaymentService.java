@@ -37,7 +37,7 @@ public class StripePaymentService {
     private String cancelUrl;
 
     public StripePaymentService(PaymentTransactionRepository paymentRepository,
-                                SubscriptionRepository subscriptionRepository) {
+            SubscriptionRepository subscriptionRepository) {
         this.paymentRepository = paymentRepository;
         this.subscriptionRepository = subscriptionRepository;
     }
@@ -52,7 +52,7 @@ public class StripePaymentService {
     }
 
     public Session initiateCheckout(String applicantId, String email,
-                                    BigDecimal amount, String currency, String description) {
+            BigDecimal amount, String currency, String description) {
         if (stripeApiKey == null || stripeApiKey.isBlank()) {
             throw new IllegalStateException("Stripe API key not configured");
         }
@@ -66,7 +66,7 @@ public class StripePaymentService {
             PaymentTransaction saved = paymentRepository.save(tx);
 
             // Create Stripe checkout session
-                SessionCreateParams.Builder builder = SessionCreateParams.builder()
+            SessionCreateParams.Builder builder = SessionCreateParams.builder()
                     .setMode(SessionCreateParams.Mode.PAYMENT)
                     .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
                     .setCancelUrl(cancelUrl)
@@ -78,23 +78,20 @@ public class StripePaymentService {
                                                     .setUnitAmount(amount.multiply(BigDecimal.valueOf(100)).longValue())
                                                     .setProductData(
                                                             SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                                                    .setName(description != null ? description : "Premium Subscription")
-                                                                    .build()
-                                                    )
-                                                    .build()
-                                    )
+                                                                    .setName(description != null ? description
+                                                                            : "Premium Subscription")
+                                                                    .build())
+                                                    .build())
                                     .setQuantity(1L)
-                                    .build()
-                    )
+                                    .build())
                     .putMetadata("transactionId", saved.getId())
-                    .putMetadata("applicantId", applicantId)
-                    ;
+                    .putMetadata("applicantId", applicantId);
 
-                if (email != null && !email.isBlank()) {
+            if (email != null && !email.isBlank()) {
                 builder.setCustomerEmail(email);
-                }
+            }
 
-                SessionCreateParams params = builder.build();
+            SessionCreateParams params = builder.build();
 
             Session session = Session.create(params);
 

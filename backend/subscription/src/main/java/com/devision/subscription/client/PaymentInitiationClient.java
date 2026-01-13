@@ -51,26 +51,4 @@ public class PaymentInitiationClient {
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                 });
     }
-
-    /**
-     * Variant that allows overriding the Authorization bearer per-call using the
-     * end-user's JWT from JA. If no override is provided, falls back to the
-     * configured static bearer (if any).
-     */
-    public Mono<Map<String, Object>> initiate(JmPaymentInitiateRequest request, String bearerOverride) {
-        WebClient.RequestHeadersSpec<?> spec = webClient.post()
-                .uri(initiatePath)
-                .bodyValue(request);
-
-        String effectiveBearer = (bearerOverride != null && !bearerOverride.isBlank()) ? bearerOverride : bearer;
-        if (effectiveBearer != null && !effectiveBearer.isBlank()) {
-            // bearerOverride may already include the "Bearer " prefix; normalize it
-            String token = effectiveBearer.startsWith("Bearer ") ? effectiveBearer.substring(7) : effectiveBearer;
-            spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
-        }
-
-        return spec.retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
-                });
-    }
 }
