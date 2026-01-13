@@ -42,8 +42,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         for (SearchProfile profile : profiles) {
             String applicantId = profile.getApplicantId();
-            Optional<Subscription> active = subscriptionRepository
-                    .findTopByApplicantIdAndIsActiveTrueOrderByStartDateDesc(applicantId);
+            Optional<Subscription> active = subscriptionRepository.findTopByApplicantIdAndIsActiveTrueOrderByStartDateDesc(applicantId);
             if (active.isEmpty() || active.get().getPlanType() != PlanType.PREMIUM) {
                 continue; // only active premium subscribers receive notifications
             }

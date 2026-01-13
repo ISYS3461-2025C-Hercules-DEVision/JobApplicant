@@ -71,8 +71,7 @@ public class SearchProfileServiceImpl implements SearchProfileService {
                 }
 
                 // Salary defaults
-                BigDecimal minSalary = request.minSalary == null ? BigDecimal.ZERO
-                                : request.minSalary.max(BigDecimal.ZERO);
+                BigDecimal minSalary = request.minSalary == null ? BigDecimal.ZERO : request.minSalary.max(BigDecimal.ZERO);
                 BigDecimal maxSalary = request.maxSalary; // null means no upper limit
 
                 // Parse job titles from semicolon-separated string
