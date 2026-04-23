@@ -1,0 +1,6 @@
+target
+.m2-ci
+.env
+.env.*
+*.log
+.DS_Store

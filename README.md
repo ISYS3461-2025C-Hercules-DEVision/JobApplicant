@@ -2,6 +2,10 @@
 
 A subsystem of DEVision focused on empowering Computer Science job seekers. The Job Applicant module enables registration, secure login, job search, and applications, with premium real-time alerts for new jobs matching users’ skills, salary range, and career goals.
 
+## Deployment
+
+Render and Vercel deployment setup is documented in [docs/deployment.md](docs/deployment.md). The root `render.yaml` defines the Render backend Blueprint, and `frontend/vercel.json` defines the Vercel frontend build and SPA routing behavior.
+
 ### **MongoDB Import Instructions**
 
 Create a **README.md** with instructions on how to load this seed data into MongoDB locally:

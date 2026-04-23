@@ -1,0 +1,257 @@
+# Render Blueprint for the JobApplicant backend.
+# Frontend deployment is configured separately in frontend/vercel.json.
+previews:
+  generation: manual
+  expireAfterDays: 3
+
+envVarGroups:
+  - name: jobapp-shared-runtime
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: EUREKA_DEFAULT_ZONE
+        value: http://jobapp-discovery:8761/eureka/
+      - key: EUREKA_PREFER_IP_ADDRESS
+        value: "false"
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        value: jobapp-kafka:9092
+      - key: MONGODB_DATABASE
+        value: jobapp
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MS
+        value: "86400000"
+      - key: ACCESS_TOKEN_EXPIRATION_MS
+        value: "900000"
+      - key: REFRESH_TOKEN_EXPIRATION_MS
+        value: "2592000000"
+
+services:
+  - type: pserv
+    runtime: image
+    name: jobapp-kafka
+    region: singapore
+    plan: starter
+    image:
+      url: docker.io/bitnami/kafka:3.7
+    disk:
+      name: kafka-data
+      mountPath: /bitnami/kafka
+      sizeGB: 10
+    envVars:
+      - key: ALLOW_PLAINTEXT_LISTENER
+        value: "yes"
+      - key: KAFKA_CFG_NODE_ID
+        value: "1"
+      - key: KAFKA_CFG_PROCESS_ROLES
+        value: broker,controller
+      - key: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+        value: 1@jobapp-kafka:9093
+      - key: KAFKA_CFG_LISTENERS
+        value: PLAINTEXT://:9092,CONTROLLER://:9093
+      - key: KAFKA_CFG_ADVERTISED_LISTENERS
+        value: PLAINTEXT://jobapp-kafka:9092
+      - key: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+        value: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - key: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
+        value: CONTROLLER
+      - key: KAFKA_CFG_INTER_BROKER_LISTENER_NAME
+        value: PLAINTEXT
+      - key: KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE
+        value: "true"
+      - key: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
+        value: "1"
+      - key: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+        value: "1"
+      - key: KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR
+        value: "1"
+
+  - type: keyvalue
+    name: jobapp-redis-revocation
+    region: singapore
+    plan: starter
+    maxmemoryPolicy: noeviction
+    ipAllowList: []
+
+  - type: pserv
+    runtime: docker
+    name: jobapp-discovery
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/discovery-server/Dockerfile
+    dockerContext: ./backend/discovery-server
+    buildFilter:
+      paths:
+        - backend/discovery-server/**
+    envVars:
+      - key: SERVER_PORT
+        value: "8761"
+
+  - type: pserv
+    runtime: docker
+    name: jobapp-authentication
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/authentication/Dockerfile
+    dockerContext: ./backend/authentication
+    buildFilter:
+      paths:
+        - backend/authentication/**
+    envVars:
+      - fromGroup: jobapp-shared-runtime
+      - key: SERVER_PORT
+        value: "8087"
+      - key: EUREKA_INSTANCE_HOSTNAME
+        value: jobapp-authentication
+      - key: REDIS_REVOCATION_HOST
+        fromService:
+          type: keyvalue
+          name: jobapp-redis-revocation
+          property: host
+      - key: REDIS_REVOCATION_PORT
+        fromService:
+          type: keyvalue
+          name: jobapp-redis-revocation
+          property: port
+      - key: REDIS_REVOCATION_PASSWORD
+        value: ""
+      - key: MONGODB_URI
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_SCOPES
+        value: email,profile
+      - key: GOOGLE_ISSUER_URI
+        value: https://accounts.google.com
+      - key: FRONTEND_REDIRECT_URL
+        sync: false
+      - key: FRONTEND_BANNED_URL
+        sync: false
+      - key: APP_SUPER_ADMIN_EMAIL
+        sync: false
+      - key: APP_SUPER_ADMIN_PASSWORD
+        sync: false
+
+  - type: pserv
+    runtime: docker
+    name: jobapp-application
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/application/Dockerfile
+    dockerContext: ./backend/application
+    buildFilter:
+      paths:
+        - backend/application/**
+    envVars:
+      - fromGroup: jobapp-shared-runtime
+      - key: SERVER_PORT
+        value: "8084"
+      - key: EUREKA_INSTANCE_HOSTNAME
+        value: jobapp-application
+      - key: MONGODB_URI
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  - type: pserv
+    runtime: docker
+    name: jobapp-applicant
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/applicant/Dockerfile
+    dockerContext: ./backend/applicant
+    buildFilter:
+      paths:
+        - backend/applicant/**
+    envVars:
+      - fromGroup: jobapp-shared-runtime
+      - key: SERVER_PORT
+        value: "8083"
+      - key: EUREKA_INSTANCE_HOSTNAME
+        value: jobapp-applicant
+      - key: MONGODB_URI
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  - type: pserv
+    runtime: docker
+    name: jobapp-subscription
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/subscription/Dockerfile
+    dockerContext: ./backend/subscription
+    buildFilter:
+      paths:
+        - backend/subscription/**
+    envVars:
+      - fromGroup: jobapp-shared-runtime
+      - key: SERVER_PORT
+        value: "8086"
+      - key: EUREKA_INSTANCE_HOSTNAME
+        value: jobapp-subscription
+      - key: MONGODB_URI
+        sync: false
+      - key: STRIPE_API_KEY
+        sync: false
+      - key: STRIPE_SUCCESS_URL
+        sync: false
+      - key: STRIPE_CANCEL_URL
+        sync: false
+      - key: PAYMENT_CONSUMER_ENABLED
+        value: "false"
+      - key: NOTIFICATION_CONSUMER_ENABLED
+        value: "false"
+
+  - type: pserv
+    runtime: docker
+    name: jobapp-admin
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/admin/Dockerfile
+    dockerContext: ./backend/admin
+    buildFilter:
+      paths:
+        - backend/admin/**
+    envVars:
+      - fromGroup: jobapp-shared-runtime
+      - key: SERVER_PORT
+        value: "8088"
+      - key: EUREKA_INSTANCE_HOSTNAME
+        value: jobapp-admin
+      - key: MONGODB_URI
+        sync: false
+
+  - type: web
+    runtime: docker
+    name: jobapp-api-gateway
+    region: singapore
+    plan: starter
+    dockerfilePath: ./backend/api-gateway/Dockerfile
+    dockerContext: ./backend/api-gateway
+    healthCheckPath: /actuator/health
+    buildFilter:
+      paths:
+        - backend/api-gateway/**
+    envVars:
+      - fromGroup: jobapp-shared-runtime
+      - key: SERVER_PORT
+        value: "10789"
+      - key: PORT
+        value: "10789"
+      - key: EUREKA_INSTANCE_HOSTNAME
+        value: jobapp-api-gateway
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://*.vercel.app,https://jobapp-frontend.onrender.com,http://localhost:5173,http://localhost:5174
+      - key: JOB_MANAGER_URI
+        sync: false
