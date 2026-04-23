@@ -6,13 +6,72 @@ import com.devision.subscription.service.SubscriptionService;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST endpoints for managing applicant subscriptions.
+ * ============================================================
+ * SUBSCRIPTION CONTROLLER - API & FLOW DOCUMENTATION
+ * ============================================================
  *
- * Routes are served behind the API Gateway under /api/v1/subscriptions.
+ * PURPOSE:
+ * - Expose REST endpoints for subscription management.
+ * - Handle subscription lookups, Stripe checkout initiation, payment
+ * finalization,
+ * and subscription cancellation.
+ *
+ * ROUTES (behind API Gateway under /api/v1/subscriptions):
  * - GET /{applicantId}: Current subscription status for the applicant
- * - POST /{applicantId}/checkout: Initiate Stripe checkout for subscription
- * - POST /{applicantId}/cancel: Cancel current subscription (set to FREE)
- * - POST /{applicantId}/default: Create a FREE active subscription when missing
+ * - POST /{applicantId}/checkout?email=<email>: Initiate Stripe checkout
+ * - GET /complete?session_id=<id>: Finalize payment (called by return page)
+ * - POST /{applicantId}/cancel: Cancel subscription (set to FREE)
+ * - POST /{applicantId}/default: Create FREE subscription if missing
+ *
+ * PAYMENT FLOW:
+ * 1. Frontend user clicks "Subscribe" button.
+ * 2. Frontend calls POST /{applicantId}/checkout?email=user@example.com.
+ * 3. Controller validates, delegates to subscriptionService.initiatePayment().
+ * 4. Service creates PaymentTransaction (CREATED state).
+ * 5. Service calls StripePaymentService.initiateCheckout():
+ * - Sets customer email on the Stripe session.
+ * - Stores Stripe session ID in transaction.
+ * - Returns Session with checkoutUrl and sessionId.
+ * 6. Controller returns { paymentId, checkoutUrl, sessionId, ... } to frontend.
+ * 7. Frontend redirects user to checkoutUrl (Stripe Checkout form).
+ * 8. User enters payment details and submits.
+ * 9. Stripe charges the card and redirects to success URL:
+ * http://localhost:5173/subscription/return?session_id={CHECKOUT_SESSION_ID}
+ * 10. Frontend SubscriptionReturnPage component:
+ * - Extracts session_id from query params.
+ * - Calls subscriptionService.completePayment(sessionId).
+ * - This hits GET /complete?sessionId=... (or ?session_id=...).
+ * 11. Controller receives sessionId, calls
+ * subscriptionService.completePayment().
+ * 12. Service:
+ * - Retrieves Stripe session details (verify payment success).
+ * - Deactivates all existing active subscriptions for the applicant.
+ * - Creates new PREMIUM subscription (30 days from now).
+ * - Updates PaymentTransaction to SUCCESS.
+ * 13. Frontend navigates to /subscription; user sees PREMIUM status.
+ *
+ * CANCELLATION FLOW:
+ * 1. Premium user clicks "Cancel Subscription" button.
+ * 2. Frontend prompts confirmation dialog.
+ * 3. Frontend calls POST /{applicantId}/cancel.
+ * 4. Service:
+ * - Deactivates all active subscriptions.
+ * - Creates new FREE subscription (no expiry).
+ * 5. Frontend emits 'subscription-updated' event.
+ * 6. ProfileHeader and SubscriptionPage listen, refetch status.
+ *
+ * ERROR HANDLING:
+ * - Missing STRIPE_API_KEY env: 500 "Stripe API key not configured".
+ * - Invalid session_id: 500 with Stripe exception details.
+ * - Missing applicantId: 400 "Invalid applicant ID".
+ * - Missing session_id on complete: 400 "Missing session id".
+ *
+ * NOTES:
+ * - Email is optional on checkout; if not provided, Stripe won't pre-fill it.
+ * - Complete endpoint accepts both ?sessionId= and ?session_id= for robustness.
+ * - All endpoints are served behind API Gateway (no auth check here; gateway
+ * enforces).
+ * ============================================================
  */
 @RestController
 @RequestMapping("/api/v1/subscriptions")
